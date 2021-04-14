@@ -1,19 +1,3 @@
-#' Bind factors
-#'
-#' Some description
-#'
-#' @param a factor
-#' @param b factor
-#'
-#' @return factor
-#' @export
-#'
-#' @examples
-#' fbind(iris$Species[c(1, 51, 101)], PlantGrowth$group[c(1, 11, 21)])
-fbind <- function(a, b) {
-  factor(c(as.character(a), as.character(b)))
-}
-
 #' Set up initial space-filling design
 #'
 #' @param size integer
@@ -40,5 +24,47 @@ init_DoE <- function(size, design_space)
   DoE[, design_space$int] <- round(DoE[, design_space$int])
 
   DoE
+}
+
+
+
+#' Fit surrogate models
+#'
+#' @param DoE data.frame
+#' @param to_model data.frame
+#' @param design_space data.frame
+#'
+#' @return list of objects of class km
+#' @export
+#'
+#' @examples
+#' design_space <- data.frame(name = c("n", "k"),
+#' low = c(100, 10),
+#' up = c(500, 100),
+#' int = c(TRUE, TRUE))
+#'
+#' DoE <- data.frame(n = c(300, 400, 200),
+#' k = c(55, 32, 78),
+#' a = c(0.11, 0.10, 0.15),
+#' b = c(0.000988, 0.000909, 0.00128),
+#' N = c(100, 100, 100))
+#'
+#' to_model <- data.frame(out_i = c(1),
+#' hyp_i = c(1))
+#'
+#' fit_models(DoE, to_model, design_space)
+fit_models <- function(DoE, to_model, design_space)
+{
+  dim <- nrow(design_space)
+  out_dim <- 3
+
+  models <- list()
+  for(i in 1:nrow(to_model)){
+    response_index <- (to_model[i, "hyp_i"] - 1)*out_dim*2 + (2*to_model[i, "out_i"] - 1) + nrow(design_space)
+    models <- append(models, DiceKriging::km(~1, design=DoE[1:dim], response=DoE[, response_index],
+                                noise.var=DoE[, response_index + 1]))
+  }
+
+  models
 }
 
