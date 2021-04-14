@@ -26,8 +26,6 @@ init_DoE <- function(size, design_space)
   DoE
 }
 
-
-
 #' Fit surrogate models
 #'
 #' @param DoE data.frame
@@ -68,3 +66,39 @@ fit_models <- function(DoE, to_model, design_space)
   models
 }
 
+#' Generate MC estimates
+#'
+#' @param design vector
+#' @param hypotheses vector
+#' @param N integer
+#' @param sim_trial function
+#'
+#' @return vector
+#' @export
+#'
+#' @examples
+#' sim_trial <- function(design, hypothesis)
+#' {
+#'   n <- design[1]; k <- design[2]
+#'   mu <- hypothesis[1]
+#'
+#'   m <- n/k
+#'   s_c <- sqrt(0.05 + 0.95/m)
+#'   x0 <- rnorm(k, 0, s_c); x1 <- rnorm(k, mu, s_c)
+#'   c(t.test(x0, x1)$p.value >= 0.05, n, k)
+#' }
+#' design <- c(250, 35)
+#' hypotheses <- c(0.3)
+#' calc_rates(design, hypotheses, N = 100)
+calc_rates <- function(design, hypotheses, N, sim)
+{
+  results <- NULL
+  for(i in 1:nrow(as.data.frame(hypotheses))){
+    sims <- replicate(N, sim(design, as.data.frame(hypotheses)[i,]))
+    for(j in 1:nrow(sims)){
+      results <- c(results, mean(sims[j,]), var(sims[j,])/N)
+    }
+  }
+  names(results) <- letters[1:length(results)]
+  results
+}
