@@ -21,7 +21,7 @@ Set up initial space-filling design
 design_space <- data.frame(name = c("n", "k"),
 low = c(100, 10),
 up = c(500, 100),
-int = c(T, T))
+int = c(TRUE, TRUE))
 
 init_DoE(10, design_space)
 }

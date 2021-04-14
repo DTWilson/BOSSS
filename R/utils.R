@@ -26,13 +26,13 @@ fbind <- function(a, b) {
 #' design_space <- data.frame(name = c("n", "k"),
 #' low = c(100, 10),
 #' up = c(500, 100),
-#' int = c(T, T))
+#' int = c(TRUE, TRUE))
 #'
 #' init_DoE(10, design_space)
 init_DoE <- function(size, design_space)
 {
   dim <- nrow(design_space)
-  DoE <- data.frame(sobol(size, dim))
+  DoE <- data.frame(randtoolbox::sobol(size, dim))
   names(DoE) <- design_space$name
   for(i in 1:dim){
     DoE[,i] <-  DoE[,i]*(design_space$up[i]-design_space$low[i]) + design_space$low[i]
@@ -41,3 +41,4 @@ init_DoE <- function(size, design_space)
 
   DoE
 }
+
