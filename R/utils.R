@@ -71,7 +71,7 @@ fit_models <- function(DoE, to_model, design_space)
 #' @param design vector
 #' @param hypotheses vector
 #' @param N integer
-#' @param sim_trial function
+#' @param sim function
 #'
 #' @return vector
 #' @export
@@ -89,14 +89,14 @@ fit_models <- function(DoE, to_model, design_space)
 #' }
 #' design <- c(250, 35)
 #' hypotheses <- c(0.3)
-#' calc_rates(design, hypotheses, N = 100)
+#' calc_rates(design, hypotheses, N = 100, sim = sim_trial)
 calc_rates <- function(design, hypotheses, N, sim)
 {
   results <- NULL
   for(i in 1:nrow(as.data.frame(hypotheses))){
     sims <- replicate(N, sim(design, as.data.frame(hypotheses)[i,]))
     for(j in 1:nrow(sims)){
-      results <- c(results, mean(sims[j,]), var(sims[j,])/N)
+      results <- c(results, mean(sims[j,]), stats::var(sims[j,])/N)
     }
   }
   names(results) <- letters[1:length(results)]

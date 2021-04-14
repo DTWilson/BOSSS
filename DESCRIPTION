@@ -20,4 +20,5 @@ Suggests:
     testthat
 Imports:
     randtoolbox,
-    DiceKriging
+    DiceKriging,
+    stats
