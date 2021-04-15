@@ -102,3 +102,88 @@ calc_rates <- function(design, hypotheses, N, sim)
   names(results) <- letters[1:length(results)]
   results
 }
+
+DoE_index <- function(out_i, hyp_i, dim, out_dim)
+{
+  # For an output and hypothesis number, get the column number in the DoE
+  (hyp_i - 1)*out_dim*2 + (2*out_i - 1) + dim
+}
+
+is_nondom <- function(x, b, objectives)
+{
+  i <- 1
+  obj_names <- as.character(objectives$name)
+  while(i <= nrow(objectives) & nrow(b)!= 0 ){
+    ## subset b to those non-dominated solutions which are less than or equal to
+    ## x in an objective
+    b <- b[b[, obj_names[i] ] <= x[[ obj_names[i] ]],]
+    i <- i + 1
+  }
+  ## If b is now empty, then des is non-dominated
+  if(nrow(b)==1 | all(apply(b[,obj_names, drop=F], 2, function(x) length(unique(x)) == 1) == TRUE) ) {
+    nondom <- TRUE
+  } else {
+    nondom <- FALSE
+  }
+  return(nondom)
+}
+
+#' Get the Pareto set
+#'
+#' @param design_space data.frame
+#' @param models list of objects of class km
+#' @param DoE data.frame
+#' @param objectives data.frame
+#' @param constraints data.frame
+#' @param to_model data.frame
+#' @param b data.frame
+#'
+#' @return data.frame
+#' @export
+best <- function(design_space, models, DoE, objectives, constraints, to_model, b=NULL)
+{
+  ## Return the set of current Pareto optimal solutions,
+  ## penalising constrain violations and considering only solutions
+  ## where some evaluation has actually happened
+  sols <- DoE
+
+  dim <- nrow(design_space)
+  out_dim <- max(c(objectives$out_i, constraints$out_i))
+
+  ## Get objective values
+  for(i in 1:nrow(objectives)){
+    index <- DoE_index(objectives[i, "out_i"], objectives[i, "hyp_i"], dim, out_dim)
+    if(objectives[i, "stoch"]){
+      model_index <- which(to_model$out_i == objectives[i, "out_i"] & to_model$hyp_i == objectives[i, "hyp_i"])
+      sols <- cbind(sols, DiceKriging::predict.km(models[[model_index]], newdata=sols[, 1:dim, drop = F], type="SK")$mean*objectives[i, "weight"])
+    } else {
+      sols <- cbind(sols, DoE[, index]*objectives[i, "weight"])
+    }
+    names(sols)[ncol(sols)] <- as.character(objectives[i, "name"])
+  }
+
+  ## Penalise constraint violations
+  sols$exp_pen <- 1
+  for(i in 1:nrow(constraints)){
+    index <- DoE_index(constraints[i, "out_i"], constraints[i, "hyp_i"], dim, out_dim)
+    model_index <- which(to_model$out_i == constraints[i, "out_i"] & to_model$hyp_i == constraints[i, "hyp_i"])
+    nom <- constraints[i, "nom"]
+    if(constraints[i, "stoch"]){
+      p <- DiceKriging::predict.km(models[[model_index]], newdata=sols[,1:dim, drop=F], type="SK")
+      pen <- stats::pnorm(nom, p$mean, p$sd)
+      pen <- ifelse(pen < constraints[i, "delta"], 0.0000001, 1)
+      sols$exp_pen <- sols$exp_pen*pen
+    } else {
+      pen <- ifelse(DoE[, index] > nom, 0.0000001, 1)
+    }
+  }
+  sols[, objectives[, "name"]] <- sols[, objectives[, "name"]]/sols$exp_pen
+
+  ## Drop any dominated solutions
+  nondom_sols <- sols[apply(sols, 1, is_nondom, b=sols, objectives=objectives), ]
+  ## check for duplicates
+  sub <- unique(nondom_sols[, objectives[, "name"], drop=F])
+
+  PS <- nondom_sols[row.names(sub),]
+  PS
+}

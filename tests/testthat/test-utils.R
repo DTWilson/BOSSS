@@ -23,6 +23,24 @@ test_that("models fit", {
                     b = c(0.000988, 0.000909, 0.00128),
                     N = c(100, 100, 100))
 
+  constraints <- data.frame(name = c("beta"),
+                            out_i = c(1),
+                            hyp_i = c(1),
+                            nom = c(0.2),
+                            delta = c(0.975),
+                            stoch = c(T)
+  )
+
+  objectives <- data.frame(name = c("f1", "f2"),
+                           out_i = c(2, 3),
+                           hyp_i = c(1, 1),
+                           weight = c(2/5, 1),
+                           stoch = c(F, F)
+  )
+  objectives$weight <- objectives$weight/sum(objectives$weight)
+  objectives$name <- as.character(objectives$name)
+  out_dim <- 3
+
   to_model <- data.frame(out_i = c(1),
                          hyp_i = c(1))
 
