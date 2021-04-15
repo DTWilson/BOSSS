@@ -13,11 +13,6 @@ BOSSSapp <- function(...) {
     c(t.test(x0, x1)$p.value >= 0.05, n, k)
   }
 
-  design_space <- data.frame(name = c("n", "k"),
-                             low = c(100, 10),
-                             up = c(500, 100),
-                             int = c(TRUE, TRUE))
-
   hypotheses <- data.frame(matrix(c(0.3), nrow = 1))
   names(hypotheses) <- "mu"
 
@@ -37,12 +32,23 @@ BOSSSapp <- function(...) {
   )
   objectives$weight <- objectives$weight/sum(objectives$weight)
   objectives$name <- as.character(objectives$name)
-  out_dim <- 3
 
   to_model <- data.frame(out_i = c(1),
                          hyp_i = c(1))
 
+  get_design_var <- function(id)
+  {
+    list(textInput(paste0(id, "Lab"), label = "Design variable name", value = id),
+         numericInput(paste0(id, "Min"), "Minimum", value = 10),
+         numericInput(paste0(id, "Max"), "Maximum", value = 100),
+         numericInput(paste0(id, "Int"), "Integer", value = 1))
+  }
+
   ui <- fluidPage(
+
+    get_design_var("a"),
+    get_design_var("b"),
+
     # number of initial DoE
     numericInput("size", "Inital DoE size", value = 20),
 
@@ -52,12 +58,23 @@ BOSSSapp <- function(...) {
     # Button to evaluate
     actionButton("initButton", "Initialise DoE"),
 
-    tableOutput("table")
+    tableOutput("table"),
+
+    verbatimTextOutput("code")
   )
 
   server <- function(input, output, session) {
+
+    ds <- reactive(data.frame(name = c(input$aLab, input$bLab),
+                                        low = c(input$aMin, input$bMin),
+                                        up = c(input$aMax, input$bMax),
+                                        int = c(input$aInt==1, input$bInt==1)))
+
     output$table <- renderTable({
+
       input$initButton
+
+      design_space <- ds()
 
       DoE <- init_DoE(input$size, design_space)
 
@@ -69,6 +86,10 @@ BOSSSapp <- function(...) {
 
       b <- best(design_space, models, DoE, objectives, constraints, to_model)
       b
+    })
+
+    output$code <- renderPrint({
+      ds()
     })
   }
 
