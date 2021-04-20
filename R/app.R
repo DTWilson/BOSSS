@@ -1,4 +1,5 @@
 library(shiny)
+library(shinyMatrix)
 
 BOSSSapp <- function(...) {
 
@@ -45,6 +46,14 @@ BOSSSapp <- function(...) {
   }
 
   ui <- fluidPage(
+
+    #matrixInput("DSnames", class = "character", cols = list(names = TRUE), rows = list(extend = TRUE),
+    #            value =  matrix(letters[1:2], 2, 1, dimnames = list(NULL, c("Name")))),
+    textInput(DSnames, "Names"),
+
+    matrixInput("DSnums", class = "numeric", cols = list(names = TRUE), rows = list(extend = TRUE),
+                value =  matrix(rnorm(6), 2, 3,
+                                dimnames = list(NULL, c("Min", "Max", "Integer")))),
 
     get_design_var("a"),
     get_design_var("b"),

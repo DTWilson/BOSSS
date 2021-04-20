@@ -21,4 +21,5 @@ Suggests:
 Imports:
     randtoolbox,
     DiceKriging,
-    stats
+    stats,
+    shinyMatrix
