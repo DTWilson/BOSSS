@@ -21,7 +21,7 @@ init_DoE <- function(size, design_space)
   for(i in 1:dim){
     DoE[,i] <-  DoE[,i]*(design_space$up[i]-design_space$low[i]) + design_space$low[i]
   }
-  DoE[, design_space$int] <- round(DoE[, design_space$int])
+  DoE[, design_space$int == 1] <- round(DoE[, design_space$int == 1])
 
   DoE
 }

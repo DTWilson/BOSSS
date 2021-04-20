@@ -1,6 +1,3 @@
-library(shiny)
-library(shinyMatrix)
-
 BOSSSapp <- function(...) {
 
   sim_trial <- function(design, hypothesis)
@@ -10,8 +7,8 @@ BOSSSapp <- function(...) {
 
     m <- n/k
     s_c <- sqrt(0.05 + 0.95/m)
-    x0 <- rnorm(k, 0, s_c); x1 <- rnorm(k, mu, s_c)
-    c(t.test(x0, x1)$p.value >= 0.05, n, k)
+    x0 <- stats::rnorm(k, 0, s_c); x1 <- stats::rnorm(k, mu, s_c)
+    c(stats::t.test(x0, x1)$p.value >= 0.05, n, k)
   }
 
   hypotheses <- data.frame(matrix(c(0.3), nrow = 1))
@@ -37,50 +34,50 @@ BOSSSapp <- function(...) {
   to_model <- data.frame(out_i = c(1),
                          hyp_i = c(1))
 
-  get_design_var <- function(id)
-  {
-    list(textInput(paste0(id, "Lab"), label = "Design variable name", value = id),
-         numericInput(paste0(id, "Min"), "Minimum", value = 10),
-         numericInput(paste0(id, "Max"), "Maximum", value = 100),
-         numericInput(paste0(id, "Int"), "Integer", value = 1))
-  }
+  #get_design_var <- function(id)
+  #{
+  #  list(textInput(paste0(id, "Lab"), label = "Design variable name", value = id),
+  #       numericInput(paste0(id, "Min"), "Minimum", value = 10),
+  #       numericInput(paste0(id, "Max"), "Maximum", value = 100),
+  #       numericInput(paste0(id, "Int"), "Integer", value = 1))
+  #}
 
-  ui <- fluidPage(
+  ui <- shiny::fluidPage(
 
-    #matrixInput("DSnames", class = "character", cols = list(names = TRUE), rows = list(extend = TRUE),
-    #            value =  matrix(letters[1:2], 2, 1, dimnames = list(NULL, c("Name")))),
-    textInput(DSnames, "Names"),
-
-    matrixInput("DSnums", class = "numeric", cols = list(names = TRUE), rows = list(extend = TRUE),
-                value =  matrix(rnorm(6), 2, 3,
-                                dimnames = list(NULL, c("Min", "Max", "Integer")))),
-
-    get_design_var("a"),
-    get_design_var("b"),
+    shinyMatrix::matrixInput("DSnums", class = "numeric",
+                cols = list(names = TRUE), rows = list(extend = TRUE, names = TRUE, editableNames = TRUE),
+                value =  matrix(c(100, 10, 500, 100, 1, 1), 2, 3,
+                                dimnames = list(c("n", "k"), c("Min", "Max", "Integer")))),
 
     # number of initial DoE
-    numericInput("size", "Inital DoE size", value = 20),
+    shiny::numericInput("size", "Inital DoE size", value = 20),
 
     # number of MC evals
-    numericInput("N", "Number of MC evals", value = 100),
+    shiny::numericInput("N", "Number of MC evals", value = 100),
 
     # Button to evaluate
-    actionButton("initButton", "Initialise DoE"),
+    shiny::actionButton("initButton", "Initialise DoE"),
 
-    tableOutput("table"),
+    shiny::tableOutput("table"),
 
-    verbatimTextOutput("code")
+    shiny::verbatimTextOutput("code")
   )
 
   server <- function(input, output, session) {
 
-    ds <- reactive(data.frame(name = c(input$aLab, input$bLab),
-                                        low = c(input$aMin, input$bMin),
-                                        up = c(input$aMax, input$bMax),
-                                        int = c(input$aInt==1, input$bInt==1)))
+    #ds <- reactive(data.frame(name = c(input$aLab, input$bLab),
+    #                                    low = c(input$aMin, input$bMin),
+    #                                    up = c(input$aMax, input$bMax),
+    #                                    int = c(input$aInt==1, input$bInt==1)))
 
-    output$table <- renderTable({
+    ds <- shiny::reactive(
+      data.frame(name = rownames(input$DSnums), #unlist(strsplit(input$DSnames,",")),
+                              low = input$DSnums[,1],
+                              up = input$DSnums[,2],
+                              int = input$DSnums[,3])[1:(nrow(input$DSnums) - 1),]
+      )
 
+    output$table <- shiny::renderTable({
       input$initButton
 
       design_space <- ds()
@@ -97,10 +94,10 @@ BOSSSapp <- function(...) {
       b
     })
 
-    output$code <- renderPrint({
+    output$code <- shiny::renderPrint({
       ds()
     })
   }
 
-  shinyApp(ui, server, ...)
+  shiny::shinyApp(ui, server, ...)
 }

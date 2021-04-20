@@ -22,4 +22,5 @@ Imports:
     randtoolbox,
     DiceKriging,
     stats,
-    shinyMatrix
+    shinyMatrix,
+    shiny
