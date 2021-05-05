@@ -1,0 +1,35 @@
+---
+title: "Notes"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Notes}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(BOSSS)
+```
+
+A place to build up notes and examples for a future tutorial-style document.
+
+Note that the method extends trivially to any kind of Bayesian analysis. We just use the hypotheses parameters to describe hyperparameters for the priors we want to simulate under, and use a Bayesian analysis (or freq if using a hybrid approach). This would include a decision-theoretic approach, where the analysis would give us a utility and we would use the expectation of this as an objective to maximise. One difficulty would be avoiding model compilation when using Stan or brms. We could potentially deal with this by storing a pre-compiled model as a file, and then loading and updating it for each iteration.
+
+## Examples
+
+### Simple two-sample t-test
+
+### Adaptive design (NIFTy)
+
+### Bayesian / decision theoretic multilevel model
+
+### Multi-state models
+
+
