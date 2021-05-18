@@ -54,16 +54,17 @@ test_that("mc estimates generated", {
   sim_trial <- function(design, hypothesis)
   {
     n <- design[1]; k <- design[2]
-    mu <- hypothesis[1]
+    mu <- hypothesis[,1]; var_u <- hypothesis[,2]; var_e <- hypothesis[,3]
 
     m <- n/k
-    s_c <- sqrt(0.05 + 0.95/m)
-    x0 <- rnorm(k, 0, s_c); x1 <- rnorm(k, mu, s_c)
-    c(t.test(x0, x1)$p.value >= 0.05, n, k)
+    s_c <- sqrt(var_u + var_e/m)
+
+    x0 <- stats::rnorm(k, 0, s_c); x1 <- stats::rnorm(k, mu, s_c)
+    c(stats::t.test(x0, x1)$p.value >= 0.05, n, k)
   }
 
   design <- c(400, 15)
-  hypotheses <- c(0.3)
+  hypotheses <- t(c(0.3, 0.05, 0.95))
 
   results <- calc_rates(design, hypotheses, N = 50, sim = sim_trial)
 

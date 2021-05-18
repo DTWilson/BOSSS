@@ -93,7 +93,7 @@ fit_models <- function(DoE, to_model, design_space)
 calc_rates <- function(design, hypotheses, N, sim)
 {
   results <- NULL
-  for(i in 1:nrow(as.data.frame(hypotheses))){
+  for(i in 1:nrow(hypotheses)){
     sims <- replicate(N, sim(design, as.data.frame(hypotheses)[i,]))
     for(j in 1:nrow(sims)){
       results <- c(results, mean(sims[j,]), stats::var(sims[j,])/N)
