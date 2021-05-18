@@ -88,7 +88,7 @@ fit_models <- function(DoE, to_model, design_space)
 #'   c(t.test(x0, x1)$p.value >= 0.05, n, k)
 #' }
 #' design <- c(250, 35)
-#' hypotheses <- c(0.3)
+#' hypotheses <- t(c(0.3))
 #' calc_rates(design, hypotheses, N = 100, sim = sim_trial)
 calc_rates <- function(design, hypotheses, N, sim)
 {
@@ -97,9 +97,10 @@ calc_rates <- function(design, hypotheses, N, sim)
     sims <- replicate(N, sim(design, as.data.frame(hypotheses)[i,]))
     for(j in 1:nrow(sims)){
       results <- c(results, mean(sims[j,]), stats::var(sims[j,])/N)
+      names(results)[(length(results) -1)] <- paste0(rownames(sims)[j], "_m_", rownames(hypotheses)[i])
+      names(results)[length(results)] <- paste0(rownames(sims)[j], "_v_", rownames(hypotheses)[i])
     }
   }
-  names(results) <- letters[1:length(results)]
   results
 }
 

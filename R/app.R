@@ -8,7 +8,7 @@ BOSSSapp <- function(...) {
     m <- n/k
     s_c <- sqrt(var_u + var_e/m)
     x0 <- stats::rnorm(k, 0, s_c); x1 <- stats::rnorm(k, mu, s_c)
-    c(stats::t.test(x0, x1)$p.value >= 0.05, n, k)
+    c(s = stats::t.test(x0, x1)$p.value >= 0.05, p = n, c = k)
   }
 
   constraints <- data.frame(name = c("beta"),
@@ -73,15 +73,13 @@ BOSSSapp <- function(...) {
       data.frame(input$Hypnums)
       )
 
-    output$table <- shiny::renderTable({
-      input$initButton
-
+    b <- shiny::eventReactive(input$initButton,{
       design_space <- ds()
 
       m <- hyps()
       m <- m[rowSums(is.na(m)) != ncol(m),]
       m <- m[, colSums(is.na(m)) != nrow(m)]
-      #hypotheses <- t(c(0.3, 0.05, 0.95))
+      hypotheses <- m
 
       DoE <- init_DoE(input$size, design_space)
 
@@ -90,10 +88,14 @@ BOSSSapp <- function(...) {
       DoE$N <- input$N
       DoE
 
-      models <- fit_models(DoE, to_model, design_space)
+      #models <- fit_models(DoE, to_model, design_space)
 
-      b <- best(design_space, models, DoE, objectives, constraints, to_model)
-      b
+      #b <- best(design_space, models, DoE, objectives, constraints, to_model)
+      #b
+    })
+
+    output$table <- shiny::renderTable({
+      b()
     })
 
     output$code <- shiny::renderPrint({

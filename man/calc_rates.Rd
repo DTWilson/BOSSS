@@ -33,6 +33,6 @@ sim_trial <- function(design, hypothesis)
   c(t.test(x0, x1)$p.value >= 0.05, n, k)
 }
 design <- c(250, 35)
-hypotheses <- c(0.3)
+hypotheses <- t(c(0.3))
 calc_rates(design, hypotheses, N = 100, sim = sim_trial)
 }
