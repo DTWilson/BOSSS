@@ -82,12 +82,15 @@ BOSSSapp <- function(...) {
 
     shiny::tableOutput("table"),
 
-    shiny::verbatimTextOutput("code")
+    # Button to evaluate
+    shiny::actionButton("solveButton", "Get approximation set"),
+
+    shiny::tableOutput("tableb"),
   )
 
   server <- function(input, output, session) {
 
-    observeEvent(input$Hypnums, {
+    shiny::observeEvent(input$Hypnums, {
       shinyMatrix::updateMatrixInput(session, inputId = "ConMat",
                                       value =  matrix(input$ConMat, ncol = 3,
                                                       dimnames = list(rownames(input$Hypnums)[1:2],
@@ -102,20 +105,66 @@ BOSSSapp <- function(...) {
       data.frame(name = rownames(input$DSnums),
                               low = input$DSnums[,1],
                               up = input$DSnums[,2],
-                              int = input$DSnums[,3])[1:(nrow(input$DSnums) - 1),]
+                              int = input$DSnums[,3])
     )
 
-    hyps <- shiny::reactive(
-      data.frame(input$Hypnums)
-      )
-
-    b <- shiny::eventReactive(input$initButton,{
-      design_space <- ds()
-
-      m <- hyps()
+    hyps <- shiny::reactive({
+      m <- data.frame(input$Hypnums)
       m <- m[rowSums(is.na(m)) != ncol(m),]
       m <- m[, colSums(is.na(m)) != nrow(m)]
-      hypotheses <- m
+      m
+    })
+
+    get_cons <- shiny::reactive({
+      # For each non-NA cell, need a row in the constraint data frame
+      m <- input$ConMat
+      cons <- NULL
+      for(i in 1:nrow(m)){
+        for(j in 1:ncol(m)){
+          if(!is.na(m[i,j])) cons <- rbind(cons, c(j, i, m[i,j]))
+        }
+      }
+
+      if(!is.null(cons)){
+        cons <- data.frame(name = letters[1:nrow(cons)],
+                           out_i = cons[,1],
+                           hyp_i = cons[,2],
+                           nom = cons[,3],
+                           delta = rep(0.975, nrow(cons)),
+                           stoch = rep(TRUE, nrow(cons)))
+      }
+
+      cons
+    })
+
+    get_ob <- shiny::reactive({
+      # For each non-NA cell, need a row in the objectives data frame
+      m <- input$ObMat
+      ob <- NULL
+      for(i in 1:nrow(m)){
+        for(j in 1:ncol(m)){
+          if(!is.na(m[i,j])) ob <- rbind(ob, c(j, i, m[i,j]))
+        }
+      }
+
+      if(!is.null(ob)){
+        ob <- data.frame(name = paste0("f", 1:nrow(ob)),
+                           out_i = ob[,1],
+                           hyp_i = ob[,2],
+                           weight = ob[,3],
+                           stoch = rep(TRUE, nrow(ob)))
+      }
+
+      ob$weight <- ob$weight/sum(ob$weight)
+
+      ob
+    })
+
+    DoE <- shiny::eventReactive(input$initButton,{
+      consss <- get_cons()
+      design_space <- ds()
+
+      hypotheses <- hyps()
 
       DoE <- init_DoE(input$size, design_space)
 
@@ -123,7 +172,12 @@ BOSSSapp <- function(...) {
       DoE <- cbind(DoE, t(apply(DoE, 1, calc_rates, hypotheses=hypotheses, N=input$N, sim=sim_trial)))
       DoE$N <- input$N
       DoE
+    })
 
+    b <- shiny::eventReactive(input$solveButton,{
+      design_space <- ds()
+
+      DoE <- DoE()
       models <- fit_models(DoE, to_model, design_space)
 
       b <- best(design_space, models, DoE, objectives, constraints, to_model)
@@ -131,12 +185,11 @@ BOSSSapp <- function(...) {
     })
 
     output$table <- shiny::renderTable({
-      b()
+      get_ob()
     })
 
-    output$code <- shiny::renderPrint({
-      ds()
-      #hyps()
+    output$tableb <- shiny::renderTable({
+      b()
     })
   }
 
