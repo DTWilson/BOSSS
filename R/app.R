@@ -11,6 +11,15 @@ BOSSSapp <- function(...) {
     c(s = stats::t.test(x0, x1)$p.value >= 0.05, p = n, c = k)
   }
 
+  det_out <- function(design, hypothesis)
+  {
+    n <- design[1]; k <- design[2]
+
+    c(s = NA, p = n, c = k)
+  }
+
+  num_hyp <- 2
+
   constraints <- data.frame(name = c("beta"),
                             out_i = c(1),
                             hyp_i = c(1),
@@ -35,16 +44,32 @@ BOSSSapp <- function(...) {
 
     # Design space matrix
     shinyMatrix::matrixInput("DSnums", class = "numeric",
-                cols = list(names = TRUE), rows = list(extend = TRUE, names = TRUE, editableNames = TRUE),
+                cols = list(names = TRUE), rows = list(names = TRUE),
                 value =  matrix(c(100, 10, 500, 100, 1, 1), 2, 3,
                                 dimnames = list(c("n", "k"), c("Min", "Max", "Integer")))),
 
     # Hypotheses matrix
     shinyMatrix::matrixInput("Hypnums", class = "numeric",
-                             cols = list(extend = TRUE, names = TRUE, editableNames = TRUE),
+                             cols = list(names = TRUE),
                              rows = list(extend = TRUE, names = TRUE, editableNames = TRUE),
                              value =  matrix(c(0.3, 0, 0.05, 0.05, 0.95, 0.95), ncol = 3,
                                              dimnames = list(letters[1:2], c("mu", "var_u", "var_e")))),
+
+    # Constraint matrix
+    shinyMatrix::matrixInput("ConMat", class = "numeric",
+                             cols = list(names = TRUE),
+                             rows = list(names = TRUE),
+                             value =  matrix(rep(NA, 6), ncol = 3,
+                                             dimnames = list(letters[1:2], c("s", "n", "k")))),
+
+    # Objectives matrix
+    shinyMatrix::matrixInput("ObMat", class = "numeric",
+                             cols = list(names = TRUE),
+                             rows = list(names = TRUE),
+                             value =  matrix(rep(NA, 6), ncol = 3,
+                                             dimnames = list(letters[1:2], c("s", "n", "k")))),
+
+    shiny::numericInput("test", "test", value = 20),
 
     # number of initial DoE
     shiny::numericInput("size", "Inital DoE size", value = 20),
@@ -61,6 +86,17 @@ BOSSSapp <- function(...) {
   )
 
   server <- function(input, output, session) {
+
+    observeEvent(input$Hypnums, {
+      shinyMatrix::updateMatrixInput(session, inputId = "ConMat",
+                                      value =  matrix(input$ConMat, ncol = 3,
+                                                      dimnames = list(rownames(input$Hypnums)[1:2],
+                                                                      c("s", "n", "k"))))
+      shinyMatrix::updateMatrixInput(session, inputId = "ObMat",
+                                     value =  matrix(input$ObMat, ncol = 3,
+                                                     dimnames = list(rownames(input$Hypnums)[1:2],
+                                                                     c("s", "n", "k"))))
+    })
 
     ds <- shiny::reactive(
       data.frame(name = rownames(input$DSnums),
@@ -88,10 +124,10 @@ BOSSSapp <- function(...) {
       DoE$N <- input$N
       DoE
 
-      #models <- fit_models(DoE, to_model, design_space)
+      models <- fit_models(DoE, to_model, design_space)
 
-      #b <- best(design_space, models, DoE, objectives, constraints, to_model)
-      #b
+      b <- best(design_space, models, DoE, objectives, constraints, to_model)
+      b
     })
 
     output$table <- shiny::renderTable({

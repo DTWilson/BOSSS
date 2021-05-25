@@ -24,6 +24,8 @@ Note that the method extends trivially to any kind of Bayesian analysis. We just
 
 ## Examples
 
+For each example, describe the application here but also allow the problem to be loaded in to the app, with seeds set, so the user can follow along themselves.
+
 ### Simple two-sample t-test
 
 ### Adaptive design (NIFTy)
