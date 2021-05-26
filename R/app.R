@@ -152,8 +152,9 @@ BOSSSapp <- function(...) {
                            out_i = ob[,1],
                            hyp_i = ob[,2],
                            weight = ob[,3],
-                           stoch = rep(TRUE, nrow(ob)))
+                           stoch = rep(FALSE, nrow(ob)))
         ob$weight <- ob$weight/sum(ob$weight)
+        ob$name <- as.character(ob$name)
       }
 
       ob
@@ -175,20 +176,23 @@ BOSSSapp <- function(...) {
 
     b <- shiny::eventReactive(input$solveButton,{
       design_space <- ds()
-
       DoE <- DoE()
       models <- fit_models(DoE, to_model, design_space)
 
+      objectives <- get_ob()
+      constraints <- get_cons()
       b <- best(design_space, models, DoE, objectives, constraints, to_model)
       b
     })
 
     output$table <- shiny::renderTable({
-      get_ob()
+      DoE()
+      #get_cons()
     })
 
     output$tableb <- shiny::renderTable({
       b()
+      #get_ob()
     })
   }
 
