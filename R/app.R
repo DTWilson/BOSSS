@@ -146,7 +146,7 @@ BOSSSapp <- function(...) {
           if(!is.na(m[i,j])) ob <- rbind(ob, c(j, i, m[i,j]))
         }
       }
-#
+
       if(!is.null(ob)){
         ob <- data.frame(name = paste0("f", 1:nrow(ob)),
                            out_i = ob[,1],
