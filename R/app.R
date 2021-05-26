@@ -138,7 +138,7 @@ BOSSSapp <- function(...) {
     })
 
     get_ob <- shiny::reactive({
-      # For each non-NA cell, need a row in the objectives data frame
+      # For each non-NA cell, need a new row in the objectives data frame
       m <- input$ObMat
       ob <- NULL
       for(i in 1:nrow(m)){
