@@ -153,9 +153,8 @@ BOSSSapp <- function(...) {
                            hyp_i = ob[,2],
                            weight = ob[,3],
                            stoch = rep(TRUE, nrow(ob)))
+        ob$weight <- ob$weight/sum(ob$weight)
       }
-
-      ob$weight <- ob$weight/sum(ob$weight)
 
       ob
     })
