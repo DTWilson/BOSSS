@@ -18,27 +18,7 @@ BOSSSapp <- function(...) {
     c(s = NA, p = n, c = k)
   }
 
-  num_hyp <- 2
-
-  constraints <- data.frame(name = c("beta"),
-                            out_i = c(1),
-                            hyp_i = c(1),
-                            nom = c(0.2),
-                            delta = c(0.975),
-                            stoch = c(TRUE)
-  )
-
-  objectives <- data.frame(name = c("f1", "f2"),
-                           out_i = c(2, 3),
-                           hyp_i = c(1, 1),
-                           weight = c(2/5, 1),
-                           stoch = c(FALSE, FALSE)
-  )
-  objectives$weight <- objectives$weight/sum(objectives$weight)
-  objectives$name <- as.character(objectives$name)
-
-  to_model <- data.frame(out_i = c(1),
-                         hyp_i = c(1))
+  #num_hyp <- 2
 
   ui <- shiny::fluidPage(
 
@@ -59,14 +39,14 @@ BOSSSapp <- function(...) {
     shinyMatrix::matrixInput("ConMat", class = "numeric",
                              cols = list(names = TRUE),
                              rows = list(names = TRUE),
-                             value =  matrix(rep(NA, 6), ncol = 3,
+                             value =  matrix(c(0.2, rep(NA, 5)), ncol = 3,
                                              dimnames = list(letters[1:2], c("s", "n", "k")))),
 
     # Objectives matrix
     shinyMatrix::matrixInput("ObMat", class = "numeric",
                              cols = list(names = TRUE),
                              rows = list(names = TRUE),
-                             value =  matrix(rep(NA, 6), ncol = 3,
+                             value =  matrix(c(NA, NA, 2, NA, 5, NA), ncol = 3,
                                              dimnames = list(letters[1:2], c("s", "n", "k")))),
 
     shiny::numericInput("test", "test", value = 20),
@@ -160,7 +140,10 @@ BOSSSapp <- function(...) {
       ob
     })
 
-    DoE <- shiny::eventReactive(input$initButton,{
+    rv <- shiny::reactiveValues(DoE=NULL,count=0)
+
+    #make_DoE <-
+    shiny::observeEvent(input$initButton,{
       consss <- get_cons()
       design_space <- ds()
 
@@ -171,22 +154,27 @@ BOSSSapp <- function(...) {
       N <- 100
       DoE <- cbind(DoE, t(apply(DoE, 1, calc_rates, hypotheses=hypotheses, N=input$N, sim=sim_trial)))
       DoE$N <- input$N
-      DoE
+      rv$DoE <- DoE
     })
 
     b <- shiny::eventReactive(input$solveButton,{
       design_space <- ds()
-      DoE <- DoE()
-      models <- fit_models(DoE, to_model, design_space)
-
+      #make_DoE()
+      DoE <- rv$DoE
       objectives <- get_ob()
       constraints <- get_cons()
+
+      to_model <- unique.data.frame(rbind(objectives[, c("out_i", "hyp_i")],
+                                          constraints[, c("out_i", "hyp_i")]))
+
+      models <- fit_models(DoE, to_model, design_space)
+
       b <- best(design_space, models, DoE, objectives, constraints, to_model)
       b
     })
 
     output$table <- shiny::renderTable({
-      DoE()
+      rv$DoE
       #get_cons()
     })
 
