@@ -141,7 +141,7 @@ is_nondom <- function(x, b, objectives)
 #'
 #' @return data.frame
 #' @export
-best <- function(design_space, models, DoE, objectives, constraints, to_model, b=NULL)
+best <- function(design_space, models, DoE, objectives, constraints, to_model, get_det_obj, b=NULL)
 {
   ## Return the set of current Pareto optimal solutions,
   ## penalising constrain violations and considering only solutions
@@ -152,16 +152,8 @@ best <- function(design_space, models, DoE, objectives, constraints, to_model, b
   out_dim <- max(c(objectives$out_i, constraints$out_i))
 
   ## Get objective values
-  for(i in 1:nrow(objectives)){
-    index <- DoE_index(objectives[i, "out_i"], objectives[i, "hyp_i"], dim, out_dim)
-    if(objectives[i, "stoch"]){
-      model_index <- which(to_model$out_i == objectives[i, "out_i"] & to_model$hyp_i == objectives[i, "hyp_i"])
-      sols <- cbind(sols, DiceKriging::predict.km(models[[model_index]], newdata=sols[, 1:dim, drop = F], type="SK")$mean*objectives[i, "weight"])
-    } else {
-      sols <- cbind(sols, DoE[, index]*objectives[i, "weight"])
-    }
-    names(sols)[ncol(sols)] <- as.character(objectives[i, "name"])
-  }
+  obj_v <- t(apply(sols[,1:2], 1, function(x) predict_obj(x, models, objectives, get_det_obj)))
+  sols <- cbind(sols, f1=obj_v[,1], f2=obj_v[,2])
 
   ## Penalise constraint violations
   sols$exp_pen <- 1
@@ -187,4 +179,64 @@ best <- function(design_space, models, DoE, objectives, constraints, to_model, b
 
   PS <- nondom_sols[row.names(sub),]
   PS
+}
+
+predict_obj <- function(design, models, objectives, get_det_obj)
+{
+  ## Does this need to be vectorised?
+  preds_stoch <- NULL
+  i <- 1
+  while(i <= sum(objectives$stoch)){
+    ## For stochastic objectives, we are just taking the lowest quantile and
+    ## treating this as deterministic - need to improve
+    model_index <- which(to_model$out_i == objectives[i, "out_i"] &
+                           to_model$hyp_i == objectives[i, "hyp_i"])
+    p <- DiceKriging::predict.km(models[[model_index]], newdata=design[,1:dim, drop=F], type="SK")
+    f <- p$mean - qnorm(0.7)*p$sd
+    preds_stoch <- c(preds_stoch, f)
+    i <- i + 1
+  }
+  preds_det <- get_det_obj(design)
+  as.numeric(c(preds_stoch, preds_det))*objectives$weight
+}
+
+exp_improve <- function(design, N, PS, models, design_space, constraints, objectives, get_det_obj, out_dim)
+{
+  names(design) <- design_space$name
+  design <- as.data.frame(t(design))
+
+  dim <- nrow(design_space)
+
+  ## Get expected penalisation if we were to evaluate at design,
+  ## using the models of constraint functions
+  design$exp_pen <- 1
+  for(i in 1:nrow(constraints)){
+    index <- DoE_index(constraints[i, "out_i"], constraints[i, "hyp_i"],
+                       dim, out_dim)
+    model_index <- which(to_model$out_i == constraints[i, "out_i"] & to_model$hyp_i == constraints[i, "hyp_i"])
+    nom <- constraints[i, "nom"]
+    if(constraints[i, "stoch"]){
+      p <- DiceKriging::predict.km(models[[model_index]], newdata=design[,1:dim, drop=F], type="SK")
+      mc_vars <- 0.25/N #p$mean*(1-p$mean)/N
+      pred_q_mean <- p$mean + stats::qnorm(constraints[i, "delta"])*sqrt(mc_vars*(p$sd^2)/(mc_vars+(p$sd^2)))
+      pred_q_var <- ((p$sd^2)^2)/(mc_vars+(p$sd^2))
+      design$exp_pen <- design$exp_pen*stats::pnorm(nom, pred_q_mean, sqrt(pred_q_var))
+    } else {
+      pen <- ifelse(DoE[, index] > nom, 0.0000001, 1)
+    }
+  }
+
+  ## Get objective value of design
+  fs <- predict_obj(design, models, objectives, get_det_obj)
+
+  ## Improvement is quantified by the number of additional
+  ## solutions which would be dominated if this design was included
+  PS2 <- as.matrix(PS[, objectives$name])
+  current <- mco::dominatedHypervolume(PS2, ref)
+  #pos <- apply(fs, 1, function(obj) mco::dominatedHypervolume(as.matrix(rbind(PS2, obj)), ref) )
+  pos <- mco::dominatedHypervolume(as.matrix(rbind(PS2, fs)), ref)
+  imp <- (current-pos)*design$exp_pen
+
+  ## Minimising, so keeping negative
+  return(imp)
 }

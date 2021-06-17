@@ -25,5 +25,7 @@ Imports:
     DiceKriging,
     stats,
     shinyMatrix,
-    shiny
+    shiny,
+    pso,
+    mco
 VignetteBuilder: knitr
