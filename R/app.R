@@ -68,6 +68,8 @@ BOSSSapp <- function(...) {
 
     shiny::plotOutput("ASgraph"),
 
+    shiny::plotOutput("Trajgraph"),
+
     # Button to iterate
     shiny::actionButton("iterButton", "Perform an iteration"),
   )
@@ -144,7 +146,7 @@ BOSSSapp <- function(...) {
       ob
     })
 
-    rv <- shiny::reactiveValues(DoE=NULL, PS=NULL, models=NULL)
+    rv <- shiny::reactiveValues(DoE=NULL, PS=NULL, models=NULL, traj=NULL)
 
     shiny::observeEvent(input$initButton,{
       design_space <- ds()
@@ -177,9 +179,10 @@ BOSSSapp <- function(...) {
                              control=list(trace=FALSE),
                              N=input$N, PS=rv$PS, mod=rv$models, design_space=design_space, constraints=constraints,
                              objectives=objectives, get_det_obj=get_det_obj, out_dim=3)
-      sol <- as.numeric(opt$optim$bestmem)
-      sol[1:2] <- round(sol[1:2])
 
+      sol <- as.numeric(opt$optim$bestmem)
+
+      sol[1:2] <- round(sol[1:2])
       y <- calc_rates(sol, hypotheses=hypotheses, N=input$N, sim=sim_trial)
 
       rv$DoE <- rbind(rv$DoE, c(sol, y, input$N))
@@ -192,6 +195,12 @@ BOSSSapp <- function(...) {
       rv$models <- fit_models(rv$DoE, to_model, design_space)
 
       rv$PS <- best(design_space, rv$models, rv$DoE, objectives, constraints, to_model, get_det_obj)
+
+      ref <- design_space$up*objectives$weight
+      PS2 <- as.matrix(rv$PS[, objectives$name])
+      current <- mco::dominatedHypervolume(PS2, ref)
+
+      rv$traj <- rbind(rv$traj, c(-opt$optim$bestval, current))
     })
 
     output$table <- shiny::renderTable({
@@ -205,6 +214,21 @@ BOSSSapp <- function(...) {
     output$ASgraph <- shiny::renderPlot({
       objectives <- get_ob()
       plot(rv$PS[,objectives$name])
+    })
+
+    output$Trajgraph <- shiny::renderPlot({
+      traj <- rv$traj
+      if(!is.null(traj)){
+
+        ## scale EI trajectory to have same min and max as DH
+        traj[,1] <- (max(traj[,2]) - min(traj[,2]))*(traj[,1] - min(traj[,1]))/(max(traj[,1] - min(traj[,1]))) + min(traj[,2])
+
+        n <- nrow(traj)
+        df <- data.frame(v = c(traj[,2], traj[,1]),
+                         t = rep(c("DH", "EI"), each = n),
+                         i = rep(1:n, 2))
+        ggplot(df, aes(i, v, colour = t)) + geom_point() + geom_line()
+      }
     })
   }
 
