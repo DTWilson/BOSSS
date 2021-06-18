@@ -64,9 +64,6 @@ BOSSSapp <- function(...) {
 
     shiny::tableOutput("table"),
 
-    # Button to evaluate
-    shiny::actionButton("solveButton", "Get approximation set"),
-
     shiny::tableOutput("tableb"),
 
     # Button to iterate
@@ -145,12 +142,12 @@ BOSSSapp <- function(...) {
       ob
     })
 
-    rv <- shiny::reactiveValues(DoE=NULL, PS=NULL)
+    rv <- shiny::reactiveValues(DoE=NULL, PS=NULL, models=NULL)
 
     shiny::observeEvent(input$initButton,{
-      consss <- get_cons()
       design_space <- ds()
-
+      objectives <- get_ob()
+      constraints <- get_cons()
       hypotheses <- hyps()
 
       DoE <- init_DoE(input$size, design_space)
@@ -158,25 +155,13 @@ BOSSSapp <- function(...) {
       DoE <- cbind(DoE, t(apply(DoE, 1, calc_rates, hypotheses=hypotheses, N=input$N, sim=sim_trial)))
       DoE$N <- input$N
       rv$DoE <- DoE
-    })
-
-    shiny::observeEvent(input$solveButton,{
-      design_space <- ds()
-      DoE <- rv$DoE
-      objectives <- get_ob()
-      constraints <- get_cons()
-
-      #to_model <- unique.data.frame(rbind(objectives[, c("out_i", "hyp_i")],
-      #                                    constraints[, c("out_i", "hyp_i")]))
 
       to_model <- data.frame(out_i = c(1),
                              hyp_i = c(1))
 
-      models <- fit_models(DoE, to_model, design_space)
+      rv$models <- fit_models(DoE, to_model, design_space)
 
-      b <- best(design_space, models, DoE, objectives, constraints, to_model, get_det_obj)
-
-      rv$PS <- b
+      rv$PS <- best(design_space, models, DoE, objectives, constraints, to_model, get_det_obj)
     })
 
     shiny::observeEvent(input$iterButton,{
@@ -187,20 +172,8 @@ BOSSSapp <- function(...) {
       objectives <- get_ob()
       constraints <- get_cons()
 
-      to_model <- unique.data.frame(rbind(objectives[, c("out_i", "hyp_i")],
-                                          constraints[, c("out_i", "hyp_i")]))
-      to_model <- data.frame(out_i = c(1),
-                             hyp_i = c(1))
-
-      models <- fit_models(DoE, to_model, design_space)
-
-      print(exp_improve(design = c(100, 10), N=100, PS, models,
-                  design_space, constraints, objectives, get_det_obj, out_dim))
-
-      PS <- best(design_space, models, DoE, objectives, constraints, to_model, get_det_obj)
-
       opt <- pso::psoptim(rep(NA, 2), exp_improve, lower=design_space$low, upper=design_space$up,
-                     N=input$N, PS=PS, mod=models, design_space=design_space, constraints=constraints,
+                     N=input$N, PS=PS, mod=rv$models, design_space=design_space, constraints=constraints,
                      objectives=objectives, get_det_obj=get_det_obj, out_dim=3,
                      control=list(vectorize = F))
       print(opt)
@@ -210,6 +183,15 @@ BOSSSapp <- function(...) {
       y <- calc_rates(sol, hypotheses=hypotheses, N=input$N, sim=sim_trial)
 
       rv$DoE <- rbind(rv$DoE, c(sol, y, input$N))
+
+      #to_model <- unique.data.frame(rbind(objectives[, c("out_i", "hyp_i")],
+      #                                    constraints[, c("out_i", "hyp_i")]))
+      to_model <- data.frame(out_i = c(1),
+                             hyp_i = c(1))
+
+      rv$models <- fit_models(rv$DoE, to_model, design_space)
+
+      rv$PS <- best(design_space, models, DoE, objectives, constraints, to_model, get_det_obj)
     })
 
     output$table <- shiny::renderTable({
