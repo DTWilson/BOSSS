@@ -111,7 +111,7 @@ test_that("expected improvement calculated", {
 
   get_det_obj <- function(design)
   {
-    design[1:2]
+    matrix(design, ncol = 2)[,1:2]
   }
 
   DoE <- init_DoE(20, design_space)
@@ -128,10 +128,20 @@ test_that("expected improvement calculated", {
 
   expect_type(EI, "double")
 
+  ptm <- proc.time()
   opt <- pso::psoptim(rep(NA, 2), exp_improve, lower=design_space$low, upper=design_space$up,
                       N=100, PS=PS, mod=models, design_space=design_space, constraints=constraints,
                       objectives=objectives, get_det_obj=get_det_obj, out_dim=3,
-                      control=list(vectorize = F))
+                      control=list(vectorize = T))
+  proc.time() - ptm
+
+  ptm <- proc.time()
+  opt <- RcppDE::DEoptim(exp_improve, lower=design_space$low, upper=design_space$up,
+                         control=list(trace=FALSE),
+        N=100, PS=PS, mod=models, design_space=design_space, constraints=constraints,
+        objectives=objectives, get_det_obj=get_det_obj, out_dim=3)
+  proc.time() - ptm
+
   sol <- opt$par
   sol[1:2] <- round(sol[1:2])
 

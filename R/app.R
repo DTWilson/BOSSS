@@ -167,17 +167,15 @@ BOSSSapp <- function(...) {
     shiny::observeEvent(input$iterButton,{
       # choose a random point in the design space
       design_space <- ds()
-      DoE <- rv$DoE
       hypotheses <- hyps()
       objectives <- get_ob()
       constraints <- get_cons()
 
-      opt <- pso::psoptim(rep(NA, 2), exp_improve, lower=design_space$low, upper=design_space$up,
-                     N=input$N, PS=PS, mod=rv$models, design_space=design_space, constraints=constraints,
-                     objectives=objectives, get_det_obj=get_det_obj, out_dim=3,
-                     control=list(vectorize = F))
-      print(opt)
-      sol <- opt$par
+      opt <- RcppDE::DEoptim(exp_improve, lower=design_space$low, upper=design_space$up,
+                             control=list(trace=FALSE),
+                             N=input$N, PS=rv$PS, mod=rv$models, design_space=design_space, constraints=constraints,
+                             objectives=objectives, get_det_obj=get_det_obj, out_dim=3)
+      sol <- as.numeric(opt$optim$bestmem)
       sol[1:2] <- round(sol[1:2])
 
       y <- calc_rates(sol, hypotheses=hypotheses, N=input$N, sim=sim_trial)
@@ -191,7 +189,7 @@ BOSSSapp <- function(...) {
 
       rv$models <- fit_models(rv$DoE, to_model, design_space)
 
-      rv$PS <- best(design_space, models, DoE, objectives, constraints, to_model, get_det_obj)
+      rv$PS <- best(design_space, rv$models, rv$DoE, objectives, constraints, to_model, get_det_obj)
     })
 
     output$table <- shiny::renderTable({

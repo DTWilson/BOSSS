@@ -152,7 +152,7 @@ best <- function(design_space, models, DoE, objectives, constraints, to_model, g
   out_dim <- max(c(objectives$out_i, constraints$out_i))
 
   ## Get objective values
-  obj_v <- t(apply(sols[,1:2], 1, function(x) predict_obj(x, models, objectives, get_det_obj)))
+  obj_v <- t(apply(sols[,1:2], 1, function(x) predict_obj(x, models, objectives, get_det_obj, dim)))
   sols <- cbind(sols, f1=obj_v[,1], f2=obj_v[,2])
 
   ## Penalise constraint violations
@@ -181,9 +181,8 @@ best <- function(design_space, models, DoE, objectives, constraints, to_model, g
   PS
 }
 
-predict_obj <- function(design, models, objectives, get_det_obj)
+predict_obj <- function(design, models, objectives, get_det_obj, dim)
 {
-  ## Does this need to be vectorised?
   preds_stoch <- NULL
   i <- 1
   while(i <= sum(objectives$stoch)){
@@ -197,15 +196,18 @@ predict_obj <- function(design, models, objectives, get_det_obj)
     i <- i + 1
   }
   preds_det <- get_det_obj(design)
-  as.numeric(c(preds_stoch, preds_det))*objectives$weight
+  t(objectives$weight*t(matrix(preds_det, ncol = dim)))
 }
 
 exp_improve <- function(design, N, PS, models, design_space, constraints, objectives, get_det_obj, out_dim)
 {
-  names(design) <- design_space$name
-  design <- as.data.frame(t(design))
-
   dim <- nrow(design_space)
+
+  ## Get objective value of design
+  fs <- predict_obj(design, models, objectives, get_det_obj, dim)
+
+  design <- as.data.frame(matrix(design, ncol = dim))
+  names(design) <- design_space$name
 
   ## Get expected penalisation if we were to evaluate at design,
   ## using the models of constraint functions
@@ -226,15 +228,13 @@ exp_improve <- function(design, N, PS, models, design_space, constraints, object
     }
   }
 
-  ## Get objective value of design
-  fs <- predict_obj(design, models, objectives, get_det_obj)
-
-  ## Improvement is quantified by the number of additional
-  ## solutions which would be dominated if this design was included
+  ## Improvement is quantified by the increase in the dominated hypervolume of
+  ## the approximation set if this design was included
+  ref <- design_space$up*objectives$weight
   PS2 <- as.matrix(PS[, objectives$name])
   current <- mco::dominatedHypervolume(PS2, ref)
-  #pos <- apply(fs, 1, function(obj) mco::dominatedHypervolume(as.matrix(rbind(PS2, obj)), ref) )
-  pos <- mco::dominatedHypervolume(as.matrix(rbind(PS2, fs)), ref)
+  pos <- apply(fs, 1, function(obj) mco::dominatedHypervolume(as.matrix(rbind(PS2, obj)), ref) )
+  #pos <- mco::dominatedHypervolume(as.matrix(rbind(PS2, fs)), ref)
   imp <- (current-pos)*design$exp_pen
 
   ## Minimising, so keeping negative
