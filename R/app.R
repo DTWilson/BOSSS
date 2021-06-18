@@ -66,6 +66,8 @@ BOSSSapp <- function(...) {
 
     shiny::tableOutput("tableb"),
 
+    shiny::plotOutput("ASgraph"),
+
     # Button to iterate
     shiny::actionButton("iterButton", "Perform an iteration"),
   )
@@ -198,6 +200,11 @@ BOSSSapp <- function(...) {
 
     output$tableb <- shiny::renderTable({
       rv$PS
+    })
+
+    output$ASgraph <- shiny::renderPlot({
+      objectives <- get_ob()
+      plot(rv$PS[,objectives$name])
     })
   }
 
