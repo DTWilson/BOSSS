@@ -11,67 +11,80 @@ BOSSSapp <- function(...) {
   ui <- shiny::fluidPage(
     theme = bslib::bs_theme(bootswatch = "united"),
 
-    # Simulation code
-    shiny::textAreaInput("simraw", "Simulation code",
-                         value = "n <- design[1]; k <- design[2]
-    mu <- hypothesis[,1]; var_u <- hypothesis[,2]; var_e <- hypothesis[,3]
+    shiny::titlePanel(
+      shiny::h1("BOSSS",
+         shiny::h5("Bayesian Optimisation for Sample Size with Simulation"))
+    ),
 
-    m <- n/k
-    s_c <- sqrt(var_u + var_e/m)
-    x0 <- stats::rnorm(k, 0, s_c); x1 <- stats::rnorm(k, mu, s_c)
-    c(s = stats::t.test(x0, x1)$p.value >= 0.05, p = n, c = k)"),
+    shiny::tabsetPanel(
+      shiny::tabPanel("Problem",
+        # Simulation code
+        shiny::textAreaInput("simraw", "Simulation code",
+                             value = "n <- design[1]; k <- design[2]
+        mu <- hypothesis[,1]; var_u <- hypothesis[,2]; var_e <- hypothesis[,3]
 
-    # Deterministic objective code
-    shiny::textAreaInput("objraw", "Deterministic objective code"),
+        m <- n/k
+        s_c <- sqrt(var_u + var_e/m)
+        x0 <- stats::rnorm(k, 0, s_c); x1 <- stats::rnorm(k, mu, s_c)
+        c(s = stats::t.test(x0, x1)$p.value >= 0.05, p = n, c = k)"),
 
-    # Design space matrix
-    shinyMatrix::matrixInput("DSnums", class = "numeric",
-                cols = list(names = TRUE), rows = list(names = TRUE),
-                value =  matrix(c(100, 10, 500, 100, 1, 1), 2, 3,
-                                dimnames = list(c("n", "k"), c("Min", "Max", "Integer")))),
+        # Deterministic objective code
+        shiny::textAreaInput("objraw", "Deterministic objective code"),
 
-    # Hypotheses matrix
-    shinyMatrix::matrixInput("Hypnums", class = "numeric",
-                             cols = list(names = TRUE),
-                             rows = list(extend = TRUE, names = TRUE, editableNames = TRUE),
-                             value =  matrix(c(0.3, 0, 0.05, 0.05, 0.95, 0.95), ncol = 3,
-                                             dimnames = list(letters[1:2], c("mu", "var_u", "var_e")))),
+        # Design space matrix
+        shinyMatrix::matrixInput("DSnums", label = "Design space", class = "numeric",
+                    cols = list(names = TRUE), rows = list(names = TRUE),
+                    value =  matrix(c(100, 10, 500, 100, 1, 1), 2, 3,
+                                    dimnames = list(c("n", "k"), c("Min", "Max", "Integer")))),
 
-    # Constraint matrix
-    shinyMatrix::matrixInput("ConMat", class = "numeric",
-                             cols = list(names = TRUE),
-                             rows = list(names = TRUE),
-                             value =  matrix(c(0.2, rep(NA, 5)), ncol = 3,
-                                             dimnames = list(letters[1:2], c("s", "n", "k")))),
+        # Hypotheses matrix
+        shinyMatrix::matrixInput("Hypnums", label = "Hypotheses", class = "numeric",
+                                 cols = list(names = TRUE),
+                                 rows = list(extend = TRUE, names = TRUE, editableNames = TRUE),
+                                 value =  matrix(c(0.3, 0, 0.05, 0.05, 0.95, 0.95), ncol = 3,
+                                                 dimnames = list(letters[1:2], c("mu", "var_u", "var_e")))),
 
-    # Objectives matrix
-    shinyMatrix::matrixInput("ObMat", class = "numeric",
-                             cols = list(names = TRUE),
-                             rows = list(names = TRUE),
-                             value =  matrix(c(NA, NA, 2, NA, 5, NA), ncol = 3,
-                                             dimnames = list(letters[1:2], c("s", "n", "k")))),
+        shiny::actionButton("checkSim", "Read in simulation")
+      ),
 
-    # number of initial DoE
-    shiny::numericInput("size", "Inital DoE size", value = 20),
+      shiny::tabPanel("Initialisation",
+        # Constraint matrix
+        shinyMatrix::matrixInput("ConMat", class = "numeric",
+                                 cols = list(names = TRUE),
+                                 rows = list(names = TRUE),
+                                 value =  matrix(c(0.2, rep(NA, 5)), ncol = 3,
+                                                 dimnames = list(letters[1:2], c("s", "n", "k")))),
 
-    # number of MC evals
-    shiny::numericInput("N", "Number of MC evals", value = 100),
+        # Objectives matrix
+        shinyMatrix::matrixInput("ObMat", class = "numeric",
+                                 cols = list(names = TRUE),
+                                 rows = list(names = TRUE),
+                                 value =  matrix(c(NA, NA, 2, NA, 5, NA), ncol = 3,
+                                                 dimnames = list(letters[1:2], c("s", "n", "k")))),
 
-    shiny::actionButton("checkSim", "Read in simulation"),
+        # number of initial DoE
+        shiny::numericInput("size", "Inital DoE size", value = 20),
 
-    # Button to evaluate
-    shiny::actionButton("initButton", "Initialise DoE"),
+        # number of MC evals
+        shiny::numericInput("N", "Number of MC evals", value = 100),
 
-    shiny::tableOutput("table"),
+        # Button to evaluate
+        shiny::actionButton("initButton", "Initialise DoE"),
 
-    shiny::tableOutput("tableb"),
+        shiny::tableOutput("table")
+      ),
 
-    shiny::plotOutput("ASgraph"),
+      shiny::tabPanel("Iteration",
+        # Button to iterate
+        shiny::actionButton("iterButton", "Perform an iteration"),
 
-    shiny::plotOutput("Trajgraph"),
+        shiny::tableOutput("tableb"),
 
-    # Button to iterate
-    shiny::actionButton("iterButton", "Perform an iteration"),
+        shiny::plotOutput("ASgraph"),
+
+        shiny::plotOutput("Trajgraph")
+      )
+    )
   )
 
   server <- function(input, output, session) {

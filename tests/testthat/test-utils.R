@@ -71,6 +71,20 @@ test_that("mc estimates generated", {
   expect_equal(length(results), 2*3)
 })
 
+sim_trial <- function(design, hypothesis)
+{
+  n <- design[1]; k <- design[2]
+  mu <- hypothesis[,1]; var_u <- hypothesis[,2]; var_e <- hypothesis[,3]
+
+  m <- n/k
+  s_c <- sqrt(var_u + var_e/m)
+  x0 <- stats::rnorm(k, 0, s_c); x1 <- stats::rnorm(k, mu, s_c)
+  c(s = stats::t.test(x0, x1)$p.value >= 0.05, p = n, c = k)
+}
+
+to_model <- data.frame(out_i = c(1),
+                       hyp_i = c(1))
+
 test_that("expected improvement calculated", {
   set.seed(1)
   design_space <- data.frame(name = c("n", "k"),
@@ -124,25 +138,16 @@ test_that("expected improvement calculated", {
   PS <- best(design_space, models, DoE, objectives, constraints, to_model, get_det_obj)
 
   EI <- exp_improve(design = c(100, 10), N=100, PS, models,
-                    design_space, constraints, objectives, get_det_obj, out_dim)
+                    design_space, constraints, objectives, get_det_obj, out_dim, to_model)
 
   expect_type(EI, "double")
 
-  ptm <- proc.time()
-  opt <- pso::psoptim(rep(NA, 2), exp_improve, lower=design_space$low, upper=design_space$up,
-                      N=100, PS=PS, mod=models, design_space=design_space, constraints=constraints,
-                      objectives=objectives, get_det_obj=get_det_obj, out_dim=3,
-                      control=list(vectorize = T))
-  proc.time() - ptm
-
-  ptm <- proc.time()
   opt <- RcppDE::DEoptim(exp_improve, lower=design_space$low, upper=design_space$up,
                          control=list(trace=FALSE),
-        N=100, PS=PS, mod=models, design_space=design_space, constraints=constraints,
-        objectives=objectives, get_det_obj=get_det_obj, out_dim=3)
-  proc.time() - ptm
+                         N=input$N, PS=rv$PS, mod=rv$models, design_space=design_space, constraints=constraints,
+                         objectives=objectives, get_det_obj=get_det_obj, out_dim=3, to_model = to_model)
 
-  sol <- opt$par
+  sol <- as.numeric(opt$optim$bestmem)
   sol[1:2] <- round(sol[1:2])
 
   y <- calc_rates(sol, hypotheses=hypotheses, N=100, sim=sim_trial)
