@@ -165,23 +165,30 @@ BOSSSapp <- function(...) {
     })
 
     shiny::observeEvent(input$initButton,{
-      design_space <- ds()
-      objectives <- get_ob()
-      constraints <- get_cons()
-      hypotheses <- hyps()
 
-      DoE <- init_DoE(input$size, design_space)
+      shiny::withProgress(message = 'Initialising', value = 0, {
+        design_space <- ds()
+        objectives <- get_ob()
+        constraints <- get_cons()
+        hypotheses <- hyps()
 
-      DoE <- cbind(DoE, t(apply(DoE, 1, calc_rates, hypotheses=hypotheses, N=input$N, sim=rv$sim_trial)))
-      DoE$N <- input$N
-      rv$DoE <- DoE
+        DoE <- init_DoE(input$size, design_space)
 
-      to_model <- data.frame(out_i = c(1),
-                             hyp_i = c(1))
+        shiny::incProgress(1/3, detail = "Running simulations")
 
-      rv$models <- fit_models(DoE, to_model, design_space)
+        DoE <- cbind(DoE, t(apply(DoE, 1, calc_rates, hypotheses=hypotheses, N=input$N, sim=rv$sim_trial)))
+        DoE$N <- input$N
+        rv$DoE <- DoE
 
-      rv$PS <- best(design_space, rv$models, rv$DoE, objectives, constraints, to_model, get_det_obj)
+        to_model <- data.frame(out_i = c(1),
+                               hyp_i = c(1))
+
+        incProgress(2/3, detail = "Fitting models")
+
+        rv$models <- fit_models(DoE, to_model, design_space)
+
+        rv$PS <- best(design_space, rv$models, rv$DoE, objectives, constraints, to_model, get_det_obj)
+      })
     })
 
     shiny::observeEvent(input$iterButton,{
@@ -194,32 +201,36 @@ BOSSSapp <- function(...) {
       to_model <- data.frame(out_i = c(1),
                              hyp_i = c(1))
 
-      opt <- RcppDE::DEoptim(exp_improve, lower=design_space$low, upper=design_space$up,
-                             control=list(trace=FALSE),
-                             N=input$N, PS=rv$PS, mod=rv$models, design_space=design_space, constraints=constraints,
-                             objectives=objectives, get_det_obj=get_det_obj, out_dim=3, to_model = to_model)
+      shiny::withProgress(message = 'Initialising', value = 0, {
 
-      sol <- as.numeric(opt$optim$bestmem)
+        incProgress(1/4, detail = "Optimising")
 
-      sol[1:2] <- round(sol[1:2])
-      y <- calc_rates(sol, hypotheses=hypotheses, N=input$N, sim=rv$sim_trial)
+        opt <- RcppDE::DEoptim(exp_improve, lower=design_space$low, upper=design_space$up,
+                               control=list(trace=FALSE),
+                               N=input$N, PS=rv$PS, mod=rv$models, design_space=design_space, constraints=constraints,
+                               objectives=objectives, get_det_obj=get_det_obj, out_dim=3, to_model = to_model)
 
-      rv$DoE <- rbind(rv$DoE, c(sol, y, input$N))
+        sol <- as.numeric(opt$optim$bestmem)
 
-      #to_model <- unique.data.frame(rbind(objectives[, c("out_i", "hyp_i")],
-      #                                    constraints[, c("out_i", "hyp_i")]))
-      to_model <- data.frame(out_i = c(1),
-                             hyp_i = c(1))
+        incProgress(2/4, detail = "Evaluating selected design")
 
-      rv$models <- fit_models(rv$DoE, to_model, design_space)
+        sol[1:2] <- round(sol[1:2])
+        y <- calc_rates(sol, hypotheses=hypotheses, N=input$N, sim=rv$sim_trial)
 
-      rv$PS <- best(design_space, rv$models, rv$DoE, objectives, constraints, to_model, get_det_obj)
+        rv$DoE <- rbind(rv$DoE, c(sol, y, input$N))
 
-      ref <- design_space$up*objectives$weight
-      PS2 <- as.matrix(rv$PS[, objectives$name])
-      current <- mco::dominatedHypervolume(PS2, ref)
+        incProgress(3/4, detail = "Updating models")
 
-      rv$traj <- rbind(rv$traj, c(-opt$optim$bestval, current))
+        rv$models <- fit_models(rv$DoE, to_model, design_space)
+
+        rv$PS <- best(design_space, rv$models, rv$DoE, objectives, constraints, to_model, get_det_obj)
+
+        ref <- design_space$up*objectives$weight
+        PS2 <- as.matrix(rv$PS[, objectives$name])
+        current <- mco::dominatedHypervolume(PS2, ref)
+
+        rv$traj <- rbind(rv$traj, c(-opt$optim$bestval, current))
+      })
     })
 
     output$table <- shiny::renderTable({
@@ -240,7 +251,7 @@ BOSSSapp <- function(...) {
 
       ggplot2::ggplot(df, ggplot2::aes(f1, f2)) +
         ggplot2::geom_step(linetype = 2) +
-        ggplot2::geom_point(data=df[2:(nrow(df)-1),])
+        ggplot2::geom_point() #data=df[2:(nrow(df)-1),])
     })
 
     output$Trajgraph <- shiny::renderPlot({
