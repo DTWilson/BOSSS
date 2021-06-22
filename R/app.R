@@ -2,26 +2,14 @@ BOSSSapp <- function(...) {
 
   set.seed(1)
 
-  sim_trial <- function(design, hypothesis)
-  {
-    n <- design[1]; k <- design[2]
-    mu <- hypothesis[,1]; var_u <- hypothesis[,2]; var_e <- hypothesis[,3]
-
-    m <- n/k
-    s_c <- sqrt(var_u + var_e/m)
-    x0 <- stats::rnorm(k, 0, s_c); x1 <- stats::rnorm(k, mu, s_c)
-    c(s = stats::t.test(x0, x1)$p.value >= 0.05, p = n, c = k)
-  }
-
   get_det_obj <- function(design)
   {
     o <- matrix(design, ncol = 2)[,1:2]
     c(s = NA, p = o[1], c = o[2])
   }
 
-  #num_hyp <- 2
-
   ui <- shiny::fluidPage(
+    theme = bslib::bs_theme(bootswatch = "united"),
 
     # Simulation code
     shiny::textAreaInput("simraw", "Simulation code",
@@ -87,6 +75,7 @@ BOSSSapp <- function(...) {
   )
 
   server <- function(input, output, session) {
+    thematic::thematic_shiny()
 
     shiny::observeEvent(input$Hypnums, {
       shinyMatrix::updateMatrixInput(session, inputId = "ConMat",
