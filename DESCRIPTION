@@ -27,5 +27,6 @@ Imports:
     shinyMatrix,
     shiny,
     pso,
-    mco
+    mco,
+    ggplot2
 VignetteBuilder: knitr

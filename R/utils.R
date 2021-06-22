@@ -152,7 +152,7 @@ best <- function(design_space, models, DoE, objectives, constraints, to_model, g
   out_dim <- max(c(objectives$out_i, constraints$out_i))
 
   ## Get objective values
-  obj_v <- t(apply(sols[,1:2], 1, function(x) predict_obj(x, models, objectives, get_det_obj, dim)))
+  obj_v <- t(apply(sols[,1:2], 1, function(x) predict_obj(x, models, objectives, get_det_obj, dim, to_model)))
   sols <- cbind(sols, f1=obj_v[,1], f2=obj_v[,2])
 
   ## Penalise constraint violations
@@ -181,25 +181,30 @@ best <- function(design_space, models, DoE, objectives, constraints, to_model, g
   PS
 }
 
-predict_obj <- function(design, models, objectives, get_det_obj, dim)
+predict_obj <- function(design, models, objectives, get_det_obj, dim, to_model)
 {
-  preds_stoch <- NULL
+  obj_vals <- NULL
   i <- 1
-  while(i <= sum(objectives$stoch)){
-    ## For stochastic objectives, we are just taking the lowest quantile and
-    ## treating this as deterministic - need to improve
-    model_index <- which(to_model$out_i == objectives[i, "out_i"] &
-                           to_model$hyp_i == objectives[i, "hyp_i"])
-    p <- DiceKriging::predict.km(models[[model_index]], newdata=design[,1:dim, drop=F], type="SK")
-    f <- p$mean - qnorm(0.7)*p$sd
-    preds_stoch <- c(preds_stoch, f)
-    i <- i + 1
+  for(i in 1:nrow(objectives)){
+    if(objectives$stoch[i]){
+      ## For stochastic objectives, we are just taking the lowest quantile and
+      ## treating this as deterministic - need to improve
+      model_index <- which(to_model$out_i == objectives[i, "out_i"] &
+                             to_model$hyp_i == objectives[i, "hyp_i"])
+      p <- DiceKriging::predict.km(models[[model_index]], newdata=design[,1:dim, drop=F], type="SK")
+      f <- p$mean - qnorm(0.7)*p$sd
+      obj_vals <- c(obj_vals, f*objectives$weight)
+    } else {
+      ## For deterministic objectives, use the user-written function
+      ## For now, assume independent of hypothesis
+      f <- get_det_obj(design)[objectives[i, "out_i"]]
+      obj_vals <- c(obj_vals, f*objectives$weight[i])
+    }
   }
-  preds_det <- get_det_obj(design)
-  t(objectives$weight*t(matrix(preds_det, ncol = dim)))
+  t(objectives$weight*t(matrix(obj_vals, ncol = nrow(objectives))))
 }
 
-exp_improve <- function(design, N, PS, models, design_space, constraints, objectives, get_det_obj, out_dim)
+exp_improve <- function(design, N, PS, models, design_space, constraints, objectives, get_det_obj, out_dim, to_model)
 {
   dim <- nrow(design_space)
 

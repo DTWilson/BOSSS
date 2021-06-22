@@ -13,16 +13,28 @@ BOSSSapp <- function(...) {
     c(s = stats::t.test(x0, x1)$p.value >= 0.05, p = n, c = k)
   }
 
-  det_out <- function(design, hypothesis)
+  get_det_obj <- function(design)
   {
-    n <- design[1]; k <- design[2]
-
-    c(s = NA, p = n, c = k)
+    o <- matrix(design, ncol = 2)[,1:2]
+    c(s = NA, p = o[1], c = o[2])
   }
 
   #num_hyp <- 2
 
   ui <- shiny::fluidPage(
+
+    # Simulation code
+    shiny::textAreaInput("simraw", "Simulation code",
+                         value = "n <- design[1]; k <- design[2]
+    mu <- hypothesis[,1]; var_u <- hypothesis[,2]; var_e <- hypothesis[,3]
+
+    m <- n/k
+    s_c <- sqrt(var_u + var_e/m)
+    x0 <- stats::rnorm(k, 0, s_c); x1 <- stats::rnorm(k, mu, s_c)
+    c(s = stats::t.test(x0, x1)$p.value >= 0.05, p = n, c = k)"),
+
+    # Deterministic objective code
+    shiny::textAreaInput("objraw", "Deterministic objective code"),
 
     # Design space matrix
     shinyMatrix::matrixInput("DSnums", class = "numeric",
@@ -51,13 +63,13 @@ BOSSSapp <- function(...) {
                              value =  matrix(c(NA, NA, 2, NA, 5, NA), ncol = 3,
                                              dimnames = list(letters[1:2], c("s", "n", "k")))),
 
-    shiny::numericInput("test", "test", value = 20),
-
     # number of initial DoE
     shiny::numericInput("size", "Inital DoE size", value = 20),
 
     # number of MC evals
     shiny::numericInput("N", "Number of MC evals", value = 100),
+
+    shiny::actionButton("checkSim", "Read in simulation"),
 
     # Button to evaluate
     shiny::actionButton("initButton", "Initialise DoE"),
@@ -146,7 +158,11 @@ BOSSSapp <- function(...) {
       ob
     })
 
-    rv <- shiny::reactiveValues(DoE=NULL, PS=NULL, models=NULL, traj=NULL)
+    rv <- shiny::reactiveValues(DoE=NULL, PS=NULL, models=NULL, traj=NULL, sim_trial = NULL)
+
+    shiny::observeEvent(input$checkSim,{
+      rv$sim_trial <- eval(parse(text = paste('f <- function(design, hypothesis) {', input$simraw, '}', sep='')))
+    })
 
     shiny::observeEvent(input$initButton,{
       design_space <- ds()
@@ -156,7 +172,7 @@ BOSSSapp <- function(...) {
 
       DoE <- init_DoE(input$size, design_space)
 
-      DoE <- cbind(DoE, t(apply(DoE, 1, calc_rates, hypotheses=hypotheses, N=input$N, sim=sim_trial)))
+      DoE <- cbind(DoE, t(apply(DoE, 1, calc_rates, hypotheses=hypotheses, N=input$N, sim=rv$sim_trial)))
       DoE$N <- input$N
       rv$DoE <- DoE
 
@@ -165,7 +181,7 @@ BOSSSapp <- function(...) {
 
       rv$models <- fit_models(DoE, to_model, design_space)
 
-      rv$PS <- best(design_space, models, DoE, objectives, constraints, to_model, get_det_obj)
+      rv$PS <- best(design_space, rv$models, rv$DoE, objectives, constraints, to_model, get_det_obj)
     })
 
     shiny::observeEvent(input$iterButton,{
@@ -175,15 +191,18 @@ BOSSSapp <- function(...) {
       objectives <- get_ob()
       constraints <- get_cons()
 
+      to_model <- data.frame(out_i = c(1),
+                             hyp_i = c(1))
+
       opt <- RcppDE::DEoptim(exp_improve, lower=design_space$low, upper=design_space$up,
                              control=list(trace=FALSE),
                              N=input$N, PS=rv$PS, mod=rv$models, design_space=design_space, constraints=constraints,
-                             objectives=objectives, get_det_obj=get_det_obj, out_dim=3)
+                             objectives=objectives, get_det_obj=get_det_obj, out_dim=3, to_model = to_model)
 
       sol <- as.numeric(opt$optim$bestmem)
 
       sol[1:2] <- round(sol[1:2])
-      y <- calc_rates(sol, hypotheses=hypotheses, N=input$N, sim=sim_trial)
+      y <- calc_rates(sol, hypotheses=hypotheses, N=input$N, sim=rv$sim_trial)
 
       rv$DoE <- rbind(rv$DoE, c(sol, y, input$N))
 
@@ -213,7 +232,15 @@ BOSSSapp <- function(...) {
 
     output$ASgraph <- shiny::renderPlot({
       objectives <- get_ob()
-      plot(rv$PS[,objectives$name])
+      df <- as.data.frame(rv$PS[,objectives$name])
+      ## Extend to include extreme points for plotting
+      #df <- rbind(c(min(df[,1]), 100*objectives$weight[2]),
+      #            df,
+      #            c(500*objectives$weight[1], min(df[,2])))
+
+      ggplot2::ggplot(df, ggplot2::aes(f1, f2)) +
+        ggplot2::geom_step(linetype = 2) +
+        ggplot2::geom_point(data=df[2:(nrow(df)-1),])
     })
 
     output$Trajgraph <- shiny::renderPlot({
@@ -227,7 +254,9 @@ BOSSSapp <- function(...) {
         df <- data.frame(v = c(traj[,2], traj[,1]),
                          t = rep(c("DH", "EI"), each = n),
                          i = rep(1:n, 2))
-        ggplot(df, aes(i, v, colour = t)) + geom_point() + geom_line()
+        ggplot2::ggplot(df, ggplot2::aes(i, v, colour = t)) +
+          ggplot2::geom_point() +
+          ggplot2::geom_line()
       }
     })
   }
