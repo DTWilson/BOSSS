@@ -4,7 +4,16 @@
 \alias{best}
 \title{Get the Pareto set}
 \usage{
-best(design_space, models, DoE, objectives, constraints, to_model, b = NULL)
+best(
+  design_space,
+  models,
+  DoE,
+  objectives,
+  constraints,
+  to_model,
+  get_det_obj,
+  b = NULL
+)
 }
 \arguments{
 \item{design_space}{data.frame}

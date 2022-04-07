@@ -8,6 +8,20 @@ BOSSSapp <- function(...) {
     c(s = NA, p = o[1], c = o[2])
   }
 
+  det_obj1 <- function(design)
+  {
+    if(is.null(dim(design))) design <- matrix(design, nrow = 1)
+    design[,1]
+  }
+
+  det_obj2 <- function(design)
+  {
+    if(is.null(dim(design))) design <- matrix(design, nrow = 1)
+    design[,2]
+  }
+
+  ## use GPareto fastfun for deterministic objectives
+
   ui <- shiny::fluidPage(
     theme = bslib::bs_theme(bootswatch = "united"),
 

@@ -53,6 +53,8 @@ init_DoE <- function(size, design_space)
 #' fit_models(DoE, to_model, design_space)
 fit_models <- function(DoE, to_model, design_space)
 {
+  ## To do: change to updating models if already initialised
+
   dim <- nrow(design_space)
   out_dim <- 3
 
@@ -96,7 +98,7 @@ calc_rates <- function(design, hypotheses, N, sim)
   for(i in 1:nrow(hypotheses)){
     sims <- replicate(N, sim(design, as.data.frame(hypotheses)[i,]))
     for(j in 1:nrow(sims)){
-      results <- c(results, mean(sims[j,]), stats::var(sims[j,])/N)
+      results <- c(results, stats::mean(sims[j,]), stats::var(sims[j,])/N)
       names(results)[(length(results) -1)] <- paste0(rownames(sims)[j], "_m_", rownames(hypotheses)[i])
       names(results)[length(results)] <- paste0(rownames(sims)[j], "_v_", rownames(hypotheses)[i])
     }
@@ -112,6 +114,7 @@ DoE_index <- function(out_i, hyp_i, dim, out_dim)
 
 is_nondom <- function(x, b, objectives)
 {
+  ## Compare against implementations in GPareto
   i <- 1
   obj_names <- as.character(objectives$name)
   while(i <= nrow(objectives) & nrow(b)!= 0 ){
@@ -206,6 +209,10 @@ predict_obj <- function(design, models, objectives, get_det_obj, dim, to_model)
 
 exp_improve <- function(design, N, PS, models, design_space, constraints, objectives, get_det_obj, out_dim, to_model)
 {
+  ## Use the expected hypervolume improvement as implemented in GPareto
+  ## Here, all objectives are models, and deterministic objective functions
+  ## implemented as such via fastfun to have predict and update methods
+
   dim <- nrow(design_space)
 
   ## Get objective value of design

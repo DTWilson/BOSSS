@@ -154,3 +154,36 @@ test_that("expected improvement calculated", {
 
   DoE <- rbind(DoE, c(sol, y, 100))
 })
+
+
+sim_trial <- function(design, hypothesis)
+{
+  n <- design[1]; k <- design[2]
+  mu <- hypothesis[,1]; var_u <- hypothesis[,2]; var_e <- hypothesis[,3]
+
+  m <- n/k
+  s_c <- sqrt(var_u + var_e/m)
+  x0 <- rnorm(k, 0, s_c); x1 <- rnorm(k, mu, s_c)
+  c(s = t.test(x0, x1)$p.value >= 0.05)
+}
+
+calc_rates <- function(design, hypotheses)
+{
+  n <- design[1]; k <- design[2]
+  N <- 1000
+  beta <- mean(replicate(N, sim_trial(design, as.data.frame(hypotheses)[1,])))
+
+  pen <- 1 + 1000*max(0, beta - 0.2)
+
+  return(c(2*n/5, k)*pen)
+}
+
+hypotheses <- data.frame(mu = c(0.3, 0),
+                         var_u = c(0.05, 0.05),
+                         var_e = c(0.95, 0.95))
+
+calc_rates(c(300, 30), hypotheses)
+
+opt <- GPareto::easyGParetoptim(calc_rates, hypotheses = hypotheses,
+                                budget = 50, lower = c(100, 10), upper = c(500, 100),
+                                control = list(method = "EHI", refPoint = c(200, 100)))
