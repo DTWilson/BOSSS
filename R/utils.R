@@ -98,7 +98,7 @@ calc_rates <- function(design, hypotheses, N, sim)
   for(i in 1:nrow(hypotheses)){
     sims <- replicate(N, sim(design, as.data.frame(hypotheses)[i,]))
     for(j in 1:nrow(sims)){
-      results <- c(results, stats::mean(sims[j,]), stats::var(sims[j,])/N)
+      results <- c(results, mean(sims[j,]), stats::var(sims[j,])/N)
       names(results)[(length(results) -1)] <- paste0(rownames(sims)[j], "_m_", rownames(hypotheses)[i])
       names(results)[length(results)] <- paste0(rownames(sims)[j], "_v_", rownames(hypotheses)[i])
     }
@@ -133,7 +133,7 @@ is_nondom <- function(x, b, objectives)
 }
 
 
-predict_obj <- function(design, models, objectives, get_det_obj, dim, to_model)
+predict_obj <- function(design, models, objectives, det_obj, dim, to_model)
 {
   obj_vals <- NULL
   i <- 1
@@ -149,7 +149,7 @@ predict_obj <- function(design, models, objectives, get_det_obj, dim, to_model)
     } else {
       ## For deterministic objectives, use the user-written function
       ## For now, assume independent of hypothesis
-      f <- get_det_obj(design)[objectives[i, "out_i"]]
+      f <- det_obj(design)[objectives[i, "out_i"]]
       obj_vals <- c(obj_vals, f*objectives$weight[i])
     }
   }

@@ -22,16 +22,129 @@ A place to build up notes and examples for a future tutorial-style document.
 
 Note that the method extends trivially to any kind of Bayesian analysis. We just use the hypotheses parameters to describe hyperparameters for the priors we want to simulate under, and use a Bayesian analysis (or freq if using a hybrid approach). This would include a decision-theoretic approach, where the analysis would give us a utility and we would use the expectation of this as an objective to maximise. One difficulty would be avoiding model compilation when using Stan or brms. We could potentially deal with this by storing a pre-compiled model as a file, and then loading and updating it for each iteration.
 
-## Examples
+# Examples
 
-For each example, describe the application here but also allow the problem to be loaded in to the app, with seeds set, so the user can follow along themselves.
+For each example, describe the application here but also allow the problem to be loaded in to the app, with seeds set, so the user can follow along themselves?
 
-### Simple two-sample t-test
+## Simple two-sample t-test
 
-### Adaptive design (NIFTy)
+### Problem
 
-### Bayesian / decision theoretic multilevel model
+Simulation:
 
-### Multi-state models
+```{r}
+sim_trial <- function(design, hypothesis){
+  design <- as.numeric(design); hypothesis <- as.numeric(hypothesis)
+  n <- design[1]; k <- design[2]
+  mu <- hypothesis[1]; var_u <- hypothesis[2]; var_e <- hypothesis[3]
+  
+  m <- n/k
+  s_c <- sqrt(var_u + var_e/m)
+  x0 <- stats::rnorm(k, 0, s_c); x1 <- stats::rnorm(k, mu, s_c)
+  c(s = stats::t.test(x0, x1)$p.value >= 0.05, p = n, c = k)
+}
+
+# For example,
+sim_trial(c(300, 30), c(0.3, 0.05, 0.95))
+```
+
+Detrministic objective functions:
+```{r}
+det_obj <- function(design){
+    o <- matrix(design, ncol = 2)[,1:2]
+    c(s = NA, p = o[1], c = o[2])
+}
+```
+
+
+Design space and hypotheses:
+
+```{r}
+design_space <- data.frame(name = c("n", "k"),
+                 low = c(50, 5),
+                 up = c(500, 50),
+                 int = c(TRUE, TRUE))
+
+hypotheses <- data.frame(mu = c(0.3, 0),
+                   var_u = c(0.05, 0.05),
+                   var_e = c(0.95, 0.95))
+```
+
+### Initialisation
+
+Constraints and objectives:
+
+```{r}
+constraints <- data.frame(name = "a",
+                   out_i = 1,
+                   hyp_i = 1,
+                   nom = 0.2,
+                   delta = 0.975,
+                   stoch = TRUE)
+
+objectives <- data.frame(name = c("f1", "f2"),
+                 out_i = c(2, 3),
+                 hyp_i = c(1, 1),
+                 weight = c(2, 5),
+                 stoch = c(FALSE, FALSE))
+
+objectives$weight <- objectives$weight/sum(objectives$weight)
+objectives$name <- as.character(objectives$name)
+```
+
+Initial DoE:
+
+```{r}
+size <- 20
+N <- 100
+
+DoE <- init_DoE(size, design_space)
+
+DoE <- cbind(DoE, t(apply(DoE, 1, calc_rates, hypotheses=hypotheses, N=N, sim=sim_trial)))
+DoE$N <- N
+
+to_model <- data.frame(out_i = c(1),
+                       hyp_i = c(1))
+
+models <- fit_models(DoE, to_model, design_space)
+
+PS <- pareto_set(design_space, models, DoE, objectives, constraints, to_model, det_obj)
+```
+
+### Iteration
+
+```{r}
+opt <- RcppDE::DEoptim(ehi_infill, lower=design_space$low, upper=design_space$up,
+                               control=list(trace=FALSE),
+                               N=N, PS=PS, mod=models, design_space=design_space, constraints=constraints,
+                               objectives=objectives, det_obj=det_obj, out_dim=3, to_model=to_model)
+
+sol <- as.numeric(opt$optim$bestmem)
+
+        incProgress(2/4, detail = "Evaluating selected design")
+
+        sol[1:2] <- round(sol[1:2])
+        y <- calc_rates(sol, hypotheses=hypotheses, N=input$N, sim=rv$sim_trial)
+
+        rv$DoE <- rbind(rv$DoE, c(sol, y, input$N))
+
+        incProgress(3/4, detail = "Updating models")
+
+        rv$models <- fit_models(rv$DoE, to_model, design_space)
+
+        rv$PS <- best(design_space, rv$models, rv$DoE, objectives, constraints, to_model, get_det_obj)
+
+        ref <- design_space$up*objectives$weight
+        PS2 <- as.matrix(rv$PS[, objectives$name])
+        current <- mco::dominatedHypervolume(PS2, ref)
+
+        rv$traj <- rbind(rv$traj, c(-opt$optim$bestval, current))
+```
+
+## Adaptive design (NIFTy)
+
+## Bayesian / decision theoretic multilevel model
+
+## Multi-state models
 
 

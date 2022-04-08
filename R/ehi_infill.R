@@ -1,6 +1,6 @@
 # Calculate the expected hypervolume improvement for a given point.
 
-ehi_infill <- function(design, N, PS, models, design_space, constraints, objectives, get_det_obj, out_dim, to_model)
+ehi_infill <- function(design, N, PS, models, design_space, constraints, objectives, det_obj, out_dim, to_model)
 {
   ## Use the expected hypervolume improvement as implemented in GPareto
   ## Here, all objectives are models, and deterministic objective functions
@@ -9,7 +9,7 @@ ehi_infill <- function(design, N, PS, models, design_space, constraints, objecti
   dim <- nrow(design_space)
 
   ## Get objective value of design
-  fs <- predict_obj(design, models, objectives, get_det_obj, dim)
+  fs <- predict_obj(design, models, objectives, det_obj, dim)
 
   design <- as.data.frame(matrix(design, ncol = dim))
   names(design) <- design_space$name

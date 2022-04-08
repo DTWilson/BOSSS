@@ -10,7 +10,7 @@
 #'
 #' @return data.frame
 #' @export
-pareto_set <- function(design_space, models, DoE, objectives, constraints, to_model, get_det_obj, b=NULL)
+pareto_set <- function(design_space, models, DoE, objectives, constraints, to_model, det_obj=NULL, b=NULL)
 {
   ## Return the set of current Pareto optimal solutions,
   ## penalising constrain violations and considering only solutions
@@ -21,7 +21,7 @@ pareto_set <- function(design_space, models, DoE, objectives, constraints, to_mo
   out_dim <- max(c(objectives$out_i, constraints$out_i))
 
   ## Get objective values
-  obj_v <- t(apply(sols[,1:2], 1, function(x) predict_obj(x, models, objectives, get_det_obj, dim, to_model)))
+  obj_v <- t(apply(sols[,1:2], 1, function(x) predict_obj(x, models, objectives, det_obj, dim, to_model)))
   sols <- cbind(sols, f1=obj_v[,1], f2=obj_v[,2])
 
   ## Penalise constraint violations
