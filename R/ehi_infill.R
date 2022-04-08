@@ -1,6 +1,6 @@
 # Calculate the expected hypervolume improvement for a given point.
 
-ehi_infill <- function(design, N, PS, models, design_space, constraints, objectives, det_obj, out_dim, to_model)
+ehi_infill <- function(design, N, pf, models, design_space, constraints, objectives, det_obj, out_dim, to_model)
 {
   ## Use the expected hypervolume improvement as implemented in GPareto
   ## Here, all objectives are models, and deterministic objective functions
@@ -36,10 +36,8 @@ ehi_infill <- function(design, N, PS, models, design_space, constraints, objecti
   ## Improvement is quantified by the increase in the dominated hypervolume of
   ## the approximation set if this design was included
   ref <- design_space$up*objectives$weight
-  PS2 <- as.matrix(PS[, objectives$name])
-  current <- mco::dominatedHypervolume(PS2, ref)
-  pos <- apply(fs, 1, function(obj) mco::dominatedHypervolume(as.matrix(rbind(PS2, obj)), ref) )
-  #pos <- mco::dominatedHypervolume(as.matrix(rbind(PS2, fs)), ref)
+  current <- emoa::dominated_hypervolume(t(pf), ref)
+  pos <- apply(fs, 1, function(obj) emoa::dominated_hypervolume(t(as.matrix(rbind(pf, obj))), ref) )
   imp <- (current-pos)*design$exp_pen
 
   ## Minimising, so keeping negative

@@ -1,4 +1,4 @@
-#' Get the Pareto set
+#' Get the Pareto front
 #'
 #' @param design_space data.frame
 #' @param models list of objects of class km
@@ -10,9 +10,9 @@
 #'
 #' @return data.frame
 #' @export
-pareto_set <- function(design_space, models, DoE, objectives, constraints, to_model, det_obj=NULL, b=NULL)
+pareto_front <- function(design_space, models, DoE, objectives, constraints, to_model, det_obj=NULL, b=NULL)
 {
-  ## Return the set of current Pareto optimal solutions,
+  ## Return the objective values of current Pareto optimal solutions,
   ## penalising constrain violations and considering only solutions
   ## where some evaluation has actually happened
   sols <- DoE
@@ -41,11 +41,11 @@ pareto_set <- function(design_space, models, DoE, objectives, constraints, to_mo
   }
   sols[, objectives[, "name"]] <- sols[, objectives[, "name"]]/sols$exp_pen
 
-  ## Drop any dominated solutions
-  nondom_sols <- sols[apply(sols, 1, is_nondom, b=sols, objectives=objectives), ]
-  ## check for duplicates
-  sub <- unique(nondom_sols[, objectives[, "name"], drop=F])
-
-  PS <- nondom_sols[row.names(sub),]
-  PS
+  ## Get the Pareto front
+  pf <- t(emoa::nondominated_points(t(as.matrix(sols[, objectives[, "name"]]))))
+  unique(pf)
 }
+
+#m <- t(nondominated_points(t(as.matrix(sols[,c("f1", "f2")]))))
+#z <- sols[match(m[,1], sols[,"f1"]),]
+

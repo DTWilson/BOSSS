@@ -31,7 +31,6 @@ For each example, describe the application here but also allow the problem to be
 ### Problem
 
 Simulation:
-
 ```{r}
 sim_trial <- function(design, hypothesis){
   design <- as.numeric(design); hypothesis <- as.numeric(hypothesis)
@@ -48,7 +47,7 @@ sim_trial <- function(design, hypothesis){
 sim_trial(c(300, 30), c(0.3, 0.05, 0.95))
 ```
 
-Detrministic objective functions:
+Deterministic objective functions:
 ```{r}
 det_obj <- function(design){
     o <- matrix(design, ncol = 2)[,1:2]
@@ -58,7 +57,6 @@ det_obj <- function(design){
 
 
 Design space and hypotheses:
-
 ```{r}
 design_space <- data.frame(name = c("n", "k"),
                  low = c(50, 5),
@@ -82,11 +80,11 @@ constraints <- data.frame(name = "a",
                    delta = 0.975,
                    stoch = TRUE)
 
-objectives <- data.frame(name = c("f1", "f2"),
-                 out_i = c(2, 3),
-                 hyp_i = c(1, 1),
-                 weight = c(2, 5),
-                 stoch = c(FALSE, FALSE))
+objectives <- data.frame(name = c("f1", "f2", "f3"),
+                 out_i = c(2, 3, 1),
+                 hyp_i = c(1, 1, 1),
+                 weight = c(2, 5, 50),
+                 stoch = c(FALSE, FALSE, TRUE))
 
 objectives$weight <- objectives$weight/sum(objectives$weight)
 objectives$name <- as.character(objectives$name)
@@ -108,38 +106,39 @@ to_model <- data.frame(out_i = c(1),
 
 models <- fit_models(DoE, to_model, design_space)
 
-PS <- pareto_set(design_space, models, DoE, objectives, constraints, to_model, det_obj)
+pf <- pareto_front(design_space, models, DoE, objectives, constraints, to_model, det_obj)
 ```
 
 ### Iteration
 
 ```{r}
-opt <- RcppDE::DEoptim(ehi_infill, lower=design_space$low, upper=design_space$up,
-                               control=list(trace=FALSE),
-                               N=N, PS=PS, mod=models, design_space=design_space, constraints=constraints,
-                               objectives=objectives, det_obj=det_obj, out_dim=3, to_model=to_model)
+traj <- NULL
 
-sol <- as.numeric(opt$optim$bestmem)
-
-        incProgress(2/4, detail = "Evaluating selected design")
-
-        sol[1:2] <- round(sol[1:2])
-        y <- calc_rates(sol, hypotheses=hypotheses, N=input$N, sim=rv$sim_trial)
-
-        rv$DoE <- rbind(rv$DoE, c(sol, y, input$N))
-
-        incProgress(3/4, detail = "Updating models")
-
-        rv$models <- fit_models(rv$DoE, to_model, design_space)
-
-        rv$PS <- best(design_space, rv$models, rv$DoE, objectives, constraints, to_model, get_det_obj)
-
-        ref <- design_space$up*objectives$weight
-        PS2 <- as.matrix(rv$PS[, objectives$name])
-        current <- mco::dominatedHypervolume(PS2, ref)
-
-        rv$traj <- rbind(rv$traj, c(-opt$optim$bestval, current))
+for(i in 1:10){
+  opt <- RcppDE::DEoptim(ehi_infill, lower=design_space$low, upper=design_space$up,
+                                 control=list(trace=FALSE),
+                                 N=N, pf=pf, mod=models, design_space=design_space, constraints=constraints,
+                                 objectives=objectives, det_obj=det_obj, out_dim=3, to_model=to_model)
+  
+  sol <- as.numeric(opt$optim$bestmem)
+  sol[1:2] <- round(sol[1:2])
+          
+  y <- calc_rates(sol, hypotheses=hypotheses, N=N, sim=sim_trial)
+  
+  DoE <- rbind(DoE, c(sol, y, N))
+  
+  models <- fit_models(DoE, to_model, design_space)
+  
+  pf <- pareto_front(design_space, models, DoE, objectives, constraints, to_model, det_obj)
+  
+  ref <- design_space$up*objectives$weight
+  current <- emoa::dominated_hypervolume(t(pf), ref)
+  traj <- rbind(traj, c(-opt$optim$bestval, current))
+}
 ```
+### Presentation
+
+
 
 ## Adaptive design (NIFTy)
 

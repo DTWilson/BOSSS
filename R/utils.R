@@ -112,47 +112,7 @@ DoE_index <- function(out_i, hyp_i, dim, out_dim)
   (hyp_i - 1)*out_dim*2 + (2*out_i - 1) + dim
 }
 
-is_nondom <- function(x, b, objectives)
-{
-  ## Compare against implementations in GPareto
-  i <- 1
-  obj_names <- as.character(objectives$name)
-  while(i <= nrow(objectives) & nrow(b)!= 0 ){
-    ## subset b to those non-dominated solutions which are less than or equal to
-    ## x in an objective
-    b <- b[b[, obj_names[i] ] <= x[[ obj_names[i] ]],]
-    i <- i + 1
-  }
-  ## If b is now empty, then des is non-dominated
-  if(nrow(b)==1 | all(apply(b[,obj_names, drop=F], 2, function(x) length(unique(x)) == 1) == TRUE) ) {
-    nondom <- TRUE
-  } else {
-    nondom <- FALSE
-  }
-  return(nondom)
-}
 
 
-predict_obj <- function(design, models, objectives, det_obj, dim, to_model)
-{
-  obj_vals <- NULL
-  i <- 1
-  for(i in 1:nrow(objectives)){
-    if(objectives$stoch[i]){
-      ## For stochastic objectives, we are just taking the lowest quantile and
-      ## treating this as deterministic - need to improve
-      model_index <- which(to_model$out_i == objectives[i, "out_i"] &
-                             to_model$hyp_i == objectives[i, "hyp_i"])
-      p <- DiceKriging::predict.km(models[[model_index]], newdata=design[,1:dim, drop=F], type="SK")
-      f <- p$mean - qnorm(0.7)*p$sd
-      obj_vals <- c(obj_vals, f*objectives$weight)
-    } else {
-      ## For deterministic objectives, use the user-written function
-      ## For now, assume independent of hypothesis
-      f <- det_obj(design)[objectives[i, "out_i"]]
-      obj_vals <- c(obj_vals, f*objectives$weight[i])
-    }
-  }
-  t(objectives$weight*t(matrix(obj_vals, ncol = nrow(objectives))))
-}
+
 
