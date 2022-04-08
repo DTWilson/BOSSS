@@ -21,11 +21,11 @@ pareto_front <- function(design_space, models, DoE, objectives, constraints, to_
   out_dim <- max(c(objectives$out_i, constraints$out_i))
 
   ## Get objective values
-  obj_v <- t(apply(sols[,1:2], 1, function(x) predict_obj(x, models, objectives, det_obj, dim, to_model)))
-  sols <- cbind(sols, f1=obj_v[,1], f2=obj_v[,2])
+  obj_v <- predict_obj(sols[,1:dim], models, objectives, det_obj, dim, to_model)
 
   ## Penalise constraint violations
-  sols$exp_pen <- 1
+  ## Note - some repetition with penalty in EHI so try to consolidate
+  exp_pen <- 1
   for(i in 1:nrow(constraints)){
     index <- DoE_index(constraints[i, "out_i"], constraints[i, "hyp_i"], dim, out_dim)
     model_index <- which(to_model$out_i == constraints[i, "out_i"] & to_model$hyp_i == constraints[i, "hyp_i"])
@@ -34,15 +34,16 @@ pareto_front <- function(design_space, models, DoE, objectives, constraints, to_
       p <- DiceKriging::predict.km(models[[model_index]], newdata=sols[,1:dim, drop=F], type="SK")
       pen <- stats::pnorm(nom, p$mean, p$sd)
       pen <- ifelse(pen < constraints[i, "delta"], 0.0000001, 1)
-      sols$exp_pen <- sols$exp_pen*pen
+      exp_pen <- exp_pen*pen
     } else {
       pen <- ifelse(DoE[, index] > nom, 0.0000001, 1)
+      exp_pen <- exp_pen*pen
     }
   }
-  sols[, objectives[, "name"]] <- sols[, objectives[, "name"]]/sols$exp_pen
+  obj_v <- obj_v/exp_pen
 
   ## Get the Pareto front
-  pf <- t(emoa::nondominated_points(t(as.matrix(sols[, objectives[, "name"]]))))
+  pf <- t(emoa::nondominated_points(t(obj_v)))
   unique(pf)
 }
 

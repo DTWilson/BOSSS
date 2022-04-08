@@ -50,8 +50,9 @@ sim_trial(c(300, 30), c(0.3, 0.05, 0.95))
 Deterministic objective functions:
 ```{r}
 det_obj <- function(design){
-    o <- matrix(design, ncol = 2)[,1:2]
-    c(s = NA, p = o[1], c = o[2])
+    #o <- matrix(design, ncol = 2)[,1:2]
+    #c(s = NA, p = o[1], c = o[2])
+  cbind(NA, design)
 }
 ```
 
@@ -131,11 +132,12 @@ for(i in 1:10){
   
   pf <- pareto_front(design_space, models, DoE, objectives, constraints, to_model, det_obj)
   
-  ref <- design_space$up*objectives$weight
+  ref <- c(design_space$up, 1)*objectives$weight
   current <- emoa::dominated_hypervolume(t(pf), ref)
   traj <- rbind(traj, c(-opt$optim$bestval, current))
 }
 ```
+
 ### Presentation
 
 

@@ -61,7 +61,7 @@ fit_models <- function(DoE, to_model, design_space)
   models <- list()
   for(i in 1:nrow(to_model)){
     response_index <- (to_model[i, "hyp_i"] - 1)*out_dim*2 + (2*to_model[i, "out_i"] - 1) + nrow(design_space)
-    models <- append(models, DiceKriging::km(~1, design=DoE[1:dim], response=DoE[, response_index],
+    models <- append(models, DiceKriging::km(~1, design=DoE[,1:dim], response=DoE[, response_index],
                                 noise.var=DoE[, response_index + 1]))
   }
 
