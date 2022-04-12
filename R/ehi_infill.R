@@ -1,10 +1,13 @@
 # Calculate the expected hypervolume improvement for a given point.
 
-ehi_infill <- function(design, N, pf, models, design_space, constraints, objectives, det_obj, out_dim, to_model)
+ehi_infill <- function(design, N, pf, mods, design_space, constraints, objectives, det_obj, out_dim, to_model)
 {
   ## Use the expected hypervolume improvement as implemented in GPareto
   ## Here, all objectives are models, and deterministic objective functions
   ## implemented as such via fastfun to have predict and update methods
+
+  models <- mods[1]
+  models_reint <- mods[2]
 
   dim <- nrow(design_space)
 
@@ -16,8 +19,8 @@ ehi_infill <- function(design, N, pf, models, design_space, constraints, objecti
   # Get EHI by sampling from predictive dists of stochastic objectives and
   # taking average of the improvement in dominated hypervolumes
 
-  n_samp <- 10
-  samp_fs <- sample_obj(n_samp, design, models, objectives, det_obj, dim, to_model)
+  n_samp <- 20
+  samp_fs <- sample_obj(n_samp, design, models_reint, objectives, det_obj, dim, to_model)
 
   # Hack - fix to make general for any objectives
   ref <- c(design_space$up, 1)*objectives$weight

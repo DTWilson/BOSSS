@@ -51,21 +51,26 @@ init_DoE <- function(size, design_space)
 #' hyp_i = c(1))
 #'
 #' fit_models(DoE, to_model, design_space)
-fit_models <- function(DoE, to_model, design_space)
+fit_models <- function(DoE, to_model, design_space, objectives)
 {
   ## To do: change to updating models if already initialised
 
-  dim <- nrow(design_space)
+  dimen <- nrow(design_space)
   out_dim <- 3
 
   models <- list()
+  models_reint <- list()
   for(i in 1:nrow(to_model)){
     response_index <- (to_model[i, "hyp_i"] - 1)*out_dim*2 + (2*to_model[i, "out_i"] - 1) + nrow(design_space)
-    models <- append(models, DiceKriging::km(~1, design=DoE[,1:dim], response=DoE[, response_index],
+    models <- append(models, DiceKriging::km(~1, design=DoE[,1:dimen], response=DoE[, response_index],
                                 noise.var=DoE[, response_index + 1]))
+
+    # reinterpolated model
+    models_reint[[i]] <- DiceKriging::km(~1, design=DoE[,1:dimen],
+                                     response=predict(models[[1]], newdata = DoE[,1:dimen], type="UK")$mean)
   }
 
-  models
+  return(c(models, models_reint))
 }
 
 #' Generate MC estimates
