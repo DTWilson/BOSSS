@@ -21,7 +21,7 @@ pareto_front <- function(design_space, models, DoE, objectives, constraints, to_
   out_dim <- max(c(objectives$out_i, constraints$out_i))
 
   ## Get objective values
-  obj_v <- predict_obj(sols[,1:dim], models, objectives, det_obj, dim, to_model)
+  obj_v <- predict_obj(sols[,1:dim], models, objectives, det_obj, to_model)
 
   ## Penalise constraint violations
   ## Note - some repetition with penalty in EHI so try to consolidate

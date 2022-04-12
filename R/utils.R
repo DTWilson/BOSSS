@@ -51,12 +51,11 @@ init_DoE <- function(size, design_space)
 #' hyp_i = c(1))
 #'
 #' fit_models(DoE, to_model, design_space)
-fit_models <- function(DoE, to_model, design_space, objectives)
+fit_models <- function(DoE, to_model, design_space, objectives, out_dim)
 {
   ## To do: change to updating models if already initialised
 
   dimen <- nrow(design_space)
-  out_dim <- 3
 
   models <- list()
   models_reint <- list()
@@ -99,11 +98,14 @@ fit_models <- function(DoE, to_model, design_space, objectives)
 #' calc_rates(design, hypotheses, N = 100, sim = sim_trial)
 calc_rates <- function(design, hypotheses, N, sim)
 {
+  # Run the simulation under each hypothesis and store the results
   results <- NULL
   for(i in 1:nrow(hypotheses)){
     sims <- replicate(N, sim(design, as.data.frame(hypotheses)[i,]))
     for(j in 1:nrow(sims)){
+      # Results are the mean and variance of each of the simulation outputs
       results <- c(results, mean(sims[j,]), stats::var(sims[j,])/N)
+      # Use the output variable names to name the result columns
       names(results)[(length(results) -1)] <- paste0(rownames(sims)[j], "_m_", rownames(hypotheses)[i])
       names(results)[length(results)] <- paste0(rownames(sims)[j], "_v_", rownames(hypotheses)[i])
     }

@@ -1,4 +1,4 @@
-predict_obj <- function(design, models, objectives, det_obj, dim, to_model)
+predict_obj <- function(design, models, objectives, det_obj, to_model)
 {
   obj_vals <- matrix(rep(NA, nrow(design)*nrow(objectives)), nrow = nrow(design))
   for(i in 1:nrow(objectives)){

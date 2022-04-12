@@ -157,6 +157,169 @@ if(ncol(pf) == 2){
 
 ## Adaptive design (NIFTy)
 
+### Problem
+
+Simulation:
+```{r}
+#n is the total sample size
+#ninterim is the number of patients at the interim analysis (proportion)
+#ainterim is alpha at interim analysis (threshold p-value at interim analysis)
+#afinal is alpha at final analaysis (threshold p-value for 2nd and final analysis)
+#this means overall alpha for the trial is ainterim*afinal
+#
+#pcontshort is the probability of 1 day PoSH in the control arm
+#pexpshort is the probability of 1 day PoSH in the experimental arm
+#pcontlong is the probability of 6 month PoSH in the control arm
+#pexplong is the probability of 6 month PoSH in the experimental arm
+
+sim_trial <- function(design, hypothesis)
+{
+  design <- as.numeric(design); hypothesis <- as.numeric(hypothesis)
+  
+  n <- design[1]; ninterim <- design[2]
+  ainterim <- design[3]; afinal <- design[4]
+  
+  pcontshort <- hypothesis[1]; pexpshort <- hypothesis[2]
+  pcontlong <- hypothesis[3]; pexplong <- hypothesis[4]
+  
+  ninterim <- floor(ninterim*n)
+  
+  patients<-c(1:n) #create patients
+  treat<-rep(c(1,2),ceiling(n/2))[1:n] #assign to treatment 1 or 2
+  
+  short<-rep(0,n) #short term outcome
+  long<-rep(0,n) #long term outcome
+  
+  data<-data.frame(patients,treat,short,long) #combine into dataset
+  
+  #generate result 1/0 for short term outcome. If short term outcome=0 then long term outcome=0
+  #If short term outcome=1 then long term outcome has probability pcontlong/pcontshort
+  #repeat for treatment=2
+  for(i in 1:n){
+    if(treat[i]==1){
+      data$short[i]<-rbinom(1,1,pcontshort)
+      if(data$short[i]==0){
+        data$long[i]<-0
+      }
+      if(data$short[i]==1){
+        data$long[i]<-rbinom(1,1,pcontlong/pcontshort)
+      }
+    }
+    else{
+      data$short[i]<-rbinom(1,1,pexpshort)
+      if(data$short[i]==0){
+        data$long[i]<-0
+      }
+      if(data$short[i]==1){
+        data$long[i]<-rbinom(1,1,pexplong/pexpshort)
+      }
+    }
+  }
+  #perform chi squared test on short term outcome for 1st ninterim patients
+  data2<-data[1:ninterim,]
+  tbl<-table(data2$short,data2$treat)
+  test<-chisq.test(tbl)$p.value #get p-value
+  
+  #if p<ainterim, perform chi squared test on long term outcome for all patients
+  if(test<ainterim){
+    tbl2<-table(data$long,data$treat)
+    test2<-chisq.test(tbl2)$p.value
+  }
+  
+  #if p>ainterim, trial unsuccessful at interim and final analysis
+  #if p<ainterim, trial successful at interim:
+  #if p2>afinal, trial unsuccessful at final analysis
+  #if p2<afinal, trial successful at final analysis
+  if(test>=ainterim){
+    return(c(s = 0, n = ninterim))
+  }
+  if(test<ainterim){
+    if(mean(data2[data2$treat == 1,"short"]) < mean(data2[data2$treat == 2,"short"])){
+      return(c(s = 0, n = ninterim))
+    } else {
+      if(test2>afinal){
+        return(c(s = 0, n = n))
+      }
+      if(test2<afinal){
+        return(c(s = 1, n = n))
+      }
+    }
+  }
+}
+
+# For example,
+sim_trial(c(300, 0.5, 0.4, 0.1), # design
+          c(0.25, 0.125, 0.1, 0.03))    # hypothesis
+```
+
+Deterministic objective functions:
+```{r}
+det_obj <- NULL
+```
+
+
+Design space and hypotheses:
+```{r}
+design_space <- data.frame(name=c("n", "ninterim", "ainterim", "afinal"), 
+                           low=c(100,0.05,0,0), 
+                           up=c(500,0.5,1,1)
+)
+
+hypotheses <- data.frame(pcontshort=c(0.25, 0.25),
+                     pexpshort=c(0.125, 0.25), 
+                     pcontlong=c(0.1, 0.25),
+                     pexplong =c(0.03, 0.25))
+```
+
+
+### Initialisation
+
+Constraints and objectives:
+
+```{r}
+constraints <- data.frame(name = c("a", "b"),
+                   out_i = c(1, 1),
+                   hyp_i = c(2, 1),
+                   nom = c(0.1, 0.2),
+                   delta =c(0.975, 0.975),
+                   stoch = c(TRUE, TRUE))
+
+objectives <- data.frame(name = c("f1", "f2", "f3"),
+                 out_i = c(1, 1, 2),
+                 hyp_i = c(2, 1, 2),
+                 weight = c(100, 100, 1),
+                 stoch = c(TRUE, TRUE, TRUE))
+
+objectives$weight <- objectives$weight/sum(objectives$weight)
+objectives$name <- as.character(objectives$name)
+```
+
+Initial DoE:
+
+```{r}
+size <- 20
+N <- 100
+
+DoE <- init_DoE(size, design_space)
+
+DoE <- cbind(DoE, t(apply(DoE, 1, calc_rates, hypotheses=hypotheses, N=N, sim=sim_trial)))
+DoE$N <- N
+
+to_model <- data.frame(out_i = c(1, 1, 2, 2),
+                       hyp_i = c(1, 2, 1, 2))
+
+mods <- fit_models(DoE, to_model, design_space, objectives, out_dim = 2)
+models <- mods[1:nrow(to_model)]
+models_reint <- mods[(nrow(to_model)+1):length(mods)]
+
+pf <- pareto_front(design_space, models, DoE, objectives, constraints, to_model, det_obj)
+```
+
+
+### Iteration
+
+### Presentation
+
 ## Bayesian / decision theoretic multilevel model
 
 ## Multi-state models
