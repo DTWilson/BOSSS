@@ -19,11 +19,11 @@ ehi_infill <- function(design, N, pf, mods, design_space, constraints, objective
   # Get EHI by sampling from predictive dists of stochastic objectives and
   # taking average of the improvement in dominated hypervolumes
 
-  n_samp <- 20
+  n_samp <- 50
   samp_fs <- sample_obj(n_samp, design, models_reint, objectives, det_obj, dim, to_model)
 
-  # Hack - fix to make general for any objectives
-  ref <- c(design_space$up, 1)*objectives$weight
+  # choose ref point as worst objective val in each dimension
+  ref <- apply(pf, 2, max)
   current <- emoa::dominated_hypervolume(t(pf), ref)
   pos <- apply(samp_fs, 1, function(obj) emoa::dominated_hypervolume(t(as.matrix(rbind(pf, obj))), ref) )
   imp <- (current-mean(pos))*exp_pen

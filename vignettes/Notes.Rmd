@@ -119,12 +119,10 @@ traj <- NULL
 
 for(i in 1:3){
   ptm <- proc.time()
-  
   opt <- RcppDE::DEoptim(ehi_infill, lower=design_space$low, upper=design_space$up,
                                  control=list(trace=FALSE, itermax=100, reltol=1e-1, steptol=50),
                                  N=N, pf=pf, mod=mods, design_space=design_space, constraints=constraints,
                                  objectives=objectives, det_obj=det_obj, out_dim=3, to_model=to_model)
-  
   sol <- as.numeric(opt$optim$bestmem)
   sol[1:2] <- round(sol[1:2])
   print(proc.time() - ptm)
