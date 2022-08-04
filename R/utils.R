@@ -59,6 +59,7 @@ fit_models <- function(DoE, to_model, design_space, objectives, out_dim)
 
   models <- list()
   models_reint <- list()
+  sink("NUL")
   for(i in 1:nrow(to_model)){
     response_index <- (to_model[i, "hyp_i"] - 1)*out_dim*2 + (2*to_model[i, "out_i"] - 1) + nrow(design_space)
     models <- append(models, DiceKriging::km(~1, design=DoE[,1:dimen], response=DoE[, response_index],
@@ -66,8 +67,9 @@ fit_models <- function(DoE, to_model, design_space, objectives, out_dim)
 
     # reinterpolated model
     models_reint[[i]] <- DiceKriging::km(~1, design=DoE[,1:dimen],
-                                     response=predict(models[[1]], newdata = DoE[,1:dimen], type="UK")$mean)
+                                     response=predict(models[[i]], newdata = DoE[,1:dimen], type="UK")$mean)
   }
+  sink()
 
   return(c(models, models_reint))
 }

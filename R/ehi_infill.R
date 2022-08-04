@@ -6,8 +6,9 @@ ehi_infill <- function(design, N, pf, mods, design_space, constraints, objective
   ## Here, all objectives are models, and deterministic objective functions
   ## implemented as such via fastfun to have predict and update methods
 
-  models <- mods[1]
-  models_reint <- mods[2]
+  n_mod <- nrow(to_model)
+  models <- mods[1:n_mod]
+  models_reint <- mods[(n_mod+1):(2*n_mod)]
 
   dim <- nrow(design_space)
 

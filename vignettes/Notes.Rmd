@@ -16,11 +16,14 @@ knitr::opts_chunk$set(
 
 ```{r setup}
 library(BOSSS)
+library(ggplot2)
 ```
 
 A place to build up notes and examples for a future tutorial-style document.
 
 Note that the method extends trivially to any kind of Bayesian analysis. We just use the hypotheses parameters to describe hyperparameters for the priors we want to simulate under, and use a Bayesian analysis (or freq if using a hybrid approach). This would include a decision-theoretic approach, where the analysis would give us a utility and we would use the expectation of this as an objective to maximise. One difficulty would be avoiding model compilation when using Stan or brms. We could potentially deal with this by storing a pre-compiled model as a file, and then loading and updating it for each iteration.
+
+Note - a Twitter thread on power analysis had a couple of people mentioning the R package simr for power through simulation when using mixed models. So might be worth including that in one of our examples, to save people having to write their own simulation code?
 
 # Examples
 
@@ -45,6 +48,8 @@ sim_trial <- function(design, hypothesis){
 
 # For example,
 sim_trial(c(300, 30), c(0.3, 0.05, 0.95))
+
+out_dim <- 3
 ```
 
 Deterministic objective functions:
@@ -105,7 +110,7 @@ DoE$N <- N
 to_model <- data.frame(out_i = c(1),
                        hyp_i = c(1))
 
-mods <- fit_models(DoE, to_model, design_space, objectives)
+mods <- fit_models(DoE, to_model, design_space, objectives, out_dim)
 models <- mods[1]
 models_reint <- mods[2]
 
@@ -131,7 +136,7 @@ for(i in 1:3){
   
   DoE <- rbind(DoE, c(sol, y, N))
   
-  models <- fit_models(DoE, to_model, design_space)
+  models <- fit_models(DoE, to_model, design_space, objectives, out_dim)
   
   pf <- pareto_front(design_space, models, DoE, objectives, constraints, to_model, det_obj)
   
@@ -218,12 +223,12 @@ sim_trial <- function(design, hypothesis)
   #perform chi squared test on short term outcome for 1st ninterim patients
   data2<-data[1:ninterim,]
   tbl<-table(data2$short,data2$treat)
-  test<-chisq.test(tbl)$p.value #get p-value
+  test<- suppressWarnings(chisq.test(tbl)$p.value) #get p-value
   
   #if p<ainterim, perform chi squared test on long term outcome for all patients
   if(test<ainterim){
     tbl2<-table(data$long,data$treat)
-    test2<-chisq.test(tbl2)$p.value
+    test2<- suppressWarnings(chisq.test(tbl2)$p.value)
   }
   
   #if p>ainterim, trial unsuccessful at interim and final analysis
@@ -231,17 +236,17 @@ sim_trial <- function(design, hypothesis)
   #if p2>afinal, trial unsuccessful at final analysis
   #if p2<afinal, trial successful at final analysis
   if(test>=ainterim){
-    return(c(s = 0, n = ninterim))
+    return(c(g = 0, s = 1, n = ninterim))
   }
   if(test<ainterim){
     if(mean(data2[data2$treat == 1,"short"]) < mean(data2[data2$treat == 2,"short"])){
-      return(c(s = 0, n = ninterim))
+      return(c(g = 0, s = 1, n = ninterim))
     } else {
       if(test2>afinal){
-        return(c(s = 0, n = n))
+        return(c(g = 0, s = 1, n = n))
       }
       if(test2<afinal){
-        return(c(s = 1, n = n))
+        return(c(g = 1, s = 0, n = n))
       }
     }
   }
@@ -250,6 +255,8 @@ sim_trial <- function(design, hypothesis)
 # For example,
 sim_trial(c(300, 0.5, 0.4, 0.1), # design
           c(0.25, 0.125, 0.1, 0.03))    # hypothesis
+
+out_dim <- 3
 ```
 
 Deterministic objective functions:
@@ -262,13 +269,13 @@ Design space and hypotheses:
 ```{r}
 design_space <- data.frame(name=c("n", "ninterim", "ainterim", "afinal"), 
                            low=c(100,0.05,0,0), 
-                           up=c(500,0.5,1,1)
+                           up=c(800,0.5,1,1)
 )
 
 hypotheses <- data.frame(pcontshort=c(0.25, 0.25),
-                     pexpshort=c(0.125, 0.25), 
-                     pcontlong=c(0.1, 0.25),
-                     pexplong =c(0.03, 0.25))
+                     pexpshort=c(0.25, 0.125), 
+                     pcontlong=c(0.25, 0.1),
+                     pexplong =c(0.25, 0.03))
 ```
 
 
@@ -278,15 +285,15 @@ Constraints and objectives:
 
 ```{r}
 constraints <- data.frame(name = c("a", "b"),
-                   out_i = c(1, 1),
-                   hyp_i = c(2, 1),
-                   nom = c(0.1, 0.2),
-                   delta =c(0.975, 0.975),
+                   out_i = c(1, 2),
+                   hyp_i = c(1, 2),
+                   nom = c(0.2, 0.2),
+                   delta =c(0.95, 0.95),
                    stoch = c(TRUE, TRUE))
 
 objectives <- data.frame(name = c("f1", "f2", "f3"),
-                 out_i = c(1, 1, 2),
-                 hyp_i = c(2, 1, 2),
+                 out_i = c(1, 2, 3),
+                 hyp_i = c(1, 2, 1),
                  weight = c(100, 100, 1),
                  stoch = c(TRUE, TRUE, TRUE))
 
@@ -297,7 +304,7 @@ objectives$name <- as.character(objectives$name)
 Initial DoE:
 
 ```{r}
-size <- 20
+size <- 40
 N <- 100
 
 DoE <- init_DoE(size, design_space)
@@ -305,20 +312,66 @@ DoE <- init_DoE(size, design_space)
 DoE <- cbind(DoE, t(apply(DoE, 1, calc_rates, hypotheses=hypotheses, N=N, sim=sim_trial)))
 DoE$N <- N
 
-to_model <- data.frame(out_i = c(1, 1, 2, 2),
-                       hyp_i = c(1, 2, 1, 2))
+to_model <- data.frame(out_i = c(1, 1, 2, 2, 3, 3),
+                       hyp_i = c(1, 2, 1, 2, 1, 2))
 
-mods <- fit_models(DoE, to_model, design_space, objectives, out_dim = 2)
+mods <- fit_models(DoE, to_model, design_space, objectives, out_dim)
 models <- mods[1:nrow(to_model)]
 models_reint <- mods[(nrow(to_model)+1):length(mods)]
 
-pf <- pareto_front(design_space, models, DoE, objectives, constraints, to_model, det_obj)
+pf_out <- pareto_front(design_space, models, DoE, objectives, constraints, to_model, det_obj)
+pf <- pf_out[[1]]
 ```
 
 
 ### Iteration
 
+```{r}
+traj <- NULL
+
+for(i in 1:20){
+  ptm <- proc.time()
+  opt <- RcppDE::DEoptim(ehi_infill, lower=design_space$low, upper=design_space$up,
+                                 control=list(trace=FALSE, itermax=100, reltol=1e-1, steptol=50),
+                                 N=N, pf=pf[,1:3], mod=mods, design_space=design_space, constraints=constraints,
+                                 objectives=objectives, det_obj=det_obj, out_dim=out_dim, to_model=to_model)
+  sol <- as.numeric(opt$optim$bestmem)
+  #sol[1:2] <- round(sol[1:2])
+  print(proc.time() - ptm)
+          
+  y <- calc_rates(sol, hypotheses=hypotheses, N=N, sim=sim_trial)
+
+  DoE <- rbind(DoE, c(sol, y, N))
+  
+  mods <- fit_models(DoE, to_model, design_space, objectives, out_dim)
+
+  pf_out <- pareto_front(design_space, models, DoE, objectives, constraints, to_model, det_obj)
+  pf <- pf_out[[1]]
+  
+  #ref <- c(design_space$up, 1)*objectives$weight
+  ref <- c(1,1,5)
+  current <- emoa::dominated_hypervolume(t(pf[,1:3]), ref)
+  traj <- rbind(traj, c(-opt$optim$bestval, current))
+}
+```
+
 ### Presentation
+
+```{r}
+# Get the Pareto set
+DoE <- cbind(DoE, pf_out[[2]])
+ps <- DoE[sapply(pf[,4], function(x) which(DoE[,ncol(DoE)] == x)),]
+
+ps <- ps[, c(5, 13, 9)]
+
+if(ncol(ps) == 2){
+  df <- data.frame(ps)
+  ggplot(df, aes(x=X1, y=X2)) + geom_point()
+} else if(ncol(ps) == 3){
+  df <- data.frame(ps)
+  ggplot(df, aes(x=g_m_1, y=s_m_2, colour=n_m_1)) + geom_point()
+}
+```
 
 ## Bayesian / decision theoretic multilevel model
 
