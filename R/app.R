@@ -201,9 +201,9 @@ BOSSSapp <- function(...) {
 
         incProgress(2/3, detail = "Fitting models")
 
-        rv$models <- fit_models(DoE, to_model, design_space)
+        rv$models <- fit_models(DoE, to_model, design_space, objectives, out_dim = ncol(input$ConMat))
 
-        rv$PS <- best(design_space, rv$models, rv$DoE, objectives, constraints, to_model, get_det_obj)
+        rv$PS <- pareto_front(design_space, rv$models, rv$DoE, objectives, constraints, to_model, get_det_obj)
       })
     })
 
@@ -237,9 +237,9 @@ BOSSSapp <- function(...) {
 
         incProgress(3/4, detail = "Updating models")
 
-        rv$models <- fit_models(rv$DoE, to_model, design_space)
+        rv$models <- fit_models(rv$DoE, to_model, design_space, objectives, out_dim = ncol(input$ConMat))
 
-        rv$PS <- best(design_space, rv$models, rv$DoE, objectives, constraints, to_model, get_det_obj)
+        rv$PS <- pareto_front(design_space, rv$models, rv$DoE, objectives, constraints, to_model, get_det_obj)
 
         ref <- design_space$up*objectives$weight
         PS2 <- as.matrix(rv$PS[, objectives$name])

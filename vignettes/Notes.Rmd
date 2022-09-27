@@ -158,7 +158,171 @@ if(ncol(pf) == 2){
 }
 ```
 
+## Simple adaptive design (for ICTMC)
 
+
+### Problem
+
+Simulation:
+```{r}
+sim_trial <- function(design, hypothesis)
+{
+  design <- as.numeric(design); hypothesis <- as.numeric(hypothesis)
+  
+  n <- design[1]; np <- design[2]
+  a1 <- design[3]; a2 <- design[4]
+  
+  mu <- hypothesis[1]; sig <- hypothesis[2]
+  
+  n1 <- n*np; n2 <- n - n1
+  
+  x1 <- mean(rnorm(n1, mean = mu, sd = sig))
+  x2 <- mean(rnorm(n2, mean = mu, sd = sig))
+  x <- (n1*x1 + n2*x2)/(n1 + n2)
+  
+  g <- x1 > a1 & x > a2
+  s <- !g
+  n <- n1 + n2*(x1 > a1)
+  
+  return(c(g, s, n))
+}
+
+# For example,
+sim_trial(c(300, 0.5, 0.4, 0.1), # design
+          c(0.3, 1))    # hypothesis
+
+out_dim <- 3
+```
+
+Deterministic objective functions:
+```{r}
+det_obj <- NULL
+```
+
+Design space and hypotheses:
+```{r}
+design_space <- data.frame(name=c("n", "np", "a1", "a2"), 
+                           low=c(10,0,0,0), 
+                           up=c(200,1,0.2,0.2)
+)
+
+hypotheses <- data.frame(mu=c(0, 0.3),
+                     sig=c(1, 1))
+```
+
+
+### Initialisation
+
+Constraints and objectives:
+
+```{r}
+constraints <- data.frame(name = c("a", "b"),
+                   out_i = c(1, 2),
+                   hyp_i = c(1, 2),
+                   nom = c(0.2, 0.2),
+                   delta =c(0.95, 0.95),
+                   stoch = c(TRUE, TRUE))
+
+objectives <- data.frame(name = c("f1", "f2", "f3"),
+                 out_i = c(1, 2, 3),
+                 hyp_i = c(1, 2, 1),
+                 weight = c(100, 100, 1),
+                 stoch = c(TRUE, TRUE, TRUE))
+
+objectives$weight <- objectives$weight/sum(objectives$weight)
+objectives$name <- as.character(objectives$name)
+```
+
+Initial DoE:
+
+```{r}
+size <- 40
+N <- 1000
+
+DoE <- init_DoE(size, design_space)
+
+DoE <- cbind(DoE, t(apply(DoE, 1, calc_rates, hypotheses=hypotheses, N=N, sim=sim_trial)))
+DoE$N <- N
+
+to_model <- data.frame(out_i = c(1, 1, 2, 2, 3, 3),
+                       hyp_i = c(1, 2, 1, 2, 1, 2))
+
+mods <- fit_models(DoE, to_model, design_space, objectives, out_dim)
+models <- mods[1:nrow(to_model)]
+models_reint <- mods[(nrow(to_model)+1):length(mods)]
+
+pf_out <- pareto_front(design_space, models, DoE, objectives, constraints, to_model, det_obj)
+pf <- pf_out[[1]][,1:nrow(objectives)]
+```
+
+### Iteration
+
+```{r}
+traj <- NULL
+
+for(i in 1:20){
+  ptm <- proc.time()
+  opt <- RcppDE::DEoptim(ehi_infill, lower=design_space$low, upper=design_space$up,
+                                 control=list(trace=FALSE, itermax=100, reltol=1e-1, steptol=50),
+                                 N=N, pf=pf, mod=mods, design_space=design_space, constraints=constraints,
+                                 objectives=objectives, det_obj=det_obj, out_dim=3, to_model=to_model)
+  sol <- as.numeric(opt$optim$bestmem)
+  #sol[1:2] <- round(sol[1:2])
+  print(proc.time() - ptm)
+          
+  y <- calc_rates(sol, hypotheses=hypotheses, N=N, sim=sim_trial)
+  
+  DoE <- rbind(DoE, c(sol, y, N))
+  
+  mods <- fit_models(DoE, to_model, design_space, objectives, out_dim)
+  models <- mods[1:nrow(to_model)]
+  models_reint <- mods[(nrow(to_model)+1):length(mods)]
+  
+  pf_out <- pareto_front(design_space, models, DoE, objectives, constraints, to_model, det_obj)
+  pf <- pf_out[[1]][,1:nrow(objectives)]
+  
+  # choose ref point as worst objective val in each dimension
+  ref <- c(1, 1, 1)
+  current <- emoa::dominated_hypervolume(t(pf), ref)
+  traj <- rbind(traj, c(-opt$optim$bestval, current))
+}
+```
+
+### Presentation
+
+```{r}
+#saveRDS(DoE, "DoE.Rds")
+DoE <- readRDS("DoE.Rds")
+
+DoE_ps_is <- sapply(pf_out[[1]][,4], function(x) which(pf_out[[2]] == x))
+
+df <- DoE[DoE_ps_is, ]
+
+obj_v <- as.data.frame(predict_obj(df[,1:4], models, objectives, det_obj, to_model))
+obj_v <- as.data.frame(t(t(obj_v)/objectives$weight))
+obj_v$t <- ifelse(DoE_ps_is <= 40, "Initial", "Iterated")
+
+ggplot(obj_v, aes(x=V1, y=V2, colour=V3, shape = t)) + geom_point() +
+  xlab("Type I error rate") + ylab("Type II error rate") +
+  scale_color_viridis(name="E[N]") +
+  scale_shape(name = "")+#, labels("a", "b")) +
+  theme_minimal() +
+  theme(panel.grid.major=element_line(colour="grey50"),
+        panel.grid.minor=element_line(colour="grey50"))
+
+#ggsave(width = 6, height = 3, filename = "../Presentations/ICTMC 2022/results.png")
+```
+
+```{r}
+df2 <- data.frame(exp_imp = traj[,1])
+df2$i <- 1:40
+
+ggplot(df2, aes(i, exp_imp)) +  geom_smooth(se=F, colour = "grey60") + geom_point() +
+  xlab("Iteration") + ylab("Expected improvement") + 
+  theme_minimal()
+
+#ggsave(width = 6, height = 4, filename = "../Presentations/ICTMC 2022/traj.png")
+```
 
 ## Adaptive design (NIFTy)
 

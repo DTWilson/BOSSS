@@ -20,7 +20,7 @@ pareto_front <- function(design_space, models, DoE, objectives, constraints, to_
 
   ## Get objective values
   # Add the objective values
-  obj_v <- predict_obj(DoE[1:40,1:dim], models, objectives, det_obj, to_model)
+  obj_v <- predict_obj(DoE[,1:dim], models, objectives, det_obj, to_model)
 
   ## Penalise constraint violations
   ## Note - some repetition with penalty in EHI so try to consolidate
