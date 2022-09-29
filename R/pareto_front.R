@@ -10,13 +10,12 @@
 #'
 #' @return data.frame
 #' @export
-pareto_front <- function(design_space, models, DoE, objectives, constraints, to_model, det_obj=NULL, b=NULL)
+pareto_front <- function(design_space, models, DoE, objectives, constraints, to_model, out_dim, det_obj=NULL, b=NULL)
 {
   ## Return the objective values of current Pareto optimal solutions,
   ## penalising constrain violations and considering only solutions
   ## where some evaluation has actually happened
   dim <- nrow(design_space)
-  out_dim <- max(c(objectives$out_i, constraints$out_i))
 
   ## Get objective values
   # Add the objective values

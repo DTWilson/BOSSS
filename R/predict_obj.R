@@ -5,6 +5,8 @@ predict_obj <- function(design, models, objectives, det_obj, to_model)
     if(objectives$stoch[i]){
       model_index <- which(to_model$out_i == objectives[i, "out_i"] &
                              to_model$hyp_i == objectives[i, "hyp_i"])
+      print(to_model)
+      print(model_index)
       p <- DiceKriging::predict.km(models[[model_index]], newdata=design, type="UK")
       f <- p$mean
       obj_vals[,i] <- f*objectives$weight[i]

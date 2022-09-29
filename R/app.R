@@ -92,11 +92,11 @@ BOSSSapp <- function(...) {
         # Button to iterate
         shiny::actionButton("iterButton", "Perform an iteration"),
 
-        shiny::tableOutput("tableb"),
+        shiny::tableOutput("tableb")#,
 
-        shiny::plotOutput("ASgraph"),
+        #shiny::plotOutput("ASgraph"),
 
-        shiny::plotOutput("Trajgraph")
+        #shiny::plotOutput("Trajgraph")
       )
     )
   )
@@ -166,7 +166,7 @@ BOSSSapp <- function(...) {
                            out_i = ob[,1],
                            hyp_i = ob[,2],
                            weight = ob[,3],
-                           stoch = rep(FALSE, nrow(ob)))
+                           stoch = rep(TRUE, nrow(ob)))
         ob$weight <- ob$weight/sum(ob$weight)
         ob$name <- as.character(ob$name)
       }
@@ -183,10 +183,13 @@ BOSSSapp <- function(...) {
     shiny::observeEvent(input$initButton,{
 
       shiny::withProgress(message = 'Initialising', value = 0, {
+
         design_space <- ds()
         objectives <- get_ob()
         constraints <- get_cons()
         hypotheses <- hyps()
+
+        out_dim <- ncol(input$ObMat)
 
         DoE <- init_DoE(input$size, design_space)
 
@@ -196,14 +199,16 @@ BOSSSapp <- function(...) {
         DoE$N <- input$N
         rv$DoE <- DoE
 
-        to_model <- data.frame(out_i = c(1),
-                               hyp_i = c(1))
+        to_model <- rbind(constraints[,c("out_i", "hyp_i")], objectives[,c("out_i", "hyp_i")])
+        to_model <- unique(to_model)
 
         incProgress(2/3, detail = "Fitting models")
 
-        rv$models <- fit_models(DoE, to_model, design_space, objectives, out_dim = ncol(input$ConMat))
+        rv$models <- fit_models(DoE, to_model, design_space, objectives, out_dim)
 
-        rv$PS <- pareto_front(design_space, rv$models, rv$DoE, objectives, constraints, to_model, get_det_obj)
+        pf_out <- pareto_front(design_space, rv$models, rv$DoE, objectives, constraints, to_model, out_dim, get_det_obj)
+        rv$PS <- pf_out[[1]][,1:nrow(objectives)]
+
       })
     })
 
@@ -214,38 +219,41 @@ BOSSSapp <- function(...) {
       objectives <- get_ob()
       constraints <- get_cons()
 
-      to_model <- data.frame(out_i = c(1),
-                             hyp_i = c(1))
+      out_dim <- ncol(input$ObMat)
 
-      shiny::withProgress(message = 'Initialising', value = 0, {
+      to_model <- rbind(constraints[,c("out_i", "hyp_i")], objectives[,c("out_i", "hyp_i")])
+      to_model <- unique(to_model)
+
+      shiny::withProgress(message = 'Iterating', value = 0, {
 
         incProgress(1/4, detail = "Optimising")
 
-        opt <- RcppDE::DEoptim(exp_improve, lower=design_space$low, upper=design_space$up,
-                               control=list(trace=FALSE),
-                               N=input$N, PS=rv$PS, mod=rv$models, design_space=design_space, constraints=constraints,
-                               objectives=objectives, get_det_obj=get_det_obj, out_dim=3, to_model = to_model)
+        opt <- RcppDE::DEoptim(ehi_infill, lower=design_space$low, upper=design_space$up,
+                               control=list(trace=FALSE, itermax=100, reltol=1e-1, steptol=50),
+                               N=input$N, pf=rv$PS, mod=rv$models, design_space=design_space, constraints=constraints,
+                               objectives=objectives, det_obj=get_det_obj, out_dim=out_dim, to_model=to_model)
 
         sol <- as.numeric(opt$optim$bestmem)
 
         incProgress(2/4, detail = "Evaluating selected design")
 
-        sol[1:2] <- round(sol[1:2])
+        #sol[1:2] <- round(sol[1:2])
         y <- calc_rates(sol, hypotheses=hypotheses, N=input$N, sim=rv$sim_trial)
 
         rv$DoE <- rbind(rv$DoE, c(sol, y, input$N))
 
         incProgress(3/4, detail = "Updating models")
 
-        rv$models <- fit_models(rv$DoE, to_model, design_space, objectives, out_dim = ncol(input$ConMat))
+        rv$models <- fit_models(rv$DoE, to_model, design_space, objectives, out_dim)
 
-        rv$PS <- pareto_front(design_space, rv$models, rv$DoE, objectives, constraints, to_model, get_det_obj)
+        pf_out <- pareto_front(design_space, rv$models, rv$DoE, objectives, constraints, to_model, out_dim, get_det_obj)
+        rv$PS <- pf_out[[1]][,1:nrow(objectives)]
 
         ref <- design_space$up*objectives$weight
-        PS2 <- as.matrix(rv$PS[, objectives$name])
-        current <- mco::dominatedHypervolume(PS2, ref)
 
+        current <- emoa::dominated_hypervolume(t(rv$PS), ref)
         rv$traj <- rbind(rv$traj, c(-opt$optim$bestval, current))
+
       })
     })
 

@@ -10,7 +10,8 @@ vignette: >
 ```{r, include = FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
-  comment = "#>"
+  comment = "#>",
+  eval = FALSE
 )
 ```
 
@@ -107,14 +108,15 @@ DoE <- init_DoE(size, design_space)
 DoE <- cbind(DoE, t(apply(DoE, 1, calc_rates, hypotheses=hypotheses, N=N, sim=sim_trial)))
 DoE$N <- N
 
-to_model <- data.frame(out_i = c(1),
-                       hyp_i = c(1))
+to_model <- rbind(constraints[,c("out_i", "hyp_i")], objectives[,c("out_i", "hyp_i")])
+to_model <- unique(to_model)
 
 mods <- fit_models(DoE, to_model, design_space, objectives, out_dim)
 models <- mods[1]
 models_reint <- mods[2]
 
-pf <- pareto_front(design_space, models, DoE, objectives, constraints, to_model, det_obj)
+pf_out <- pareto_front(design_space, models, DoE, objectives, constraints, to_model, det_obj)
+pf <- pf_out[[1]][,1:nrow(objectives)]
 ```
 
 ### Iteration
@@ -138,7 +140,8 @@ for(i in 1:3){
   
   models <- fit_models(DoE, to_model, design_space, objectives, out_dim)
   
-  pf <- pareto_front(design_space, models, DoE, objectives, constraints, to_model, det_obj)
+  pf_out <- pareto_front(design_space, models, DoE, objectives, constraints, to_model, det_obj)
+  pf <- pf_out[[1]][,1:nrow(objectives)]
   
   ref <- c(design_space$up, 1)*objectives$weight
   current <- emoa::dominated_hypervolume(t(pf), ref)
@@ -237,15 +240,15 @@ Initial DoE:
 
 ```{r}
 size <- 40
-N <- 1000
+N <- 100
 
 DoE <- init_DoE(size, design_space)
 
 DoE <- cbind(DoE, t(apply(DoE, 1, calc_rates, hypotheses=hypotheses, N=N, sim=sim_trial)))
 DoE$N <- N
 
-to_model <- data.frame(out_i = c(1, 1, 2, 2, 3, 3),
-                       hyp_i = c(1, 2, 1, 2, 1, 2))
+to_model <- rbind(constraints[,c("out_i", "hyp_i")], objectives[,c("out_i", "hyp_i")])
+to_model <- unique(to_model)
 
 mods <- fit_models(DoE, to_model, design_space, objectives, out_dim)
 models <- mods[1:nrow(to_model)]
@@ -260,7 +263,7 @@ pf <- pf_out[[1]][,1:nrow(objectives)]
 ```{r}
 traj <- NULL
 
-for(i in 1:20){
+for(i in 1:3){
   ptm <- proc.time()
   opt <- RcppDE::DEoptim(ehi_infill, lower=design_space$low, upper=design_space$up,
                                  control=list(trace=FALSE, itermax=100, reltol=1e-1, steptol=50),
@@ -479,6 +482,9 @@ DoE$N <- N
 to_model <- data.frame(out_i = c(1, 1, 2, 2, 3, 3),
                        hyp_i = c(1, 2, 1, 2, 1, 2))
 
+to_model <- rbind(constraints[,c("out_i", "hyp_i")], objectives[,c("out_i", "hyp_i")])
+to_model <- unique(to_model)
+
 mods <- fit_models(DoE, to_model, design_space, objectives, out_dim)
 models <- mods[1:nrow(to_model)]
 models_reint <- mods[(nrow(to_model)+1):length(mods)]
@@ -493,7 +499,7 @@ pf <- pf_out[[1]]
 ```{r}
 traj <- NULL
 
-for(i in 1:20){
+for(i in 1:3){
   ptm <- proc.time()
   opt <- RcppDE::DEoptim(ehi_infill, lower=design_space$low, upper=design_space$up,
                                  control=list(trace=FALSE, itermax=100, reltol=1e-1, steptol=50),
