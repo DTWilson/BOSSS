@@ -64,7 +64,7 @@ fit_models <- function(DoE, to_model, design_space, objectives, out_dim)
     response_index <- (to_model[i, "hyp_i"] - 1)*out_dim*2 + (2*to_model[i, "out_i"] - 1) + nrow(design_space)
     models <- append(models, DiceKriging::km(~1, design=DoE[,1:dimen], response=DoE[, response_index],
                                 noise.var=DoE[, response_index + 1]))
-
+    print(DoE[,1:dimen])
     # reinterpolated model
     models_reint[[i]] <- DiceKriging::km(~1, design=DoE[,1:dimen],
                                      response=predict(models[[i]], newdata = DoE[,1:dimen], type="UK")$mean)
@@ -119,6 +119,40 @@ DoE_index <- function(out_i, hyp_i, dim, out_dim)
 {
   # For an output and hypothesis number, get the column number in the DoE
   (hyp_i - 1)*out_dim*2 + (2*out_i - 1) + dim
+}
+
+extract_outputs <- function(sim_trial)
+{
+  str_func <- format(sim_trial)
+  found_return <- FALSE
+  i <- 1
+  while(found_return == FALSE & i <= length(str_func)){
+    line <- str_func[i]
+    r_index <- regexpr(pattern = "return", format(sim_trial)[i])[[1]]
+    i <- i + 1
+  }
+  if(r_index != -1){
+    line_split <- strsplit(line, "=")[[1]]
+    n_out <- length(line_split) - 1
+    out_names <- rep("", n_out)
+    for(i in 1:n_out){
+      line_chars <- strsplit(line_split[i], "")[[1]]
+      done <- FALSE
+      j <- length(line_chars)
+      while(!done){
+        e <- line_chars[j]
+        if(e == " "){
+          j <- j - 1
+        } else if(e == "(" | e == ","){
+          done <- TRUE
+        } else {
+          out_names[i] <- paste0(e, out_names[i])
+          j <- j - 1
+        }
+      }
+    }
+  }
+  return(out_names)
 }
 
 

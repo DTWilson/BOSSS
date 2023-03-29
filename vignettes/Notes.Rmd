@@ -34,26 +34,36 @@ For each example, describe the application here but also allow the problem to be
 
 ### Problem
 
-Simulation:
+First, specify our simulation function. This should always be called `sim_trial` and should always have two arguments, `design` and `hypothesis`. Each argument can be a vector. The `design` vector should have an element for each design variable (i.e. each variable we are optimising over), while the `hypothesis` vector should have an element for each parameter of the data generating model. The function should return a vector of outcomes whose expectations are going to be minimised, constrained, or both.
+
+In this example we have a cluster randomised trial. The design variables are the total per-arm sample size and the per-arm number of clusters. The parameters are the mean difference $\mu$, the between-cluster variance $\sigma_u^2$, and the within-cluster variance $\sigma_e^2$. The function simulates the mean outcome for each cluster, and then compares these in a t-test. It outputs a binary indicator of statistical significance along with the design variables.
+
 ```{r}
 sim_trial <- function(design, hypothesis){
+  # Exctract the design variables and parameters
   design <- as.numeric(design); hypothesis <- as.numeric(hypothesis)
   n <- design[1]; k <- design[2]
   mu <- hypothesis[1]; var_u <- hypothesis[2]; var_e <- hypothesis[3]
   
+  # Number of patients in each cluster
   m <- n/k
+  # SD of cluster means
   s_c <- sqrt(var_u + var_e/m)
+  # Simulate cluster means
   x0 <- stats::rnorm(k, 0, s_c); x1 <- stats::rnorm(k, mu, s_c)
-  c(s = stats::t.test(x0, x1)$p.value >= 0.05, p = n, c = k)
+  
+  return(c(s = stats::t.test(x0, x1)$p.value >= 0.05, n = n, k = k))
 }
 
 # For example,
 sim_trial(c(300, 30), c(0.3, 0.05, 0.95))
 
+# Note the number of elements in the output - hard coded for now
 out_dim <- 3
 ```
 
-Deterministic objective functions:
+We can also provide a function which will return any deterministic objective values - in this case, the numbers of patients and clusters. This helps later when optimising.
+
 ```{r}
 det_obj <- function(design){
     #o <- matrix(design, ncol = 2)[,1:2]
@@ -63,7 +73,8 @@ det_obj <- function(design){
 ```
 
 
-Design space and hypotheses:
+Now set up two dataframes. The first, `design_space`, gives the names and bounds of the design variables together with a binary indicator if they are integer or not. The second, `hypotheses`, gives the parameter values which define any hypotheses we will want to simulate under (in this case, an alternative and a null).
+
 ```{r}
 design_space <- data.frame(name = c("n", "k"),
                  low = c(50, 5),
@@ -77,12 +88,14 @@ hypotheses <- data.frame(mu = c(0.3, 0),
 
 ### Initialisation
 
-Constraints and objectives:
+To initialise the search, we first define `constraints` and `objectives`. These have similar structures, including names and numeric indicators of which output element (`out_i`) and which hypothesis (`hyp_i`) they are defined by. For example, constraint "a" relates to the first output (statistical significance) under the second hypothesis (the null). The field `nom` gives the upper limit for this constraint, while `delta` denotes the probability threshold used when judging if it has been satisfied. So our constraint here is that the probability of statistical significance under the null should be less than 0.2 with probability 0.975.
+
+Our objectives 
 
 ```{r}
 constraints <- data.frame(name = "a",
                    out_i = 1,
-                   hyp_i = 1,
+                   hyp_i = 2,
                    nom = 0.2,
                    delta = 0.975,
                    stoch = TRUE)

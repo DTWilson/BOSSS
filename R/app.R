@@ -40,41 +40,45 @@ BOSSSapp <- function(...) {
         m <- n/k
         s_c <- sqrt(var_u + var_e/m)
         x0 <- stats::rnorm(k, 0, s_c); x1 <- stats::rnorm(k, mu, s_c)
-        c(s = stats::t.test(x0, x1)$p.value >= 0.05, p = n, c = k)"),
+        return(c(s = stats::t.test(x0, x1)$p.value >= 0.05, p = n, c = k))",
+                             width = '800px', height = '400px'),
 
-        # Deterministic objective code
-        shiny::textAreaInput("objraw", "Deterministic objective code"),
+        shiny::textInput("desnames", "Design variable names:",
+                         "n,k"),
 
-        # Design space matrix
-        shinyMatrix::matrixInput("DSnums", label = "Design space", class = "numeric",
-                    cols = list(names = TRUE), rows = list(names = TRUE),
-                    value =  matrix(c(100, 10, 500, 100, 1, 1), 2, 3,
-                                    dimnames = list(c("n", "k"), c("Min", "Max", "Integer")))),
+        shiny::textInput("hypnames", "Model parameter names:",
+                         "mu,var_u,var_e"),
 
-        # Hypotheses matrix
-        shinyMatrix::matrixInput("Hypnums", label = "Hypotheses", class = "numeric",
-                                 cols = list(names = TRUE),
-                                 rows = list(extend = TRUE, names = TRUE, editableNames = TRUE),
-                                 value =  matrix(c(0.3, 0, 0.05, 0.05, 0.95, 0.95), ncol = 3,
-                                                 dimnames = list(letters[1:2], c("mu", "var_u", "var_e")))),
+        shiny::textInput("outnames", "Output variable names:",
+                         "s,p,c"),
 
         shiny::actionButton("checkSim", "Read in simulation")
       ),
 
       shiny::tabPanel("Initialisation",
+        # Design space matrix
+        shinyMatrix::matrixInput("DSnums", label = "Design space", class = "numeric",
+                                  cols = list(names = TRUE),
+                                  rows = list(names = TRUE),
+                                  value =  matrix(c(rep(1,6), ncol=3))),
+
+        # Hypotheses matrix
+        shinyMatrix::matrixInput("Hypnums", label = "Hypotheses", class = "numeric",
+                                  cols = list(names = TRUE),
+                                  rows = list(extend = TRUE, names = TRUE, editableNames = TRUE),
+                                  value = matrix(c(rep(1,3), ncol=3))),
+
         # Constraint matrix
-        shinyMatrix::matrixInput("ConMat", class = "numeric",
+        shinyMatrix::matrixInput("ConMat", label = "Constraints", class = "numeric",
                                  cols = list(names = TRUE),
                                  rows = list(names = TRUE),
-                                 value =  matrix(c(0.2, rep(NA, 5)), ncol = 3,
-                                                 dimnames = list(letters[1:2], c("s", "n", "k")))),
+                                 value =  matrix(c(rep(1,3), ncol=3))),
 
         # Objectives matrix
-        shinyMatrix::matrixInput("ObMat", class = "numeric",
+        shinyMatrix::matrixInput("ObMat", label = "Objectives", class = "numeric",
                                  cols = list(names = TRUE),
                                  rows = list(names = TRUE),
-                                 value =  matrix(c(NA, NA, 2, NA, 5, NA), ncol = 3,
-                                                 dimnames = list(letters[1:2], c("s", "n", "k")))),
+                                 value =  matrix(c(rep(1,3), ncol=3))),
 
         # number of initial DoE
         shiny::numericInput("size", "Inital DoE size", value = 20),
@@ -105,14 +109,21 @@ BOSSSapp <- function(...) {
     thematic::thematic_shiny()
 
     shiny::observeEvent(input$Hypnums, {
+
+      # Set up constraint and objective matrices
+      out_name_split <- strsplit(input$outnames, ",")[[1]]
+      hyp_num <- nrow(input$Hypnums)
+
       shinyMatrix::updateMatrixInput(session, inputId = "ConMat",
-                                      value =  matrix(input$ConMat, ncol = 3,
-                                                      dimnames = list(rownames(input$Hypnums)[1:2],
-                                                                      c("s", "n", "k"))))
+                                      value =  matrix(rep(NA, length(out_name_split)*hyp_num),
+                                                      ncol = length(out_name_split),
+                                                      dimnames = list(rownames(input$Hypnums),
+                                                                      out_name_split)))
       shinyMatrix::updateMatrixInput(session, inputId = "ObMat",
-                                     value =  matrix(input$ObMat, ncol = 3,
-                                                     dimnames = list(rownames(input$Hypnums)[1:2],
-                                                                     c("s", "n", "k"))))
+                                     value =  matrix(rep(NA, length(out_name_split)*hyp_num),
+                                                     ncol = length(out_name_split),
+                                                     dimnames = list(rownames(input$Hypnums),
+                                                                     out_name_split)))
     })
 
     ds <- shiny::reactive(
@@ -177,7 +188,25 @@ BOSSSapp <- function(...) {
     rv <- shiny::reactiveValues(DoE=NULL, PS=NULL, models=NULL, traj=NULL, sim_trial = NULL)
 
     shiny::observeEvent(input$checkSim,{
+      # Read in the simulation and turn into a function
       rv$sim_trial <- eval(parse(text = paste('f <- function(design, hypothesis) {', input$simraw, '}', sep='')))
+
+      # Set up design space matrix
+      ds_name_split <- strsplit(input$desnames, ",")[[1]]
+
+      shinyMatrix::updateMatrixInput(session, inputId = "DSnums",
+                                     value =  matrix(c(10,10,500,50,1,1),#rep(NA, 3*length(ds_name_split)),
+                                                     ncol = 3,
+                                                     dimnames = list(ds_name_split,
+                                                                     c("Min", "Max", "Integer"))))
+
+      # Set up hypothesis matrix
+      hyp_name_split <- strsplit(input$hypnames, ",")[[1]]
+
+      shinyMatrix::updateMatrixInput(session, inputId = "Hypnums",
+                                     value =  matrix(c(0,0.05,0.95),#rep(NA, length(hyp_name_split)),
+                                                     ncol = length(hyp_name_split),
+                                                     dimnames = list("a", hyp_name_split)))
     })
 
     shiny::observeEvent(input$initButton,{
