@@ -11,6 +11,7 @@ pareto_front(
   objectives,
   constraints,
   to_model,
+  out_dim,
   det_obj = NULL,
   b = NULL
 )

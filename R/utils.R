@@ -31,6 +31,8 @@ init_DoE <- function(size, design_space)
 #' @param DoE data.frame
 #' @param to_model data.frame
 #' @param design_space data.frame
+#' @param objectives
+#' @param out_dim
 #'
 #' @return list of objects of class km
 #' @export
@@ -50,8 +52,10 @@ init_DoE <- function(size, design_space)
 #' to_model <- data.frame(out_i = c(1),
 #' hyp_i = c(1))
 #'
-#' fit_models(DoE, to_model, design_space)
-fit_models <- function(DoE, to_model, design_space, objectives, out_dim)
+#' out_dim <- 3
+#'
+#' fit_models(DoE, to_model, design_space, out_dim)
+fit_models <- function(DoE, to_model, design_space,  out_dim)
 {
   ## To do: change to updating models if already initialised
 

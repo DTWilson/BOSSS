@@ -6,6 +6,8 @@
 #' @param objectives data.frame
 #' @param constraints data.frame
 #' @param to_model data.frame
+#' @param out_dim
+#' @param det_obj
 #' @param b data.frame
 #'
 #' @return data.frame

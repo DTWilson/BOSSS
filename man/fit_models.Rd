@@ -4,7 +4,7 @@
 \alias{fit_models}
 \title{Fit surrogate models}
 \usage{
-fit_models(DoE, to_model, design_space, objectives, out_dim)
+fit_models(DoE, to_model, design_space, out_dim)
 }
 \arguments{
 \item{DoE}{data.frame}
@@ -12,6 +12,8 @@ fit_models(DoE, to_model, design_space, objectives, out_dim)
 \item{to_model}{data.frame}
 
 \item{design_space}{data.frame}
+
+\item{out_dim}{}
 }
 \value{
 list of objects of class km
@@ -34,5 +36,7 @@ N = c(100, 100, 100))
 to_model <- data.frame(out_i = c(1),
 hyp_i = c(1))
 
-fit_models(DoE, to_model, design_space)
+out_dim <- 3
+
+fit_models(DoE, to_model, design_space, out_dim)
 }
