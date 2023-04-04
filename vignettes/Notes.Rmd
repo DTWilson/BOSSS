@@ -359,7 +359,8 @@ Simulation:
 #pcontlong is the probability of 6 month PoSH in the control arm
 #pexplong is the probability of 6 month PoSH in the experimental arm
 
-sim_trial <- function(design, hypothesis)
+sim_trial <- function(design = c(300, 0.5, 0.4, 0.1),
+                      hypothesis = c(0.25, 0.125, 0.1, 0.03))
 {
   design <- as.numeric(design); hypothesis <- as.numeric(hypothesis)
   
@@ -435,8 +436,7 @@ sim_trial <- function(design, hypothesis)
 }
 
 # For example,
-sim_trial(c(300, 0.5, 0.4, 0.1), # design
-          c(0.25, 0.125, 0.1, 0.03))    # hypothesis
+sim_trial()
 
 out_dim <- 3
 ```
@@ -454,10 +454,18 @@ design_space <- data.frame(name=c("n", "ninterim", "ainterim", "afinal"),
                            up=c(800,0.5,1,1)
 )
 
+design_space <- design_space(name = c("n", "ninterim", "ainterim", "afinal"),
+                             lower = c(100,0.05,0,0), 
+                             upper = c(800,0.5,1,1))
+
 hypotheses <- data.frame(pcontshort=c(0.25, 0.25),
                      pexpshort=c(0.25, 0.125), 
                      pcontlong=c(0.25, 0.1),
                      pexplong =c(0.25, 0.03))
+
+hypotheses <- hypotheses(name = c("pcontshort", "pexpshort", "pcontlong", "pexplong"),
+                         param_matrix = matrix(c(0.25, 0.25, 0.25, 0.25, 
+                                                 0.25, 0.125, 0.1, 0.03), ncol = 2))
 ```
 
 
@@ -479,8 +487,9 @@ objectives <- data.frame(name = c("f1", "f2", "f3"),
                  weight = c(100, 100, 1),
                  stoch = c(TRUE, TRUE, TRUE))
 
+prob <- new_BOSSS_problem(sim_trial, design_space, hypotheses, constraints, objectives, det_obj)
+
 objectives$weight <- objectives$weight/sum(objectives$weight)
-objectives$name <- as.character(objectives$name)
 ```
 
 Initial DoE:
@@ -500,7 +509,7 @@ to_model <- data.frame(out_i = c(1, 1, 2, 2, 3, 3),
 to_model <- rbind(constraints[,c("out_i", "hyp_i")], objectives[,c("out_i", "hyp_i")])
 to_model <- unique(to_model)
 
-mods <- fit_models(DoE, to_model, design_space, objectives, out_dim)
+mods <- fit_models(DoE, to_model, design_space, out_dim)
 models <- mods[1:nrow(to_model)]
 models_reint <- mods[(nrow(to_model)+1):length(mods)]
 
