@@ -4,7 +4,7 @@
 \alias{fit_models}
 \title{Fit surrogate models}
 \usage{
-fit_models(DoE, to_model, design_space, out_dim)
+fit_models(DoE, results, to_model, problem)
 }
 \arguments{
 \item{DoE}{data.frame}

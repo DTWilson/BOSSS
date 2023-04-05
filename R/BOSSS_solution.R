@@ -14,6 +14,7 @@ new_BOSSS_solution <- function(DoE, results, models, models_reint, p_front, p_se
   )
 }
 
+#' @export
 BOSSS_solution <- function(size, N, problem){
   stopifnot(class(problem) == "BOSSS_problem")
 
@@ -71,12 +72,19 @@ BOSSS_solution <- function(size, N, problem){
   sol
 }
 
+#' @export
 print.BOSSS_solution <- function(x, ...) {
   x$p_set
 }
 
+#' @export
 plot.BOSSS_solution <- function(x, y, ...) {
+
   n_obj <- (ncol(x$p_front) - 1)
+  df <- data.frame(x$p_set)
+  obj_names <- names(df)[(ncol(df) - n_obj + 1):ncol(df)]
+  names(df)[(ncol(df) - n_obj + 1):ncol(df)] <- letters[1:n_obj]
+
   if(n_obj > 3){
     stop(
       "Plotting methods are not currently available for > 3 objectives",
@@ -84,31 +92,22 @@ plot.BOSSS_solution <- function(x, y, ...) {
     )
   }
   if(n_obj == 3){
-    df <- data.frame(x$p_set)
-
-  } else if(n_obj == 2) {
-
-  } else {
-    stop(
-      "Plotting methods are not currently available for 1 objective",
-      call. = FALSE
-    )
-  }
-
-  df <- data.frame(ps)
-  obj_names <- names(df)[(ncol(df) - n_obj + 1):ncol(df)]
-  names(df)[(ncol(df) - n_obj + 1):ncol(df)] <- letters[1:n_obj]
-
-  if(n_obj == 2){
-    ggplot(df, aes(x=a, y=b)) + geom_point() +
-      xlab(obj_names[1]) + ylab(obj_names[2]) +
-      theme_minimal()
-  } else if(n_obj == 3){
     ggplot(df, aes(x=a, y=b, colour=c)) + geom_point() +
       xlab(obj_names[1]) + ylab(obj_names[2]) +
       #viridis::scale_color_viridis(name=obj_names[3]) +
       scale_colour_gradient(name = obj_names[3],
                             low = "green", high = "blue", na.value = NA) +
       theme_minimal()
+
+  } else if(n_obj == 2) {
+    ggplot(df, aes(x=a, y=b)) + geom_point() +
+      xlab(obj_names[1]) + ylab(obj_names[2]) +
+      theme_minimal()
+
+  } else {
+    stop(
+      "Plotting methods are not currently available for 1 objective",
+      call. = FALSE
+    )
   }
 }

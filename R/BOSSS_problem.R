@@ -1,4 +1,5 @@
 # Constructor
+#' @export
 new_BOSSS_problem <- function(sim_trial, design_space, hypotheses,
                               constraints, objectives, det_obj = NULL){
   # Check types

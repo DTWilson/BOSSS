@@ -4,32 +4,22 @@
 \alias{pareto_front}
 \title{Get the Pareto front}
 \usage{
-pareto_front(
-  design_space,
-  models,
-  DoE,
-  objectives,
-  constraints,
-  to_model,
-  out_dim,
-  det_obj = NULL,
-  b = NULL
-)
+pareto_front(models, DoE, results, to_model, problem, b = NULL)
 }
 \arguments{
-\item{design_space}{data.frame}
-
 \item{models}{list of objects of class km}
 
 \item{DoE}{data.frame}
 
-\item{objectives}{data.frame}
-
-\item{constraints}{data.frame}
-
 \item{to_model}{data.frame}
 
 \item{b}{data.frame}
+
+\item{design_space}{data.frame}
+
+\item{objectives}{data.frame}
+
+\item{constraints}{data.frame}
 }
 \value{
 data.frame

@@ -1,3 +1,4 @@
+#' @export
 iterate <- function(solution, problem, N) {
 
   opt <- RcppDE::DEoptim(ehi_infill,
