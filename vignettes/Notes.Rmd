@@ -441,12 +441,6 @@ sim_trial()
 out_dim <- 3
 ```
 
-Deterministic objective functions:
-```{r}
-det_obj <- NULL
-```
-
-
 Design space and hypotheses:
 ```{r}
 design_space <- design_space(name = c("n", "ninterim", "ainterim", "afinal"),
@@ -477,14 +471,16 @@ objectives <- objectives(name = c("f1", "f2", "f3"),
                  weight = c(100, 100, 1),
                  stoch = c(TRUE, TRUE, TRUE))
 
-prob <- new_BOSSS_problem(sim_trial, design_space, hypotheses, constraints, objectives, det_obj)
+prob <- new_BOSSS_problem(sim_trial, design_space, hypotheses, constraints, objectives)
 ```
 
-Initial DoE:
+Initialise solution:
 
 ```{r}
 size <- 40
 N <- 100
+
+sol <- BOSSS_solution(size, N, prob)
 
 DoE <- init_DoE(size, design_space)
 

@@ -1,6 +1,6 @@
 # Constructor
 new_BOSSS_problem <- function(sim_trial, design_space, hypotheses,
-                              constraints, objectives, det_obj){
+                              constraints, objectives, det_obj = NULL){
   # Check types
   stopifnot(is.function(sim_trial))
   stopifnot(is.data.frame(design_space))
@@ -12,15 +12,16 @@ new_BOSSS_problem <- function(sim_trial, design_space, hypotheses,
   # Normalise objective weights
   objectives$weight <- objectives$weight/sum(objectives$weight)
 
-  structure(
-    sim_trial,
-    design_space = design_space,
-    hypotheses = hypotheses,
-    constraints = constraints,
-    objectives = objectives,
-    det_obj = det_obj,
-    out_dimen = length(sim_trial()),
-    dimen = nrow(design_space),
+  prob <- list(simulation = sim_trial,
+               design_space = design_space,
+               hypotheses = hypotheses,
+               constraints = constraints,
+               objectives = objectives,
+               det_obj = det_obj,
+               out_dimen = length(sim_trial()),
+               dimen = nrow(design_space))
+
+  structure(prob,
     class = "BOSSS_problem"
   )
 }
@@ -40,4 +41,13 @@ validate_BOSSS_problem <- function(prob) {
   }
 
   prob
+}
+
+# Helper
+BOSSS_problem <- function(sim_trial, design_space, hypotheses,
+                              constraints, objectives, det_obj = NULL){
+
+  prob <- new_BOSSS_problem(sim_trial, design_space, hypotheses,
+                                        constraints, objectives, det_obj = NULL)
+  validate_BOSSS_problem(prob)
 }

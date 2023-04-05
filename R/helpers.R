@@ -15,7 +15,6 @@ hypotheses <- function(name, param_matrix) {
   names(df) <- paste0("hyp_", 1:ncol(param_matrix))
   df
 }
-<<<<<<< HEAD
 
 constraints <- function(name, out_i, hyp_i, nom, delta, stoch) {
 
@@ -35,5 +34,3 @@ objectives <- function(name, out_i, hyp_i, weight, stoch) {
              weight = weight,
              stoch = stoch)
 }
-=======
->>>>>>> 9f792d3e0cad008c6ab80ba8850f7e6a98d406cc

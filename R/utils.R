@@ -55,20 +55,19 @@ init_DoE <- function(size, design_space)
 #' out_dim <- 3
 #'
 #' fit_models(DoE, to_model, design_space, out_dim)
-fit_models <- function(DoE, to_model, design_space,  out_dim)
+fit_models <- function(DoE, results, to_model, problem)
 {
   ## To do: change to updating models if already initialised
 
-  dimen <- nrow(design_space)
+  dimen <- problem$dimen
 
   models <- list()
   models_reint <- list()
   sink("NUL")
   for(i in 1:nrow(to_model)){
-    response_index <- (to_model[i, "hyp_i"] - 1)*out_dim*2 + (2*to_model[i, "out_i"] - 1) + nrow(design_space)
-    models <- append(models, DiceKriging::km(~1, design=DoE[,1:dimen], response=DoE[, response_index],
-                                noise.var=DoE[, response_index + 1]))
-    print(DoE[,1:dimen])
+    r <- results[[to_model[i,2], to_model[i,1]]]
+    models <- append(models, DiceKriging::km(~1, design=DoE[,1:dimen], response=r[, 1],
+                                noise.var=r[, 2]))
     # reinterpolated model
     models_reint[[i]] <- DiceKriging::km(~1, design=DoE[,1:dimen],
                                      response=predict(models[[i]], newdata = DoE[,1:dimen], type="UK")$mean)
@@ -106,6 +105,7 @@ calc_rates <- function(design, hypotheses, N, sim)
 {
   # Run the simulation under each hypothesis and store the results
   results <- NULL
+  hypotheses <- t(hypotheses)
   for(i in 1:nrow(hypotheses)){
     sims <- replicate(N, sim(design, as.data.frame(hypotheses)[i,]))
     for(j in 1:nrow(sims)){
