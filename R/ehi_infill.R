@@ -1,14 +1,12 @@
 # Calculate the expected hypervolume improvement for a given point.
 
-ehi_infill <- function(design, N, pf, mods, design_space, constraints, objectives, det_obj, out_dim, to_model)
+ehi_infill <- function(design, N, pf, models, models_reint, design_space, constraints, objectives, det_obj, out_dim, to_model)
 {
   ## Use the expected hypervolume improvement as implemented in GPareto
   ## Here, all objectives are models, and deterministic objective functions
   ## implemented as such via fastfun to have predict and update methods
 
   n_mod <- nrow(to_model)
-  models <- mods[1:n_mod]
-  models_reint <- mods[(n_mod+1):(2*n_mod)]
 
   dim <- nrow(design_space)
 

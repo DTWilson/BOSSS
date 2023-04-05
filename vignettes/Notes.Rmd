@@ -437,8 +437,6 @@ sim_trial <- function(design = c(300, 0.5, 0.4, 0.1),
 
 # For example,
 sim_trial()
-
-out_dim <- 3
 ```
 
 Design space and hypotheses:

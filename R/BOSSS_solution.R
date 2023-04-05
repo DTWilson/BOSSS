@@ -1,11 +1,12 @@
 # Constructor
-new_BOSSS_solution <- function(DoE, models, models_reint, p_front, p_set_ids, to_model){
+new_BOSSS_solution <- function(DoE, results, models, models_reint, p_front, p_set, to_model){
 
   sol <- list(DoE = DoE,
+              results = results,
               models = models,
               models_reint = models_reint,
               p_front = p_front,
-              p_set_ids = p_set_ids,
+              p_set = p_set,
               to_model = to_model)
 
   structure(sol,
@@ -26,7 +27,7 @@ BOSSS_solution <- function(size, N, problem){
   t <- Sys.time()
   r <- calc_rates(DoE[1,], hypotheses=problem$hypotheses, N=N, sim=problem$simulation)
   dif <- capture.output((Sys.time() - t)*size)
-  cat("Initialisation will take approximately", substr(ch, 20, nchar(dif)), "\n")
+  cat("Initialisation will take approximately", substr(dif, 20, nchar(dif)), "\n")
 
   r <-  t(apply(DoE, 1, calc_rates, hypotheses=problem$hypotheses, N=N, sim=problem$simulation))
 
@@ -56,11 +57,58 @@ BOSSS_solution <- function(size, N, problem){
   cat("Models fitted\n")
 
   pf_out <- pareto_front(models, DoE, results, to_model, problem)
-  cat("Initial Pareto front and set found\n")
+  p_front <- pf_out[[1]]
+  cat("Initial solution found\n")
 
-  #DoE2 <- cbind(DoE, pf_out[[2]])
-  #ps <- DoE2[sapply(pf[,ncol(pf)], function(x) which(DoE2[,ncol(DoE2)] == x)), 1:problem$dimen]
+  p_set <- cbind(DoE, pf_out[[2]])
+  p_set <- p_set[sapply(p_front[,ncol(p_front)], function(y) which(p_set[,ncol(p_set)] == y)), 1:problem$dimen]
+  obj_vals <- predict_obj(p_set, models, problem$objectives, problem$det_obj, to_model)
+  obj_vals <- t(t(obj_vals)/problem$objectives$weight)
+  p_set <- cbind(p_set, obj_vals)
+  names(p_set)[(problem$dimen + 1):ncol(p_set)] <- problem$objectives$name
 
-  sol <- new_BOSSS_solution(DoE, models, models_reint, pf_out[[1]], pf_out[[2]], to_model)
+  sol <- new_BOSSS_solution(DoE, results, models, models_reint, p_front, p_set, to_model)
   sol
+}
+
+print.BOSSS_solution <- function(x, ...) {
+  x$p_set
+}
+
+plot.BOSSS_solution <- function(x, y, ...) {
+  n_obj <- (ncol(x$p_front) - 1)
+  if(n_obj > 3){
+    stop(
+      "Plotting methods are not currently available for > 3 objectives",
+      call. = FALSE
+    )
+  }
+  if(n_obj == 3){
+    df <- data.frame(x$p_set)
+
+  } else if(n_obj == 2) {
+
+  } else {
+    stop(
+      "Plotting methods are not currently available for 1 objective",
+      call. = FALSE
+    )
+  }
+
+  df <- data.frame(ps)
+  obj_names <- names(df)[(ncol(df) - n_obj + 1):ncol(df)]
+  names(df)[(ncol(df) - n_obj + 1):ncol(df)] <- letters[1:n_obj]
+
+  if(n_obj == 2){
+    ggplot(df, aes(x=a, y=b)) + geom_point() +
+      xlab(obj_names[1]) + ylab(obj_names[2]) +
+      theme_minimal()
+  } else if(n_obj == 3){
+    ggplot(df, aes(x=a, y=b, colour=c)) + geom_point() +
+      xlab(obj_names[1]) + ylab(obj_names[2]) +
+      #viridis::scale_color_viridis(name=obj_names[3]) +
+      scale_colour_gradient(name = obj_names[3],
+                            low = "green", high = "blue", na.value = NA) +
+      theme_minimal()
+  }
 }
