@@ -1,11 +1,11 @@
 # Constructor
-new_BOSSS_solution <- function(DoE, models, models_reint, p_front, p_set, to_model){
+new_BOSSS_solution <- function(DoE, models, models_reint, p_front, p_set_ids, to_model){
 
   sol <- list(DoE = DoE,
               models = models,
               models_reint = models_reint,
               p_front = p_front,
-              p_set = p_set,
+              p_set_ids = p_set_ids,
               to_model = to_model)
 
   structure(sol,
@@ -16,8 +16,17 @@ new_BOSSS_solution <- function(DoE, models, models_reint, p_front, p_set, to_mod
 BOSSS_solution <- function(size, N, problem){
   stopifnot(class(problem) == "BOSSS_problem")
 
+  # Initialise the solution by setting up the initial DoE, evaluating those points,
+  # fitting models and extracting the Pareto front and set
   DoE <- init_DoE(size, problem$design_space)
   DoE$N <- N
+
+  # Get a rough estimate of how long initialisation will take
+  cat("Checking simulation speed...\n")
+  t <- Sys.time()
+  r <- calc_rates(DoE[1,], hypotheses=problem$hypotheses, N=N, sim=problem$simulation)
+  dif <- capture.output((Sys.time() - t)*size)
+  cat("Initialisation will take approximately", substr(ch, 20, nchar(dif)), "\n")
 
   r <-  t(apply(DoE, 1, calc_rates, hypotheses=problem$hypotheses, N=N, sim=problem$simulation))
 
@@ -28,7 +37,6 @@ BOSSS_solution <- function(size, N, problem){
     for(j in 1:problem$out_dimen){
       s <- i*6 - 6 + j*2 - 1
       e <- j + i*3 - 3
-      print(c(i,j,s,e))
       results[[e]]  <- r[, s:(s+1)]
     }
   }
@@ -45,10 +53,14 @@ BOSSS_solution <- function(size, N, problem){
   mods <- fit_models(DoE, results, to_model, problem)
   models <- mods[1:nrow(to_model)]
   models_reint <- mods[(nrow(to_model)+1):length(mods)]
+  cat("Models fitted\n")
 
   pf_out <- pareto_front(models, DoE, results, to_model, problem)
-  pf <- pf_out[[1]]
+  cat("Initial Pareto front and set found\n")
 
-  sol <- new_BOSSS_solution(DoE, models, models_reint, pf, pf, to_model)
+  #DoE2 <- cbind(DoE, pf_out[[2]])
+  #ps <- DoE2[sapply(pf[,ncol(pf)], function(x) which(DoE2[,ncol(DoE2)] == x)), 1:problem$dimen]
+
+  sol <- new_BOSSS_solution(DoE, models, models_reint, pf_out[[1]], pf_out[[2]], to_model)
   sol
 }
