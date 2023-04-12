@@ -9,34 +9,15 @@ fit_models(DoE, results, to_model, problem)
 \arguments{
 \item{DoE}{data.frame}
 
+\item{results}{Matrix of estimates}
+
 \item{to_model}{data.frame}
 
-\item{design_space}{data.frame}
-
-\item{out_dim}{}
+\item{problem}{BOSSS problem}
 }
 \value{
 list of objects of class km
 }
 \description{
 Fit surrogate models
-}
-\examples{
-design_space <- data.frame(name = c("n", "k"),
-low = c(100, 10),
-up = c(500, 100),
-int = c(TRUE, TRUE))
-
-DoE <- data.frame(n = c(300, 400, 200),
-k = c(55, 32, 78),
-a = c(0.11, 0.10, 0.15),
-b = c(0.000988, 0.000909, 0.00128),
-N = c(100, 100, 100))
-
-to_model <- data.frame(out_i = c(1),
-hyp_i = c(1))
-
-out_dim <- 3
-
-fit_models(DoE, to_model, design_space, out_dim)
 }

@@ -29,32 +29,14 @@ init_DoE <- function(size, design_space)
 #' Fit surrogate models
 #'
 #' @param DoE data.frame
+#' @param results Matrix of estimates
 #' @param to_model data.frame
-#' @param design_space data.frame
-#' @param objectives
-#' @param out_dim
+#' @param problem BOSSS problem
 #'
 #' @return list of objects of class km
 #' @export
 #'
-#' @examples
-#' design_space <- data.frame(name = c("n", "k"),
-#' low = c(100, 10),
-#' up = c(500, 100),
-#' int = c(TRUE, TRUE))
 #'
-#' DoE <- data.frame(n = c(300, 400, 200),
-#' k = c(55, 32, 78),
-#' a = c(0.11, 0.10, 0.15),
-#' b = c(0.000988, 0.000909, 0.00128),
-#' N = c(100, 100, 100))
-#'
-#' to_model <- data.frame(out_i = c(1),
-#' hyp_i = c(1))
-#'
-#' out_dim <- 3
-#'
-#' fit_models(DoE, to_model, design_space, out_dim)
 fit_models <- function(DoE, results, to_model, problem)
 {
   ## To do: change to updating models if already initialised
@@ -119,12 +101,7 @@ calc_rates <- function(design, hypotheses, N, sim)
   results
 }
 
-DoE_index <- function(out_i, hyp_i, dim, out_dim)
-{
-  # For an output and hypothesis number, get the column number in the DoE
-  (hyp_i - 1)*out_dim*2 + (2*out_i - 1) + dim
-}
-
+# Now redundant?
 extract_outputs <- function(sim_trial)
 {
   str_func <- format(sim_trial)

@@ -14,7 +14,15 @@ new_BOSSS_solution <- function(DoE, results, models, models_reint, p_front, p_se
   )
 }
 
-#' @export
+#' Create an initial solution to a BOSSS problem
+#'
+#' @param size Number of points used in initialisation.
+#' @param N Number of simulations used in MC estimation.
+#' @param problem BOSSS problem to be solved.
+#'
+#' @returns An object of class BOSSS_solution.
+#'
+#'
 BOSSS_solution <- function(size, N, problem){
   stopifnot(class(problem) == "BOSSS_problem")
 
@@ -74,12 +82,32 @@ BOSSS_solution <- function(size, N, problem){
   sol
 }
 
+
+#' Print the Pareto set of a BOSSS solution
+#'
+#' @param x BOSSS solution.
+#' @param ... No other arguments for this method.
+#'
+#' @return A data.frame containing the Pareto set and the corresponding
+#' (unweighted) objective values.
 #' @export
+#'
+#'
 print.BOSSS_solution <- function(x, ...) {
   x$p_set
 }
 
+
+#' Plot the Pareto front of a BOSSS solution
+#'
+#' @param x BOSSS solution.
+#' @param y Not used.
+#' @param ... No other arguments for this method.
+#'
+#' @return A ggplot object two- and three-dimension Pareto fronts.
 #' @export
+#'
+#'
 plot.BOSSS_solution <- function(x, y, ...) {
 
   n_obj <- (ncol(x$p_front) - 1)

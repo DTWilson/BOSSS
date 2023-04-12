@@ -2,28 +2,18 @@
 % Please edit documentation in R/pareto_front.R
 \name{pareto_front}
 \alias{pareto_front}
-\title{Get the Pareto front}
+\title{Get the Pareto front of a BOSSS problem and solution}
 \usage{
 pareto_front(solution, problem)
 }
 \arguments{
-\item{design_space}{data.frame}
+\item{solution}{BOSSS solution.}
 
-\item{models}{list of objects of class km}
-
-\item{DoE}{data.frame}
-
-\item{objectives}{data.frame}
-
-\item{constraints}{data.frame}
-
-\item{to_model}{data.frame}
-
-\item{b}{data.frame}
+\item{problem}{BOSSS problem.}
 }
 \value{
-data.frame
+A data.frame containing the (weighted, penalised) Pareto front.
 }
 \description{
-Get the Pareto front
+Get the Pareto front of a BOSSS problem and solution
 }

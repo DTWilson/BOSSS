@@ -1,17 +1,12 @@
-#' Get the Pareto front
+#' Get the Pareto front of a BOSSS problem and solution
 #'
-#' @param design_space data.frame
-#' @param models list of objects of class km
-#' @param DoE data.frame
-#' @param objectives data.frame
-#' @param constraints data.frame
-#' @param to_model data.frame
-#' @param out_dim
-#' @param det_obj
-#' @param b data.frame
+#' @param solution BOSSS solution.
+#' @param problem BOSSS problem.
 #'
-#' @return data.frame
+#' @return A data.frame containing the (weighted, penalised) Pareto front.
 #' @export
+#'
+#'
 pareto_front <- function(solution, problem)
 {
   ## Return the objective values of current Pareto optimal solutions,
