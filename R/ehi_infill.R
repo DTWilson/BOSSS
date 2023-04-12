@@ -1,6 +1,6 @@
 # Calculate the expected hypervolume improvement for a given point.
 
-ehi_infill <- function(design, problem, solution)
+ehi_infill <- function(design, N, problem, solution)
 {
   ## Use the expected hypervolume improvement as implemented in GPareto
 
@@ -9,13 +9,14 @@ ehi_infill <- function(design, problem, solution)
 
   design <- as.data.frame(matrix(design, ncol = dim))
   names(design) <- problem$design_space$name
+  design$N <- N
 
   exp_pen <- exp_penalty(design, problem, solution)
 
   # Get EHI by sampling from predictive dists of stochastic objectives and
   # taking average of the improvement in dominated hypervolumes
   n_samp <- 50
-  samp_fs <- predict_obj(n_samp, design, problem, solution)
+  samp_fs <- predict_next_obj(n_samp, design, problem, solution)
 
   # choose ref point as worst objective val in each dimension
   p_front <- solution$p_front[, 1:(ncol(solution$p_front) - 1)]

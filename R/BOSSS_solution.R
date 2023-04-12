@@ -94,7 +94,7 @@ plot.BOSSS_solution <- function(x, y, ...) {
     )
   }
   if(n_obj == 3){
-    ggplot2::ggplot(df, ggplot2::aes(x=a, y=b, colour=c)) + ggplot2::geom_point() +
+    p <- ggplot2::ggplot(df, ggplot2::aes(x=a, y=b, colour=c)) + ggplot2::geom_point() +
       ggplot2::xlab(obj_names[1]) + ggplot2::ylab(obj_names[2]) +
       #viridis::scale_color_viridis(name=obj_names[3]) +
       ggplot2::scale_colour_gradient(name = obj_names[3],
@@ -102,7 +102,7 @@ plot.BOSSS_solution <- function(x, y, ...) {
       ggplot2::theme_minimal()
 
   } else if(n_obj == 2) {
-    ggplot2::ggplot(df, ggplot2::aes(x=a, y=b)) + ggplot2::geom_point() +
+    p <- ggplot2::ggplot(df, ggplot2::aes(x=a, y=b)) + ggplot2::geom_point() +
       ggplot2::xlab(obj_names[1]) + ggplot2::ylab(obj_names[2]) +
       ggplot2::theme_minimal()
 
@@ -112,4 +112,5 @@ plot.BOSSS_solution <- function(x, y, ...) {
       call. = FALSE
     )
   }
+  p
 }

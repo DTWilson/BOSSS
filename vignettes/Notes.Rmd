@@ -488,8 +488,10 @@ plot(sol)
 ### Iteration
 
 ```{r}
+for(i in 1:50) {
+print(i)
 sol <- iterate(sol, prob, N) 
-
+}
 print(sol)
 plot(sol)
 ```

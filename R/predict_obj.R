@@ -47,8 +47,8 @@ predict_next_obj <- function(n_samp, design, problem, solution){
   obj_vals <- matrix(rep(NA, n_samp*nrow(problem$objectives)), nrow = n_samp)
   for(i in 1:nrow(problem$objectives)){
 
-    out_i <- problem$constraints[i, "out_i"]
-    hyp_i <- problem$constraints[i, "hyp_i"]
+    out_i <- problem$objectives[i, "out_i"]
+    hyp_i <- problem$objectives[i, "hyp_i"]
 
     model_index <- which(solution$to_model$out_i == out_i & solution$to_model$hyp_i == hyp_i)
 
