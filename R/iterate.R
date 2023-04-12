@@ -5,16 +5,9 @@ iterate <- function(solution, problem, N) {
                          lower = problem$design_space$lower,
                          upper = problem$design_space$upper,
                          control=list(trace=FALSE, itermax=100, reltol=1e-1, steptol=50),
-                         N = N,
-                         pf = solution$p_front[,1:nrow(problem$objectives)],
-                         models = solution$models,
-                         models_reint = solution$models_reint,
-                         design_space = problem$design_space,
-                         constraints = problem$constraints,
-                         objectives = problem$objectives,
-                         det_obj = problem$det_obj,
-                         out_dim = problem$out_dim,
-                         to_model = solution$to_model)
+                         problem = problem,
+                         solution = solution)
+
   to_eval <- as.numeric(opt$optim$bestmem)
 
   solution$DoE <- rbind(solution$DoE, c(to_eval, N))

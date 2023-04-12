@@ -12,7 +12,7 @@
 #'
 #' @return data.frame
 #' @export
-pareto_front <- function(models, DoE, results, to_model, problem, b=NULL)
+pareto_front <- function(solution, problem)
 {
   ## Return the objective values of current Pareto optimal solutions,
   ## penalising constrain violations and considering only solutions
@@ -20,24 +20,34 @@ pareto_front <- function(models, DoE, results, to_model, problem, b=NULL)
   dimen <- problem$dimen
 
   ## Get objective values
-  # Add the objective values for all evaluated points
-  obj_v <- predict_obj(DoE[,1:dimen], models, problem$objectives, problem$det_obj, to_model)
+  # Add the objective values for all evaluated points, using point estimates
+  # from the fitted models
+  obj_v <- predict_obj(solution$DoE[,1:problem$dimen], problem, solution)
 
   ## Penalise constraint violations
   ## Note - some repetition with penalty in EHI so try to consolidate
   constraints <- problem$constraints
   exp_pen <- 1
-  for(i in 1:nrow(constraints)){
-    #index <- DoE_index(constraints[i, "out_i"], constraints[i, "hyp_i"], dim, out_dim)
-    model_index <- which(to_model$out_i == constraints[i, "out_i"] & to_model$hyp_i == constraints[i, "hyp_i"])
-    nom <- constraints[i, "nom"]
-    if(constraints[i, "stoch"]){
-      p <- DiceKriging::predict.km(models[[model_index]], newdata=DoE[,1:dimen, drop=F], type="UK")
+  for(i in 1:nrow(problem$constraints)){
+
+    out_i <- problem$constraints[i, "out_i"]
+    hyp_i <- problem$constraints[i, "hyp_i"]
+
+    # Models are in order of to_model
+    model_index <- which(solution$to_model$out_i == out_i & solution$to_model$hyp_i == hyp_i)
+
+    nom <- problem$constraints[i, "nom"]
+    if(problem$constraints[i, "stoch"]){
+      p <- DiceKriging::predict.km(solution$models[[model_index]],
+                                   newdata = solution$DoE[,1:dimen, drop=F],
+                                   type="UK", light.return = TRUE)
+      # Get probability that constraint is violated
       pen <- stats::pnorm(nom, p$mean, p$sd)
+      # Penalise based on this probability being below delta
       pen <- ifelse(pen < constraints[i, "delta"], 0.0000001, 1)
       exp_pen <- exp_pen*pen
     } else {
-      pen <- ifelse(results[[constraints[i, "hyp_i"], constraints[i, "out_i"]]][,1] > nom, 0.0000001, 1)
+      pen <- ifelse(solution$results[[hyp_i, out_i]][,1] > nom, 0.0000001, 1)
       exp_pen <- exp_pen*pen
     }
   }

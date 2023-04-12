@@ -1,63 +1,69 @@
 # Calculate the expected hypervolume improvement for a given point.
 
-ehi_infill <- function(design, N, pf, models, models_reint, design_space, constraints, objectives, det_obj, out_dim, to_model)
+ehi_infill <- function(design, problem, solution)
 {
   ## Use the expected hypervolume improvement as implemented in GPareto
-  ## Here, all objectives are models, and deterministic objective functions
-  ## implemented as such via fastfun to have predict and update methods
 
-  n_mod <- nrow(to_model)
-
-  dim <- nrow(design_space)
+  n_mod <- nrow(solution$to_model)
+  dim <- problem$dimen
 
   design <- as.data.frame(matrix(design, ncol = dim))
-  names(design) <- design_space$name
+  names(design) <- problem$design_space$name
 
-  exp_pen <- exp_penalty(design, N, models, constraints, dim, out_dim, to_model)
+  exp_pen <- exp_penalty(design, problem, solution)
 
   # Get EHI by sampling from predictive dists of stochastic objectives and
   # taking average of the improvement in dominated hypervolumes
-
   n_samp <- 50
-  samp_fs <- sample_obj(n_samp, design, models_reint, objectives, det_obj, dim, to_model)
+  samp_fs <- predict_obj(n_samp, design, problem, solution)
 
   # choose ref point as worst objective val in each dimension
-  ref <- apply(pf, 2, max)
-  current <- emoa::dominated_hypervolume(t(pf), ref)
-  pos <- apply(samp_fs, 1, function(obj) emoa::dominated_hypervolume(t(as.matrix(rbind(pf, obj))), ref) )
+  p_front <- solution$p_front[, 1:(ncol(solution$p_front) - 1)]
+  ref <- apply(p_front, 2, max)
+  current <- emoa::dominated_hypervolume(t(p_front), ref)
+  pos <- apply(samp_fs, 1, function(obj) emoa::dominated_hypervolume(t(as.matrix(rbind(p_front, obj))), ref) )
   imp <- (current-mean(pos))*exp_pen
 
   ## Minimising, so keeping negative
   return(imp)
 }
 
-exp_penalty <- function(design, N, models, constraints, dim, out_dim, to_model){
+exp_penalty <- function(design, problem, soltuion){
   ## Get expected penalisation if we were to evaluate at design,
   ## using the models of constraint functions
   exp_pen <- 1
-  for(i in 1:nrow(constraints)){
-    # Get index of constraint output in DoE
-    index <- DoE_index(constraints[i, "out_i"], constraints[i, "hyp_i"],
-                       dim, out_dim)
-    nom <- constraints[i, "nom"]
+  for(i in 1:nrow(problem$constraints)){
 
-    if(constraints[i, "stoch"]){
-      # If constraint is stochastic, get index of the appropriate model
-      model_index <- which(to_model$out_i == constraints[i, "out_i"] & to_model$hyp_i == constraints[i, "hyp_i"])
+    out_i <- problem$constraints[i, "out_i"]
+    hyp_i <- problem$constraints[i, "hyp_i"]
 
-      # predict constraint at design point
-      p <- DiceKriging::predict.km(models[[model_index]], newdata=design[,1:dim, drop=F], type="SK")
+    # Models are in order of to_model
+    model_index <- which(solution$to_model$out_i == out_i & solution$to_model$hyp_i == hyp_i)
 
-      # assuming worst case MC error, get mean and varinace of the predicted quantile
-      mc_vars <- 0.25/N #p$mean*(1-p$mean)/N
-      pred_q_mean <- p$mean + stats::qnorm(constraints[i, "delta"])*sqrt(mc_vars*(p$sd^2)/(mc_vars+(p$sd^2)))
+    nom <- problem$constraints[i, "nom"]
+
+    if(problem$constraints[i, "nom"]){
+
+      # If constraint is stochastic, predict constraint at design point
+      p <- DiceKriging::predict.km(solution$models[[model_index]],
+                                   newdata=design[,1:problem$dimen, drop=F],
+                                   type="SK",
+                                   light.return=TRUE)
+
+      # assuming worst case MC error, get mean and variance of the predicted quantile
+      mc_vars <- 0.25/design$N
+      pred_q_mean <- p$mean + stats::qnorm(problem$constraints[i, "delta"])*sqrt(mc_vars*(p$sd^2)/(mc_vars+(p$sd^2)))
       pred_q_var <- ((p$sd^2)^2)/(mc_vars+(p$sd^2))
 
       # Incorporate prob of constraint violation into penalisation
       exp_pen <- exp_pen*stats::pnorm(nom, pred_q_mean, sqrt(pred_q_var))
     } else {
       # If constraint is deterministic, penalise by ~0 if violated
-      exp_pen <- ifelse(DoE[, index] > nom, 0.0000001, 1)
+
+      # Results are a hyp x out matrix
+      ests <- solution$results[hyp_i, out_i]
+
+      exp_pen <- ifelse(ests[, 1] > nom, 0.0000001, 1)
     }
   }
   return(exp_pen)

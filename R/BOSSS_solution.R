@@ -27,7 +27,7 @@ BOSSS_solution <- function(size, N, problem){
   cat("Checking simulation speed...\n")
   t <- Sys.time()
   r <- calc_rates(DoE[1,], hypotheses=problem$hypotheses, N=N, sim=problem$simulation)
-  dif <- capture.output((Sys.time() - t)*size)
+  dif <- utils::capture.output((Sys.time() - t)*size)
   cat("Initialisation will take approximately", substr(dif, 20, nchar(dif)), "\n")
 
   r <-  t(apply(DoE, 1, calc_rates, hypotheses=problem$hypotheses, N=N, sim=problem$simulation))
@@ -57,13 +57,15 @@ BOSSS_solution <- function(size, N, problem){
   models_reint <- mods[(nrow(to_model)+1):length(mods)]
   cat("Models fitted\n")
 
-  pf_out <- pareto_front(models, DoE, results, to_model, problem)
+  sol <- new_BOSSS_solution(DoE, results, models, models_reint, p_front = NULL, p_set = NULL, to_model)
+
+  pf_out <- pareto_front(sol, problem)
   p_front <- pf_out[[1]]
   cat("Initial solution found\n")
 
   p_set <- cbind(DoE, pf_out[[2]])
   p_set <- p_set[sapply(p_front[,ncol(p_front)], function(y) which(p_set[,ncol(p_set)] == y)), 1:problem$dimen]
-  obj_vals <- predict_obj(p_set, models, problem$objectives, problem$det_obj, to_model)
+  obj_vals <- predict_obj(p_set, problem, sol)
   obj_vals <- t(t(obj_vals)/problem$objectives$weight)
   p_set <- cbind(p_set, obj_vals)
   names(p_set)[(problem$dimen + 1):ncol(p_set)] <- problem$objectives$name
