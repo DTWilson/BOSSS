@@ -443,7 +443,7 @@ Design space and hypotheses:
 ```{r}
 design_space <- design_space(name = c("n", "ninterim", "ainterim", "afinal"),
                              lower = c(100,0.05,0,0), 
-                             upper = c(800,0.5,1,1))
+                             upper = c(500,0.5,1,1))
 
 hypotheses <- hypotheses(name = c("pcontshort", "pexpshort", "pcontlong", "pexplong"),
                          param_matrix = matrix(c(0.25, 0.25, 0.25, 0.25, 
@@ -488,31 +488,47 @@ plot(sol)
 ### Iteration
 
 ```{r}
-for(i in 1:50) {
-print(i)
-sol <- iterate(sol, prob, N) 
+for(i in 1:39) {
+  sol <- iterate(sol, prob, N) 
 }
 print(sol)
 plot(sol)
 ```
 
+### Diagnostics
+
+To check the GP models are giving sensible predictions, we can choose a specific design and then plot the predictions for each model along the range of each design variable.
+
+```{r}
+# Pick a specific design from the Pareto set
+design <- solution$p_set[1,]
+
+plots <- one_d_plots(design, problem, solution)
+
+for(i in 1:length(plots)) {
+  print(plots[[i]])
+}
+```
+
+```{r}
+check_point(design, problem, solution, N=100) 
+```
+
 ### Presentation
 
 ```{r}
-# Get the Pareto set
-DoE <- cbind(DoE, pf_out[[2]])
-ps <- DoE[sapply(pf[,4], function(x) which(DoE[,ncol(DoE)] == x)),]
-
-ps <- ps[, c(5, 13, 9)]
-
-if(ncol(ps) == 2){
-  df <- data.frame(ps)
-  ggplot(df, aes(x=X1, y=X2)) + geom_point()
-} else if(ncol(ps) == 3){
-  df <- data.frame(ps)
-  ggplot(df, aes(x=g_m_1, y=s_m_2, colour=n_m_1)) + geom_point()
+# Plot the Pareto front as a plotly object if installed
+is_plotly_available <- require(plotly)
+if(is_plotly_available) {
+  ggplotly(plot(sol))
 }
 ```
+
+### Sensitivity analysis
+
+Use a generalised hypothesis defined by ranges (which may be degenerate point values) for each parameter. Take a suggested design and fit new models to cover these ranges. 
+
+
 
 ## Bayesian / decision theoretic multilevel model
 
