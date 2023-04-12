@@ -24,10 +24,7 @@ Imports:
     randtoolbox,
     DiceKriging,
     stats,
-    shinyMatrix,
-    shiny,
     ggplot2,
-    thematic,
     RcppDE,
     emoa
 VignetteBuilder: knitr

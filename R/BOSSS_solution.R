@@ -92,17 +92,17 @@ plot.BOSSS_solution <- function(x, y, ...) {
     )
   }
   if(n_obj == 3){
-    ggplot(df, aes(x=a, y=b, colour=c)) + geom_point() +
-      xlab(obj_names[1]) + ylab(obj_names[2]) +
+    ggplot2::ggplot(df, ggplot2::aes(x=a, y=b, colour=c)) + ggplot2::geom_point() +
+      ggplot2::xlab(obj_names[1]) + ggplot2::ylab(obj_names[2]) +
       #viridis::scale_color_viridis(name=obj_names[3]) +
-      scale_colour_gradient(name = obj_names[3],
+      ggplot2::scale_colour_gradient(name = obj_names[3],
                             low = "green", high = "blue", na.value = NA) +
-      theme_minimal()
+      ggplot2::theme_minimal()
 
   } else if(n_obj == 2) {
-    ggplot(df, aes(x=a, y=b)) + geom_point() +
-      xlab(obj_names[1]) + ylab(obj_names[2]) +
-      theme_minimal()
+    ggplot2::ggplot(df, ggplot2::aes(x=a, y=b)) + ggplot2::geom_point() +
+      ggplot2::xlab(obj_names[1]) + ggplot2::ylab(obj_names[2]) +
+      ggplot2::theme_minimal()
 
   } else {
     stop(
