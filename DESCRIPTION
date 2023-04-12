@@ -26,8 +26,8 @@ Imports:
     stats,
     shinyMatrix,
     shiny,
-    pso,
-    mco,
     ggplot2,
-    thematic
+    thematic,
+    RcppDE,
+    emoa
 VignetteBuilder: knitr
