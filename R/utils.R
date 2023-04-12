@@ -70,7 +70,7 @@ fit_models <- function(DoE, results, to_model, problem)
                                 noise.var=r[, 2]))
     # reinterpolated model
     models_reint[[i]] <- DiceKriging::km(~1, design=DoE[,1:dimen],
-                                     response=predict(models[[i]], newdata = DoE[,1:dimen], type="UK")$mean)
+                                     response=DiceKriging::predict.km(models[[i]], newdata = DoE[,1:dimen], type="UK")$mean)
   }
   sink()
 

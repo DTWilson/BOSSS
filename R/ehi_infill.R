@@ -29,7 +29,7 @@ ehi_infill <- function(design, N, problem, solution)
   return(imp)
 }
 
-exp_penalty <- function(design, problem, soltuion){
+exp_penalty <- function(design, problem, solution){
   ## Get expected penalisation if we were to evaluate at design,
   ## using the models of constraint functions
   exp_pen <- 1
