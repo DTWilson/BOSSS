@@ -20,327 +20,11 @@ library(BOSSS)
 library(ggplot2)
 ```
 
-Changes
-
 A place to build up notes and examples for a future tutorial-style document.
-
-Note that the method extends trivially to any kind of Bayesian analysis. We just use the hypotheses parameters to describe hyperparameters for the priors we want to simulate under, and use a Bayesian analysis (or freq if using a hybrid approach). This would include a decision-theoretic approach, where the analysis would give us a utility and we would use the expectation of this as an objective to maximise. One difficulty would be avoiding model compilation when using Stan or brms. We could potentially deal with this by storing a pre-compiled model as a file, and then loading and updating it for each iteration.
 
 Note - a Twitter thread on power analysis had a couple of people mentioning the R package simr for power through simulation when using mixed models. So might be worth including that in one of our examples, to save people having to write their own simulation code?
 
 # Examples
-
-For each example, describe the application here but also allow the problem to be loaded in to the app, with seeds set, so the user can follow along themselves?
-
-## Simple two-sample t-test
-
-### Problem
-
-First, specify our simulation function. This should always be called `sim_trial` and should always have two arguments, `design` and `hypothesis`. Each argument can be a vector. The `design` vector should have an element for each design variable (i.e. each variable we are optimising over), while the `hypothesis` vector should have an element for each parameter of the data generating model. The function should return a vector of outcomes whose expectations are going to be minimised, constrained, or both.
-
-In this example we have a cluster randomised trial. The design variables are the total per-arm sample size and the per-arm number of clusters. The parameters are the mean difference $\mu$, the between-cluster variance $\sigma_u^2$, and the within-cluster variance $\sigma_e^2$. The function simulates the mean outcome for each cluster, and then compares these in a t-test. It outputs a binary indicator of statistical significance along with the design variables.
-
-```{r}
-sim_trial <- function(design, hypothesis){
-  # Exctract the design variables and parameters
-  design <- as.numeric(design); hypothesis <- as.numeric(hypothesis)
-  n <- design[1]; k <- design[2]
-  mu <- hypothesis[1]; var_u <- hypothesis[2]; var_e <- hypothesis[3]
-  
-  # Number of patients in each cluster
-  m <- n/k
-  # SD of cluster means
-  s_c <- sqrt(var_u + var_e/m)
-  # Simulate cluster means
-  x0 <- stats::rnorm(k, 0, s_c); x1 <- stats::rnorm(k, mu, s_c)
-  
-  return(c(s = stats::t.test(x0, x1)$p.value >= 0.05, n = n, k = k))
-}
-
-# For example,
-sim_trial(c(300, 30), c(0.3, 0.05, 0.95))
-
-# Note the number of elements in the output - hard coded for now
-out_dim <- 3
-```
-
-We can also provide a function which will return any deterministic objective values - in this case, the numbers of patients and clusters. This helps later when optimising.
-
-```{r}
-det_obj <- function(design){
-    #o <- matrix(design, ncol = 2)[,1:2]
-    #c(s = NA, p = o[1], c = o[2])
-  cbind(NA, design)
-}
-```
-
-
-Now set up two dataframes. The first, `design_space`, gives the names and bounds of the design variables together with a binary indicator if they are integer or not. The second, `hypotheses`, gives the parameter values which define any hypotheses we will want to simulate under (in this case, an alternative and a null).
-
-```{r}
-design_space <- data.frame(name = c("n", "k"),
-                 low = c(50, 5),
-                 up = c(500, 50),
-                 int = c(TRUE, TRUE))
-
-hypotheses <- data.frame(mu = c(0.3, 0),
-                   var_u = c(0.05, 0.05),
-                   var_e = c(0.95, 0.95))
-```
-
-### Initialisation
-
-To initialise the search, we first define `constraints` and `objectives`. These have similar structures, including names and numeric indicators of which output element (`out_i`) and which hypothesis (`hyp_i`) they are defined by. For example, constraint "a" relates to the first output (statistical significance) under the second hypothesis (the null). The field `nom` gives the upper limit for this constraint, while `delta` denotes the probability threshold used when judging if it has been satisfied. So our constraint here is that the probability of statistical significance under the null should be less than 0.2 with probability 0.975.
-
-Our objectives 
-
-```{r}
-constraints <- data.frame(name = "a",
-                   out_i = 1,
-                   hyp_i = 2,
-                   nom = 0.2,
-                   delta = 0.975,
-                   stoch = TRUE)
-
-objectives <- data.frame(name = c("f1", "f2", "f3"),
-                 out_i = c(2, 3, 1),
-                 hyp_i = c(1, 1, 1),
-                 weight = c(2, 5, 50),
-                 stoch = c(FALSE, FALSE, TRUE))
-
-objectives$weight <- objectives$weight/sum(objectives$weight)
-objectives$name <- as.character(objectives$name)
-```
-
-Initial DoE:
-
-```{r}
-size <- 20
-N <- 100
-
-DoE <- init_DoE(size, design_space)
-
-DoE <- cbind(DoE, t(apply(DoE, 1, calc_rates, hypotheses=hypotheses, N=N, sim=sim_trial)))
-DoE$N <- N
-
-to_model <- rbind(constraints[,c("out_i", "hyp_i")], objectives[,c("out_i", "hyp_i")])
-to_model <- unique(to_model)
-
-mods <- fit_models(DoE, to_model, design_space, objectives, out_dim)
-models <- mods[1]
-models_reint <- mods[2]
-
-pf_out <- pareto_front(design_space, models, DoE, objectives, constraints, to_model, det_obj)
-pf <- pf_out[[1]][,1:nrow(objectives)]
-```
-
-### Iteration
-
-```{r}
-traj <- NULL
-
-for(i in 1:3){
-  ptm <- proc.time()
-  opt <- RcppDE::DEoptim(ehi_infill, lower=design_space$low, upper=design_space$up,
-                                 control=list(trace=FALSE, itermax=100, reltol=1e-1, steptol=50),
-                                 N=N, pf=pf, mod=mods, design_space=design_space, constraints=constraints,
-                                 objectives=objectives, det_obj=det_obj, out_dim=3, to_model=to_model)
-  sol <- as.numeric(opt$optim$bestmem)
-  sol[1:2] <- round(sol[1:2])
-  print(proc.time() - ptm)
-          
-  y <- calc_rates(sol, hypotheses=hypotheses, N=N, sim=sim_trial)
-  
-  DoE <- rbind(DoE, c(sol, y, N))
-  
-  models <- fit_models(DoE, to_model, design_space, objectives, out_dim)
-  
-  pf_out <- pareto_front(design_space, models, DoE, objectives, constraints, to_model, det_obj)
-  pf <- pf_out[[1]][,1:nrow(objectives)]
-  
-  ref <- c(design_space$up, 1)*objectives$weight
-  current <- emoa::dominated_hypervolume(t(pf), ref)
-  traj <- rbind(traj, c(-opt$optim$bestval, current))
-}
-```
-
-### Presentation
-
-```{r}
-if(ncol(pf) == 2){
-  df <- data.frame(pf)
-  ggplot(df, aes(x=X1, y=X2)) + geom_point()
-} else if(ncol(pf) == 3){
-  df <- data.frame(pf)
-  ggplot(df, aes(x=X1, y=X2, colour=X3)) + geom_point()
-}
-```
-
-## Simple adaptive design (for ICTMC)
-
-
-### Problem
-
-Simulation:
-```{r}
-sim_trial <- function(design, hypothesis)
-{
-  design <- as.numeric(design); hypothesis <- as.numeric(hypothesis)
-  
-  n <- design[1]; np <- design[2]
-  a1 <- design[3]; a2 <- design[4]
-  
-  mu <- hypothesis[1]; sig <- hypothesis[2]
-  
-  n1 <- n*np; n2 <- n - n1
-  
-  x1 <- mean(rnorm(n1, mean = mu, sd = sig))
-  x2 <- mean(rnorm(n2, mean = mu, sd = sig))
-  x <- (n1*x1 + n2*x2)/(n1 + n2)
-  
-  g <- x1 > a1 & x > a2
-  s <- !g
-  n <- n1 + n2*(x1 > a1)
-  
-  return(c(g, s, n))
-}
-
-# For example,
-sim_trial(c(300, 0.5, 0.4, 0.1), # design
-          c(0.3, 1))    # hypothesis
-
-out_dim <- 3
-```
-
-Deterministic objective functions:
-```{r}
-det_obj <- NULL
-```
-
-Design space and hypotheses:
-```{r}
-design_space <- data.frame(name=c("n", "np", "a1", "a2"), 
-                           low=c(10,0,0,0), 
-                           up=c(200,1,0.2,0.2)
-)
-
-hypotheses <- data.frame(mu=c(0, 0.3),
-                     sig=c(1, 1))
-```
-
-
-### Initialisation
-
-Constraints and objectives:
-
-```{r}
-constraints <- data.frame(name = c("a", "b"),
-                   out_i = c(1, 2),
-                   hyp_i = c(1, 2),
-                   nom = c(0.2, 0.2),
-                   delta =c(0.95, 0.95),
-                   stoch = c(TRUE, TRUE))
-
-objectives <- data.frame(name = c("f1", "f2", "f3"),
-                 out_i = c(1, 2, 3),
-                 hyp_i = c(1, 2, 1),
-                 weight = c(100, 100, 1),
-                 stoch = c(TRUE, TRUE, TRUE))
-
-objectives$weight <- objectives$weight/sum(objectives$weight)
-objectives$name <- as.character(objectives$name)
-```
-
-Initial DoE:
-
-```{r}
-size <- 40
-N <- 100
-
-DoE <- init_DoE(size, design_space)
-
-DoE <- cbind(DoE, t(apply(DoE, 1, calc_rates, hypotheses=hypotheses, N=N, sim=sim_trial)))
-DoE$N <- N
-
-to_model <- rbind(constraints[,c("out_i", "hyp_i")], objectives[,c("out_i", "hyp_i")])
-to_model <- unique(to_model)
-
-mods <- fit_models(DoE, to_model, design_space, objectives, out_dim)
-models <- mods[1:nrow(to_model)]
-models_reint <- mods[(nrow(to_model)+1):length(mods)]
-
-pf_out <- pareto_front(design_space, models, DoE, objectives, constraints, to_model, det_obj)
-pf <- pf_out[[1]][,1:nrow(objectives)]
-```
-
-### Iteration
-
-```{r}
-traj <- NULL
-
-for(i in 1:3){
-  ptm <- proc.time()
-  opt <- RcppDE::DEoptim(ehi_infill, lower=design_space$low, upper=design_space$up,
-                                 control=list(trace=FALSE, itermax=100, reltol=1e-1, steptol=50),
-                                 N=N, pf=pf, mod=mods, design_space=design_space, constraints=constraints,
-                                 objectives=objectives, det_obj=det_obj, out_dim=3, to_model=to_model)
-  sol <- as.numeric(opt$optim$bestmem)
-  #sol[1:2] <- round(sol[1:2])
-  print(proc.time() - ptm)
-          
-  y <- calc_rates(sol, hypotheses=hypotheses, N=N, sim=sim_trial)
-  
-  DoE <- rbind(DoE, c(sol, y, N))
-  
-  mods <- fit_models(DoE, to_model, design_space, objectives, out_dim)
-  models <- mods[1:nrow(to_model)]
-  models_reint <- mods[(nrow(to_model)+1):length(mods)]
-  
-  pf_out <- pareto_front(design_space, models, DoE, objectives, constraints, to_model, det_obj)
-  pf <- pf_out[[1]][,1:nrow(objectives)]
-  
-  # choose ref point as worst objective val in each dimension
-  ref <- c(1, 1, 1)
-  current <- emoa::dominated_hypervolume(t(pf), ref)
-  traj <- rbind(traj, c(-opt$optim$bestval, current))
-}
-```
-
-### Presentation
-
-```{r}
-#saveRDS(DoE, "DoE.Rds")
-DoE <- readRDS("DoE.Rds")
-
-DoE_ps_is <- sapply(pf_out[[1]][,4], function(x) which(pf_out[[2]] == x))
-
-df <- DoE[DoE_ps_is, ]
-
-obj_v <- as.data.frame(predict_obj(df[,1:4], models, objectives, det_obj, to_model))
-obj_v <- as.data.frame(t(t(obj_v)/objectives$weight))
-obj_v$t <- ifelse(DoE_ps_is <= 40, "Initial", "Iterated")
-
-ggplot(obj_v, aes(x=V1, y=V2, colour=V3, shape = t)) + geom_point() +
-  xlab("Type I error rate") + ylab("Type II error rate") +
-  scale_color_viridis(name="E[N]") +
-  scale_shape(name = "")+#, labels("a", "b")) +
-  theme_minimal() +
-  theme(panel.grid.major=element_line(colour="grey50"),
-        panel.grid.minor=element_line(colour="grey50"))
-
-#ggsave(width = 6, height = 3, filename = "../Presentations/ICTMC 2022/results.png")
-```
-
-```{r}
-df2 <- data.frame(exp_imp = traj[,1])
-df2$i <- 1:40
-
-ggplot(df2, aes(i, exp_imp)) +  geom_smooth(se=F, colour = "grey60") + geom_point() +
-  xlab("Iteration") + ylab("Expected improvement") + 
-  theme_minimal()
-
-#ggsave(width = 6, height = 4, filename = "../Presentations/ICTMC 2022/traj.png")
-```
 
 ## Adaptive design (NIFTy)
 
@@ -469,7 +153,7 @@ objectives <- objectives(name = c("f1", "f2", "f3"),
                  weight = c(100, 100, 1),
                  stoch = c(TRUE, TRUE, TRUE))
 
-prob <- new_BOSSS_problem(sim_trial, design_space, hypotheses, constraints, objectives)
+prob <- BOSSS_problem(sim_trial, design_space, hypotheses, constraints, objectives)
 ```
 
 Initialise solution:
@@ -513,14 +197,18 @@ for(i in 1:length(plots)) {
 When we've chosen our design, we might want to check its properties by running computing more MC estimates, which we can also compare against the model predictions. 
 
 ```{r}
-r <- check_point(design, prob, sol, N=10^3) 
+r <- check_point(design, prob, sol, N=10^2) 
+```
 
-# If we decide we want to run more simulations at the same point, we can pass
-# the previous results in so they are built upon.
-r <- check_point(design, prob, sol, N=10^3, r) 
+If we decide we want to run more simulations at the same point, we can pass the previous results in so they are built upon.
+
+```{r}
+r <- check_point(design, prob, sol, N=10^2, r) 
 ```
 
 ### Presentation
+
+Plotly is useful to look at the specific points on the Pareto front to choose amongst them. To do - add an identifier so any point on the Pareto front can be easily linked to the corresponding design in the Pareto set.
 
 ```{r}
 # Plot the Pareto front as a plotly object if installed
@@ -532,11 +220,61 @@ if(is_plotly_available) {
 
 ### Sensitivity analysis
 
-Use a generalised hypothesis defined by ranges (which may be degenerate point values) for each parameter. Take a suggested design and fit new models to cover these ranges. 
+Use a generalised hypothesis defined by ranges (which may be degenerate point values) for each parameter. Take a suggested design and fit new models to cover these ranges.
 
+## Simple two-sample t-test
 
+To do.
+
+```{r}
+sim_trial <- function(design, hypothesis){
+  # Exctract the design variables and parameters
+  design <- as.numeric(design); hypothesis <- as.numeric(hypothesis)
+  n <- design[1]; k <- design[2]
+  mu <- hypothesis[1]; var_u <- hypothesis[2]; var_e <- hypothesis[3]
+  
+  # Number of patients in each cluster
+  m <- n/k
+  # SD of cluster means
+  s_c <- sqrt(var_u + var_e/m)
+  # Simulate cluster means
+  x0 <- stats::rnorm(k, 0, s_c); x1 <- stats::rnorm(k, mu, s_c)
+  
+  return(c(s = stats::t.test(x0, x1)$p.value >= 0.05, n = n, k = k))
+}
+
+det_obj <- function(design){
+    #o <- matrix(design, ncol = 2)[,1:2]
+    #c(s = NA, p = o[1], c = o[2])
+  cbind(NA, design)
+}
+
+design_space <- data.frame(name = c("n", "k"),
+                 low = c(50, 5),
+                 up = c(500, 50),
+                 int = c(TRUE, TRUE))
+
+hypotheses <- data.frame(mu = c(0.3, 0),
+                   var_u = c(0.05, 0.05),
+                   var_e = c(0.95, 0.95))
+
+constraints <- data.frame(name = "a",
+                   out_i = 1,
+                   hyp_i = 2,
+                   nom = 0.2,
+                   delta = 0.975,
+                   stoch = TRUE)
+
+objectives <- data.frame(name = c("f1", "f2", "f3"),
+                 out_i = c(2, 3, 1),
+                 hyp_i = c(1, 1, 1),
+                 weight = c(2, 5, 50),
+                 stoch = c(FALSE, FALSE, TRUE))
+```
 
 ## Bayesian / decision theoretic multilevel model
+
+Note that the method extends trivially to any kind of Bayesian analysis. We just use the hypotheses parameters to describe hyperparameters for the priors we want to simulate under, and use a Bayesian analysis (or freq if using a hybrid approach). This would include a decision-theoretic approach, where the analysis would give us a utility and we would use the expectation of this as an objective to maximise. One difficulty would be avoiding model compilation when using Stan or brms. We could potentially deal with this by storing a pre-compiled model as a file, and then loading and updating it for each iteration.
 
 ## Multi-state models
 

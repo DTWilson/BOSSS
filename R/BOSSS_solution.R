@@ -21,7 +21,7 @@ new_BOSSS_solution <- function(DoE, results, models, models_reint, p_front, p_se
 #' @param problem BOSSS problem to be solved.
 #'
 #' @returns An object of class BOSSS_solution.
-#'
+#' @export
 #'
 BOSSS_solution <- function(size, N, problem){
   stopifnot(class(problem) == "BOSSS_problem")
