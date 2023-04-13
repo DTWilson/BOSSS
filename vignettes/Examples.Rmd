@@ -11,13 +11,13 @@ vignette: >
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>",
-  eval = FALSE
+  eval = TRUE
 )
 ```
 
 Install the development version of BOSSS from GitHub:
 
-```{r}
+```{r, eval = FALSE}
 # install.packages("devtools")
 devtools::install_github("DTWilson/BOSSS")
 ```
@@ -234,18 +234,6 @@ If we decide we want to run more simulations at the same point, we can pass the 
 
 ```{r}
 r <- check_point(design, prob, sol, N=10^2, r) 
-```
-
-### Presentation
-
-Plotly is useful to look at the specific points on the Pareto front to choose amongst them. To do - add an identifier so any point on the Pareto front can be easily linked to the corresponding design in the Pareto set.
-
-```{r}
-# Plot the Pareto front as a plotly object if installed
-is_plotly_available <- require(plotly)
-if(is_plotly_available) {
-  ggplotly(plot(sol))
-}
 ```
 
 ### Sensitivity analysis

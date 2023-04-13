@@ -114,6 +114,7 @@ plot.BOSSS_solution <- function(x, y, ...) {
   df <- data.frame(x$p_set)
   obj_names <- names(df)[(ncol(df) - n_obj + 1):ncol(df)]
   names(df)[(ncol(df) - n_obj + 1):ncol(df)] <- letters[1:n_obj]
+  df$label <- rownames(df)
 
   if(n_obj > 3){
     stop(
@@ -122,7 +123,9 @@ plot.BOSSS_solution <- function(x, y, ...) {
     )
   }
   if(n_obj == 3){
-    p <- ggplot2::ggplot(df, ggplot2::aes(x=a, y=b, colour=c)) + ggplot2::geom_point() +
+    p <- ggplot2::ggplot(df, ggplot2::aes(x=a, y=b, )) +
+      ggplot2::geom_point(ggplot2::aes(colour=c)) +
+      ggplot2::geom_text(ggplot2::aes(label = label), hjust=-0.5, vjust=-0.5) +
       ggplot2::xlab(obj_names[1]) + ggplot2::ylab(obj_names[2]) +
       #viridis::scale_color_viridis(name=obj_names[3]) +
       ggplot2::scale_colour_gradient(name = obj_names[3],
