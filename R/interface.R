@@ -30,7 +30,7 @@ design_space <- function(name, lower, upper) {
 #' @return A data.frame defining the hypotheses.
 #' @export
 #'
-#' @examples
+#'
 hypotheses <- function(name, param_matrix) {
   df <- as.data.frame(param_matrix)
   row.names(df) <- name
@@ -80,7 +80,7 @@ constraints <- function(name, out_i, hyp_i, nom, delta, stoch) {
 #' @return A data.frame defining the objectives.
 #' @export
 #'
-#' @examples
+#'
 objectives <- function(name, out_i, hyp_i, weight, stoch) {
 
   data.frame(name = name,

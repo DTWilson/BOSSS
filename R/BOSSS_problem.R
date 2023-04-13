@@ -1,5 +1,4 @@
 # Constructor
-#' @export
 new_BOSSS_problem <- function(sim_trial, design_space, hypotheses,
                               constraints, objectives, det_obj = NULL){
   # Check types
@@ -44,11 +43,27 @@ validate_BOSSS_problem <- function(prob) {
   prob
 }
 
-# Helper
+
+#' Create a BOSSS problem
+#'
+#' @param sim_trial Function which generates a single (possibly multivariate)
+#' Monte Carlo outcome of a design under a hypothesis.
+#' @param design_space Data frame constructed via design_space().
+#' @param hypotheses Data frame constructed via hypotheses().
+#' @param constraints Data frame constructed via constraints().
+#' @param objectives Data frame constructed via objectives().
+#' @param det_obj Optional function which generates deterministic outcomes of a
+#' design under a hypothesis.
+#'
+#' @return An object of class BOSSS_problem.
+#' @export
+#'
+#'
 BOSSS_problem <- function(sim_trial, design_space, hypotheses,
                               constraints, objectives, det_obj = NULL){
 
   prob <- new_BOSSS_problem(sim_trial, design_space, hypotheses,
                                         constraints, objectives, det_obj = NULL)
-  validate_BOSSS_problem(prob)
+  #validate_BOSSS_problem(prob)
+  prob
 }
