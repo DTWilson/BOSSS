@@ -1,8 +1,8 @@
 ---
-title: "Notes"
+title: "Examples"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Notes}
+  %\VignetteIndexEntry{Examples}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -15,22 +15,39 @@ knitr::opts_chunk$set(
 )
 ```
 
+Install the development version of BOSSS from GitHub:
+
+```{r}
+# install.packages("devtools")
+devtools::install_github("DTWilson/BOSSS")
+```
+
 ```{r setup}
 library(BOSSS)
 library(ggplot2)
 ```
 
-A place to build up notes and examples for a future tutorial-style document.
+<!-- A place to build up notes and examples for a future tutorial-style document. -->
 
-Note - a Twitter thread on power analysis had a couple of people mentioning the R package simr for power through simulation when using mixed models. So might be worth including that in one of our examples, to save people having to write their own simulation code?
+<!-- Note - a Twitter thread on power analysis had a couple of people mentioning the R package simr for power through simulation when using mixed models. So might be worth including that in one of our examples, to save people having to write their own simulation code? -->
 
-# Examples
+Every application of BOSSS follows the same set of steps:
+
+1. Formally specify the problem and create a corresponding `BOSSS_problem` object;
+2. Create a `BOSSS_solution` object and initialise it;
+3. Perform a number of iterations, each one updating and (hopefully) improving the `BOSSS_solution` object;
+4. Select a final design and run some diagnostics to check it is valid.
 
 ## Adaptive design (NIFTy)
 
 ### Problem
 
-Simulation:
+The first ingredient of a BOSSS problem is the simulation function. This function must have two named arguments. The first, `design`, is a vector containing the values of all _design variables_ which we want to vary in our problem. In this example we have 4 design variables representing the total sample size, the fraction of the sample size used in the first stage, the $\alpha$ level used in the interim analysis, and the $\alpha$ level used in the final analysis. Note how these variables are extracted from the `design` vector.
+
+The second argument, `hypothesis` is a vector containing the values of all _model parameters_ which we will vary in our problem. In this case this vector has four entries corresponding to the probability of the interim outcome in the control and experimental arms, and the probability of the final outcome in the control and experimental arms. Again, we extract these variables from the `hypothesis` vector at the start of the function.
+
+The other element of interface the simulation function must conform to is in its return value, which should be a vector of the quantities who's mean values we want to estimate using the Monte Carlo method. Here, we have three such quantities: a boolean indicator of an overall positive decision (`g`), a boolean indicator of a negative decision (`s`), and the final sample size (`n`).
+
 ```{r}
 #n is the total sample size
 #ninterim is the number of patients at the interim analysis (proportion)
@@ -123,21 +140,23 @@ sim_trial <- function(design = c(300, 0.5, 0.4, 0.1),
 sim_trial()
 ```
 
-Design space and hypotheses:
+Next, we need to note the ranges of the design variables which we plan to search over. We use the `design_space()` function for this:
+
 ```{r}
 design_space <- design_space(name = c("n", "ninterim", "ainterim", "afinal"),
                              lower = c(100,0.05,0,0), 
                              upper = c(500,0.5,1,1))
+```
 
+We also need to specify the hypotheses which we're planning to simulate under, using the `hypotheses()` function. We need two hypotheses, corresponding to a null and an alternative:
+
+```{r}
 hypotheses <- hypotheses(name = c("pcontshort", "pexpshort", "pcontlong", "pexplong"),
                          param_matrix = matrix(c(0.25, 0.25, 0.25, 0.25, 
                                                  0.25, 0.125, 0.1, 0.03), ncol = 2))
 ```
 
-
-### Initialisation
-
-Constraints and objectives:
+Constraints should be specified using the `constraints` function. Each constraint should be named, and should be defined with respect to a specific simulation output and a specific hypothesis. It should have a nominal maximum value, and a probability `delta` used to judge if it is satisfied. Finally, it should note if the function is stochastic, or deterministic. Here, our fist constraint is that the mean of the first simulation output (i.e. the probability of a positive result) under the first hypothesis (the null) should be less than 0.2 with a probability of at least 0.95.
 
 ```{r}
 constraints <- constraints(name = c("a", "b"),
@@ -146,17 +165,27 @@ constraints <- constraints(name = c("a", "b"),
                    nom = c(0.2, 0.2),
                    delta =c(0.95, 0.95),
                    stoch = c(TRUE, TRUE))
+```
 
+The final ingredient of the problem is the set of objectives we want to minimise. Similar to constraints, objectives are tied to a specific simulation output and hypothesis, and can be stochastic or deterministic. We also specify weights for each objective which help guide the optimisation process. For example, here we want to minimise both the type I and type II error rates and the expected sample size, with the former carrying a weight of 100 times of the latter.
+
+```{r}
 objectives <- objectives(name = c("f1", "f2", "f3"),
                  out_i = c(1, 2, 3),
                  hyp_i = c(1, 2, 1),
                  weight = c(100, 100, 1),
                  stoch = c(TRUE, TRUE, TRUE))
+```
 
+We now put this simulation function and set of data frames together to create an object of class `BOSSS_problem`. 
+
+```{r}
 prob <- BOSSS_problem(sim_trial, design_space, hypotheses, constraints, objectives)
 ```
 
-Initialise solution:
+### Initialisation
+
+Having set up the problem, we now need to create an initial solution to it. This involves setting up a space-filling set of designs spanning the design space (where `size` is the number of designs), computing the Monte Carlo estimates of all the expectations we are interested in at each of these designs (using `N` samples for each evaluation), fitting GP models to these estimates, and then using those models to estimate the Pareto set and front:
 
 ```{r}
 size <- 40
@@ -168,8 +197,9 @@ print(sol)
 plot(sol)
 ```
 
-
 ### Iteration
+
+We can now start improving this solution by calling the `iterate()` function. Each call uses the fitted GP models to decide on the next design to be evaluated, computes the MC estimates at that point, and then updates the estimated Pareto set and front. 
 
 ```{r}
 for(i in 1:5) {
