@@ -177,13 +177,3 @@ calc_rates <- function(design, hypotheses)
 
   return(c(2*n/5, k)*pen)
 }
-
-hypotheses <- data.frame(mu = c(0.3, 0),
-                         var_u = c(0.05, 0.05),
-                         var_e = c(0.95, 0.95))
-
-calc_rates(c(300, 30), hypotheses)
-
-opt <- GPareto::easyGParetoptim(calc_rates, hypotheses = hypotheses,
-                                budget = 50, lower = c(100, 10), upper = c(500, 100),
-                                control = list(method = "EHI", refPoint = c(200, 100)))

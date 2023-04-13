@@ -1,4 +1,14 @@
+
+#' Perform one iteration of Bayesian optimisation
+#'
+#' @param solution Current BOSSS solution.
+#' @param problem BOSSS problem.
+#' @param N Number of simulations to use when computing Monte Carlo estimates.
+#'
+#' @return An updated BOSSS solution object.
 #' @export
+#'
+#'
 iterate <- function(solution, problem, N) {
 
   opt <- RcppDE::DEoptim(ehi_infill,

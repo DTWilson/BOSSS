@@ -51,18 +51,26 @@ one_d_plots <- function(design, problem, solution) {
 
 #' Empirical check
 #'
-#' @param design
-#' @param problem
-#' @param solution
-#' @param N
+#' @param design Design to evaluate.
+#' @param problem BOSSS problem.
+#' @param solution BOSSS solution.
+#' @param N Number of simulations to use when computing Monte Carlo estimates.
+#' @param current An optional matrix containing the results of previous
+#' check_point calls, to be built upon.
 #'
-#' @return
+#' @return A matrix with each row corresponds to a model of the BOSSS solution
+#'  object, giving the Monte Carlo estimates of the mean and variance
+#'  along side the number of simulations used to compute them.
 #' @export
 #'
-#' @examples
-check_point <- function(design, problem, solution, N) {
+#'
+check_point <- function(design, problem, solution, N, current = NULL) {
 
   r <- calc_rates(design, problem$hypotheses, N, problem$simulation)
+
+  if(is.null(current)){
+    current <- matrix(rep(0, nrow(solution$to_model)*3), ncol = 3)
+  }
 
   for(i in 1:nrow(solution$to_model)) {
     p <- DiceKriging::predict.km(solution$models[[i]],
@@ -74,14 +82,16 @@ check_point <- function(design, problem, solution, N) {
     hyp_i <- solution$to_model$hyp_i[i]
     index <- hyp_i*6 - 6 + out_i*2 - 1
     emp_mean <- r[index]
-    emp_sd <- sqrt(r[index + 1])
-    emp_lower95 <- emp_mean - 1.96*emp_sd
-    emp_upper95 <- emp_mean + 1.96*emp_sd
+    emp_var <- r[index + 1]
+
+    current[i, 1] <- current[i, 1]*(current[i, 3]/(current[i, 3] + N)) + emp_mean*(N/(current[i, 3] + N))
+    current[i, 2] <- current[i, 2]*(current[i, 3]/(current[i, 3] + N))^2 + emp_var*(N/(current[i, 3] + N))^2
+    current[i, 3] <- current[i, 3] + N
+
+    emp_lower95 <- current[i, 1] - 1.96*sqrt(current[i, 2])
+    emp_upper95 <- current[i, 1] + 1.96*sqrt(current[i, 2])
 
     cat(paste0("Model ", i, " empirical interval: [", round(emp_lower95, 3), ", ", round(emp_upper95, 3), "]\n\n"))
-
   }
-  # To do: return the results and have these as an optional argument,
-  # to allow for previous checks to be built on with more N. And output
-  # A rough time-per-simulation message.
+  return(current)
 }

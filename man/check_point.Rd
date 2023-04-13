@@ -4,10 +4,24 @@
 \alias{check_point}
 \title{Empirical check}
 \usage{
-check_point(design, problem, solution, N)
+check_point(design, problem, solution, N, current = NULL)
 }
 \arguments{
-\item{N}{}
+\item{design}{Design to evaluate.}
+
+\item{problem}{BOSSS problem.}
+
+\item{solution}{BOSSS solution.}
+
+\item{N}{Number of simulations to use when computing Monte Carlo estimates.}
+
+\item{current}{An optional matrix containing the results of previous
+check_point calls, to be built upon.}
+}
+\value{
+A matrix with each row corresponds to a model of the BOSSS solution
+object, giving the Monte Carlo estimates of the mean and variance
+along side the number of simulations used to compute them.
 }
 \description{
 Empirical check
