@@ -144,15 +144,15 @@ Next, we need to note the ranges of the design variables which we plan to search
 
 ```{r}
 design_space <- design_space(name = c("n", "ninterim", "ainterim", "afinal"),
-                             lower = c(100,0.05,0,0), 
-                             upper = c(500,0.5,1,1))
+                             lower = c(300,0.05,0,0), 
+                             upper = c(700,0.5,1,1))
 ```
 
 We also need to specify the hypotheses which we're planning to simulate under, using the `hypotheses()` function. We need two hypotheses, corresponding to a null and an alternative:
 
 ```{r}
 hypotheses <- hypotheses(name = c("pcontshort", "pexpshort", "pcontlong", "pexplong"),
-                         param_matrix = matrix(c(0.25, 0.25, 0.25, 0.25, 
+                         param_matrix = matrix(c(0.25, 0.25, 0.1, 0.1, 
                                                  0.25, 0.125, 0.1, 0.03), ncol = 2))
 ```
 
@@ -162,7 +162,7 @@ Constraints should be specified using the `constraints` function. Each constrain
 constraints <- constraints(name = c("a", "b"),
                    out_i = c(1, 2),
                    hyp_i = c(1, 2),
-                   nom = c(0.2, 0.2),
+                   nom = c(0.1, 0.2),
                    delta =c(0.95, 0.95),
                    stoch = c(TRUE, TRUE))
 ```
@@ -202,7 +202,7 @@ plot(sol)
 We can now start improving this solution by calling the `iterate()` function. Each call uses the fitted GP models to decide on the next design to be evaluated, computes the MC estimates at that point, and then updates the estimated Pareto set and front. 
 
 ```{r}
-for(i in 1:5) {
+for(i in 1:20) {
   sol <- iterate(sol, prob, N) 
 }
 print(sol)
@@ -233,8 +233,10 @@ r <- check_point(design, prob, sol, N=10^2)
 If we decide we want to run more simulations at the same point, we can pass the previous results in so they are built upon.
 
 ```{r}
-r <- check_point(design, prob, sol, N=10^2, r) 
+r <- check_point(design, prob, sol, N=10^3, r) 
 ```
+To do - have these extra checks incorporated back into the solution so they can be used if we start iterating again.
+
 
 ### Sensitivity analysis
 

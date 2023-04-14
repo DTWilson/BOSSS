@@ -19,7 +19,7 @@ ehi_infill <- function(design, N, problem, solution)
   samp_fs <- predict_next_obj(n_samp, design, problem, solution)
 
   # choose ref point as worst objective val in each dimension
-  p_front <- solution$p_front[, 1:(ncol(solution$p_front) - 1)]
+  p_front <- solution$p_front[, 1:(ncol(solution$p_front) - 1), drop = FALSE]
   ref <- apply(p_front, 2, max)
   current <- emoa::dominated_hypervolume(t(p_front), ref)
   pos <- apply(samp_fs, 1, function(obj) emoa::dominated_hypervolume(t(as.matrix(rbind(p_front, obj))), ref) )
