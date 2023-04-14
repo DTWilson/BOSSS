@@ -284,6 +284,45 @@ To do - have these extra checks incorporated back into the solution so they can 
 
 Use a generalised hypothesis defined by ranges (which may be degenerate point values) for each parameter. Take a suggested design and fit new models to cover these ranges.
 
+```{r}
+sa_hypothesis <- data.frame(hyp = 1,
+                            sa_param = 5,
+                            lower = 0,
+                            upper = 1)
+
+sa <- as.data.frame(sensitivity(sa_hypothesis, design, prob, sol, num_eval = 20, N = 1000))
+
+# Plot these to examine sensitivity:
+ggplot(sa, aes(p01relative, g_m)) + geom_point() + 
+  geom_errorbar(aes(ymin = g_m - 1.96*sqrt(g_v), ymax = g_m + 1.96*sqrt(g_v))) +
+  theme_minimal()
+
+ggplot(sa, aes(p01relative, n_m)) + geom_point() + 
+  geom_errorbar(aes(ymin = n_m - 1.96*sqrt(n_v), ymax = n_m + 1.96*sqrt(n_v))) +
+  theme_minimal()
+```
+From the above we can conclude the type I error rate and the expected sample size under the null are not sensitive to the nuisance parameter. Repeating under the alternative:
+
+```{r}
+sa_hypothesis <- data.frame(hyp = 2,
+                            sa_param = 5,
+                            lower = 0,
+                            upper = 1)
+
+sa <- as.data.frame(sensitivity(sa_hypothesis, design, prob, sol, num_eval = 20, N = 1000))
+
+# Plot these to examine sensitivity:
+ggplot(sa, aes(p01relative, s_m)) + geom_point() + 
+  geom_errorbar(aes(ymin = s_m - 1.96*sqrt(s_v), ymax = s_m + 1.96*sqrt(s_v))) +
+  theme_minimal()
+
+ggplot(sa, aes(p01relative, n_m)) + geom_point() + 
+  geom_errorbar(aes(ymin = n_m - 1.96*sqrt(n_v), ymax = n_m + 1.96*sqrt(n_v))) +
+  theme_minimal()
+```
+
+Again, no clear trend.
+
 ## Simple two-sample t-test
 
 To do.
