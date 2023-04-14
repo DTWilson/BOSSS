@@ -59,9 +59,11 @@ The other element of interface the simulation function must conform to is in its
 #pexpshort is the probability of 1 day PoSH in the experimental arm
 #pcontlong is the probability of 6 month PoSH in the control arm
 #pexplong is the probability of 6 month PoSH in the experimental arm
+#p01_relative is s.t. p01_relative*pexplong = probability of having 
+# a long term outcome after no short term outcome
 
 sim_trial <- function(design = c(300, 0.5, 0.4, 0.1),
-                      hypothesis = c(0.25, 0.125, 0.1, 0.03))
+                      hypothesis = c(0.25, 0.125, 0.1, 0.03, 0))
 {
   design <- as.numeric(design); hypothesis <- as.numeric(hypothesis)
   
@@ -70,11 +72,15 @@ sim_trial <- function(design = c(300, 0.5, 0.4, 0.1),
   
   pcontshort <- hypothesis[1]; pexpshort <- hypothesis[2]
   pcontlong <- hypothesis[3]; pexplong <- hypothesis[4]
+  p01_relative <- hypothesis[5]
   
   ninterim <- floor(ninterim*n)
   
   patients<-c(1:n) #create patients
-  treat<-rep(c(1,2),ceiling(n/2))[1:n] #assign to treatment 1 or 2
+  
+  treat<- rep(c(1,2), ceiling(n/2))[1:n]
+  
+  n_cont <- sum(treat == 1)
   
   short<-rep(0,n) #short term outcome
   long<-rep(0,n) #long term outcome
@@ -84,26 +90,61 @@ sim_trial <- function(design = c(300, 0.5, 0.4, 0.1),
   #generate result 1/0 for short term outcome. If short term outcome=0 then long term outcome=0
   #If short term outcome=1 then long term outcome has probability pcontlong/pcontshort
   #repeat for treatment=2
-  for(i in 1:n){
-    if(treat[i]==1){
-      data$short[i]<-rbinom(1,1,pcontshort)
-      if(data$short[i]==0){
-        data$long[i]<-0
-      }
-      if(data$short[i]==1){
-        data$long[i]<-rbinom(1,1,pcontlong/pcontshort)
-      }
-    }
-    else{
-      data$short[i]<-rbinom(1,1,pexpshort)
-      if(data$short[i]==0){
-        data$long[i]<-0
-      }
-      if(data$short[i]==1){
-        data$long[i]<-rbinom(1,1,pexplong/pexpshort)
-      }
-    }
-  }
+  # for(i in 1:n){
+  #   if(treat[i]==1){
+  #     data$short[i]<-rbinom(1,1,pcontshort)
+  #     if(data$short[i]==0){
+  #       data$long[i]<-0
+  #     }
+  #     if(data$short[i]==1){
+  #       data$long[i]<-rbinom(1,1,pcontlong/pcontshort)
+  #     }
+  #   }
+  #   else{
+  #     data$short[i]<-rbinom(1,1,pexpshort)
+  #     if(data$short[i]==0){
+  #       data$long[i]<-0
+  #     }
+  #     if(data$short[i]==1){
+  #       data$long[i]<-rbinom(1,1,pexplong/pexpshort)
+  #     }
+  #   }
+  # }
+  
+  # An alternative and more general parametersation of the above model
+  # to allow different values of probability of a long outcome after
+  # no short outcome (previously hard coded as 0)
+
+  # probability vector p00, p01, p10, p11 in (short, long) form
+  # Control arm:
+  p01 <- p01_relative*pcontlong
+  p11 <- pcontlong - p01
+  p10 <- pcontshort - p11
+  # Simulate outcomes in multinomial format
+  cont_count <- rmultinom(1, n_cont, c((1 - p01 - p10 - p11), p01, p10, p11))
+  # Translate these to short and long outcomes
+  cont_out <- matrix(c(rep(c(0,0), cont_count[1]),
+                       rep(c(0,1), cont_count[2]),
+                       rep(c(1,0), cont_count[3]),
+                       rep(c(1,1), cont_count[4])), ncol = 2, byrow = TRUE)
+  # shuffle the list randomly
+  cont_out <- cont_out[sample(1:nrow(cont_out)),]
+  
+  # Experimental arm:
+    # Control arm:
+  p01 <- p01_relative*pexplong
+  p11 <- pexplong - p01
+  p10 <- pexpshort - p11
+  exp_count <- rmultinom(1, n - n_cont, c((1 - p01 - p10 - p11), p01, p10, p11))
+  exp_out <- matrix(c(rep(c(0,0), exp_count[1]),
+                       rep(c(0,1), exp_count[2]),
+                       rep(c(1,0), exp_count[3]),
+                       rep(c(1,1), exp_count[4])), ncol = 2, byrow = TRUE)
+  exp_out <- exp_out[sample(1:nrow(exp_out)),]
+  
+  data[data$treat == 1, c("short", "long")] <- cont_out
+  data[data$treat == 2, c("short", "long")] <- exp_out
+  
   #perform chi squared test on short term outcome for 1st ninterim patients
   data2<-data[1:ninterim,]
   tbl<-table(data2$short,data2$treat)
@@ -151,10 +192,12 @@ design_space <- design_space(name = c("n", "ninterim", "ainterim", "afinal"),
 We also need to specify the hypotheses which we're planning to simulate under, using the `hypotheses()` function. We need two hypotheses, corresponding to a null and an alternative:
 
 ```{r}
-hypotheses <- hypotheses(name = c("pcontshort", "pexpshort", "pcontlong", "pexplong"),
-                         param_matrix = matrix(c(0.25, 0.25, 0.1, 0.1, 
-                                                 0.25, 0.125, 0.1, 0.03), ncol = 2))
+hypotheses <- hypotheses(name = c("pcontshort", "pexpshort", "pcontlong", "pexplong", "p01relative"),
+                         param_matrix = matrix(c(0.25, 0.25, 0.1, 0.1, 0, 
+                                                 0.25, 0.125, 0.1, 0.03, 0), ncol = 2))
 ```
+
+Note that for both the design space and the hypotheses, the names are just for reference and do not need to correspond exactly to the variables names used in the simulation function.
 
 Constraints should be specified using the `constraints` function. Each constraint should be named, and should be defined with respect to a specific simulation output and a specific hypothesis. It should have a nominal maximum value, and a probability `delta` used to judge if it is satisfied. Finally, it should note if the function is stochastic, or deterministic. Here, our fist constraint is that the mean of the first simulation output (i.e. the probability of a positive result) under the first hypothesis (the null) should be less than 0.2 with a probability of at least 0.95.
 
@@ -189,7 +232,7 @@ Having set up the problem, we now need to create an initial solution to it. This
 
 ```{r}
 size <- 40
-N <- 100
+N <- 500
 
 sol <- BOSSS_solution(size, N, prob)
 
@@ -202,7 +245,7 @@ plot(sol)
 We can now start improving this solution by calling the `iterate()` function. Each call uses the fitted GP models to decide on the next design to be evaluated, computes the MC estimates at that point, and then updates the estimated Pareto set and front. 
 
 ```{r}
-for(i in 1:20) {
+for(i in 1:10) {
   sol <- iterate(sol, prob, N) 
 }
 print(sol)
@@ -236,7 +279,6 @@ If we decide we want to run more simulations at the same point, we can pass the 
 r <- check_point(design, prob, sol, N=10^3, r) 
 ```
 To do - have these extra checks incorporated back into the solution so they can be used if we start iterating again.
-
 
 ### Sensitivity analysis
 

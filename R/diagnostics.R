@@ -40,6 +40,7 @@ one_d_plots <- function(design, problem, solution) {
         ggplot2::ylab(paste("Mean outcome", solution$to_model$out_i[i], ", hypothesis", solution$to_model$hyp_i[i])) +
         ggplot2::xlab(names(design)[j]) +
         ggplot2::geom_point(data = df[nrow(df),]) +
+        geom_vline(xintercept = solution$DoE[,j], alpha = 0.3) +
         ggplot2::theme_minimal()
 
       plots[[count]] <- pl
