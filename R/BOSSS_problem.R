@@ -63,7 +63,7 @@ BOSSS_problem <- function(sim_trial, design_space, hypotheses,
                               constraints, objectives, det_obj = NULL){
 
   prob <- new_BOSSS_problem(sim_trial, design_space, hypotheses,
-                                        constraints, objectives, det_obj = NULL)
+                                        constraints, objectives, det_obj)
   #validate_BOSSS_problem(prob)
   prob
 }

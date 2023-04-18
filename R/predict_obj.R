@@ -23,8 +23,9 @@ predict_obj <- function(design, problem, solution){
     } else {
       ## For deterministic objectives, use the user-written function
       ## For now, assume independent of hypothesis
-      f <- as.numeric(problem$det_obj(design)[problem$objectives[i, "out_i"]])
-      obj_vals[,i] <- f*objectives$weight[i]
+      f <- apply(design, 1, problem$simulation, hypothesis = problem$hypotheses[,hyp_i])[out_i,]
+      #f <- as.numeric(problem$det_obj(design)[problem$objectives[i, "out_i"]])
+      obj_vals[,i] <- f*problem$objectives$weight[i]
     }
   }
   return(obj_vals)
@@ -60,9 +61,9 @@ predict_next_obj <- function(n_samp, design, problem, solution){
       f <- stats::rnorm(n_samp, p$mean, p$sd)
       obj_vals[,i] <- f*problem$objectives$weight[i]
     } else {
-      ## For deterministic objectives, use the user-written function
-      ## For now, assume independent of hypothesis
-      f <- as.numeric(problem$det_obj(design)[problem$objectives[i, "out_i"]])
+      ## For deterministic objectives
+      f <- apply(design, 1, problem$simulation, hypothesis = hypotheses[,hyp_i])[out_i,]
+      #f <- as.numeric(problem$det_obj(design)[problem$objectives[i, "out_i"]])
       obj_vals[,i] <- f*objectives$weight[i]
     }
   }
