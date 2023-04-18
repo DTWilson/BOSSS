@@ -323,6 +323,51 @@ ggplot(sa, aes(p01relative, n_m)) + geom_point() +
 
 Again, no clear trend.
 
+## NIFTY variation
+
+Using the same simulation, we can change the problem slightly by now only con straining the type I error rate (and not treating its minimisation as an objective), and only minimising the power (not constraining it) and expected sample size:
+
+```{r}
+design_space <- design_space(name = c("n", "ninterim", "ainterim", "afinal"),
+                             lower = c(300,0.05,0,0), 
+                             upper = c(700,0.5,1,1))
+
+hypotheses <- hypotheses(name = c("pcontshort", "pexpshort", "pcontlong", "pexplong", "p01relative"),
+                         param_matrix = matrix(c(0.25, 0.25, 0.1, 0.1, 0, 
+                                                 0.25, 0.125, 0.1, 0.03, 0), ncol = 2))
+
+constraints <- constraints(name = c("a", "b"),
+                   out_i = c(1),
+                   hyp_i = c(1),
+                   nom = c(0.1),
+                   delta =c(0.95),
+                   stoch = c(TRUE))
+
+objectives <- objectives(name = c("f1", "f2"),
+                 out_i = c(2, 3),
+                 hyp_i = c(2, 1),
+                 weight = c(100, 1),
+                 stoch = c(TRUE, TRUE))
+
+prob <- BOSSS_problem(sim_trial, design_space, hypotheses, constraints, objectives)
+
+size <- 40
+N <- 500
+
+sol <- BOSSS_solution(size, N, prob)
+
+print(sol)
+plot(sol)
+```
+
+```{r}
+for(i in 1:10) {
+  sol <- iterate(sol, prob, N) 
+}
+print(sol)
+plot(sol)
+```
+
 ## Simple two-sample t-test
 
 To do.
