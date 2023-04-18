@@ -1,3 +1,4 @@
+
 #' Run a one-dimensional sensitivity analysis
 #'
 #' @param sa_hypothesis Data frame defining the SA variable and its bounds
@@ -11,6 +12,7 @@
 #' output over the SA variable range.
 #' @export
 #'
+
 sensitivity <- function(sa_hypothesis, design, problem, solution, num_eval = 20, N = 100) {
 
     # Create the grid to evaluate, varying only the SA parameter

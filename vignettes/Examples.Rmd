@@ -503,8 +503,8 @@ objectives <- objectives(name = c("f1", "f2", "f3"),
 
 prob <- BOSSS_problem(sim_bayes, design_space, hypotheses, constraints, objectives, det_obj = bayes_det)
 
-size <- 10
-N <- 10
+size <- 20
+N <- 100
 
 sol <- BOSSS_solution(size, N, prob)
 
