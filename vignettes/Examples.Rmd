@@ -192,9 +192,10 @@ design_space <- design_space(name = c("n", "ninterim", "ainterim", "afinal"),
 We also need to specify the hypotheses which we're planning to simulate under, using the `hypotheses()` function. We need two hypotheses, corresponding to a null and an alternative:
 
 ```{r}
-hypotheses <- hypotheses(name = c("pcontshort", "pexpshort", "pcontlong", "pexplong", "p01relative"),
-                         param_matrix = matrix(c(0.25, 0.25, 0.1, 0.1, 0, 
-                                                 0.25, 0.125, 0.1, 0.03, 0), ncol = 2))
+hypotheses <- hypotheses(par_name = c("pcontshort", "pexpshort", "pcontlong", "pexplong", "p01relative"),
+                         values = matrix(c(0.25, 0.25, 0.1, 0.1, 0, 
+                                                 0.25, 0.125, 0.1, 0.03, 0), ncol = 2),
+                         hyp_names = c("null", "alt"))
 ```
 
 Note that for both the design space and the hypotheses, the names are just for reference and do not need to correspond exactly to the variables names used in the simulation function.
@@ -203,8 +204,8 @@ Constraints should be specified using the `constraints` function. Each constrain
 
 ```{r}
 constraints <- constraints(name = c("a", "b"),
-                   out_i = c(1, 2),
-                   hyp_i = c(1, 2),
+                   out = c("g", "s"),
+                   hyp = c("null", "alt"),
                    nom = c(0.1, 0.2),
                    delta =c(0.95, 0.95),
                    stoch = c(TRUE, TRUE))
@@ -214,8 +215,8 @@ The final ingredient of the problem is the set of objectives we want to minimise
 
 ```{r}
 objectives <- objectives(name = c("f1", "f2", "f3"),
-                 out_i = c(1, 2, 3),
-                 hyp_i = c(1, 2, 1),
+                 out = c("g", "s", "n"),
+                 hyp = c("null", "alt", "null"),
                  weight = c(100, 100, 1),
                  stoch = c(TRUE, TRUE, TRUE))
 ```
@@ -232,7 +233,7 @@ Having set up the problem, we now need to create an initial solution to it. This
 
 ```{r}
 size <- 40
-N <- 500
+N <- 100
 
 sol <- BOSSS_solution(size, N, prob)
 
@@ -245,7 +246,7 @@ plot(sol)
 We can now start improving this solution by calling the `iterate()` function. Each call uses the fitted GP models to decide on the next design to be evaluated, computes the MC estimates at that point, and then updates the estimated Pareto set and front. 
 
 ```{r}
-for(i in 1:10) {
+for(i in 1:3) {
   sol <- iterate(sol, prob, N) 
 }
 print(sol)
@@ -285,7 +286,7 @@ To do - have these extra checks incorporated back into the solution so they can 
 Use a generalised hypothesis defined by ranges (which may be degenerate point values) for each parameter. Take a suggested design and fit new models to cover these ranges.
 
 ```{r}
-sa_hypothesis <- data.frame(hyp = 1,
+sa_hypothesis <- data.frame(hyp = "null",
                             sa_param = 5,
                             lower = 0,
                             upper = 1)
@@ -301,10 +302,11 @@ ggplot(sa, aes(p01relative, n_m)) + geom_point() +
   geom_errorbar(aes(ymin = n_m - 1.96*sqrt(n_v), ymax = n_m + 1.96*sqrt(n_v))) +
   theme_minimal()
 ```
+
 From the above we can conclude the type I error rate and the expected sample size under the null are not sensitive to the nuisance parameter. Repeating under the alternative:
 
 ```{r}
-sa_hypothesis <- data.frame(hyp = 2,
+sa_hypothesis <- data.frame(hyp = "alt",
                             sa_param = 5,
                             lower = 0,
                             upper = 1)
@@ -325,27 +327,28 @@ Again, no clear trend.
 
 ## NIFTY variation
 
-Using the same simulation, we can change the problem slightly by now only con straining the type I error rate (and not treating its minimisation as an objective), and only minimising the power (not constraining it) and expected sample size:
+Using the same simulation, we can change the problem slightly by now only constraining the type I error rate (and not treating its minimisation as an objective), and only minimising the power (not constraining it) and expected sample size:
 
 ```{r}
 design_space <- design_space(name = c("n", "ninterim", "ainterim", "afinal"),
                              lower = c(300,0.05,0,0), 
                              upper = c(700,0.5,1,1))
 
-hypotheses <- hypotheses(name = c("pcontshort", "pexpshort", "pcontlong", "pexplong", "p01relative"),
-                         param_matrix = matrix(c(0.25, 0.25, 0.1, 0.1, 0, 
-                                                 0.25, 0.125, 0.1, 0.03, 0), ncol = 2))
+hypotheses <- hypotheses(par_name = c("pcontshort", "pexpshort", "pcontlong", "pexplong", "p01relative"),
+                         values = matrix(c(0.25, 0.25, 0.1, 0.1, 0, 
+                                                 0.25, 0.125, 0.1, 0.03, 0), ncol = 2),
+                         hyp_names = c("null", "alt"))
 
 constraints <- constraints(name = c("a", "b"),
-                   out_i = c(1),
-                   hyp_i = c(1),
+                   out = c("g"),
+                   hyp = c("null"),
                    nom = c(0.1),
                    delta =c(0.95),
                    stoch = c(TRUE))
 
 objectives <- objectives(name = c("f1", "f2"),
-                 out_i = c(2, 3),
-                 hyp_i = c(2, 1),
+                 out = c("s", "n"),
+                 hyp = c("alt", "null"),
                  weight = c(100, 1),
                  stoch = c(TRUE, TRUE))
 
@@ -423,6 +426,8 @@ objectives <- data.frame(name = c("f1", "f2", "f3"),
 Note that the method extends trivially to any kind of Bayesian analysis. We just use the hypotheses parameters to describe hyperparameters for the priors we want to simulate under, and use a Bayesian analysis (or freq if using a hybrid approach). This would include a decision-theoretic approach, where the analysis would give us a utility and we would use the expectation of this as an objective to maximise. One difficulty would be avoiding model compilation when using Stan or brms. We could potentially deal with this by storing a pre-compiled model as a file, and then loading and updating it for each iteration.
 
 ```{r}
+library(lme4)
+
 sim_bayes <- function(design = c(20, 10),
                       hypothesis = c(0.2, 15, 0.3, 15, 100, 10))
 {
@@ -462,22 +467,25 @@ sim_bayes <- function(design = c(20, 10),
                    c_id = rep(1:(2*m), each = n),
                    y = c(p_0, p_1))
   
-  fit <- glmer(y ~ trt + (1 | c_id), family = binomial, data = df)
+  fit <- suppressMessages(glmer(y ~ trt + (1 | c_id), family = binomial, data = df))
   
   est <- fixef(fit)[[2]]
   se <- sqrt(diag(vcov(fit)))[[2]]
   
   s <- est/se < qnorm(0.975)
-  return(c(s, m, 2*n*m))
+  return(c(s=s))
 }
 
 sim_bayes()
 
-bayes_det <- function(design = c(20, 10),
+det_bayes <- function(design = c(20, 10),
                       hypothesis = c(0.2, 15, 0.3, 15, 100, 10))
 {
-  return(c(0, design[1], 2*design[1]*design[2]))
+  design <- as.numeric(design); hypothesis <- as.numeric(hypothesis)
+  return(c(m = design[1], N = 2*design[1]*design[2]))
 }
+
+det_bayes()
 ```
 
 ```{r}
@@ -485,23 +493,24 @@ design_space <- design_space(name = c("m", "n"),
                              lower = c(10,5), 
                              upper = c(50,40))
 
-hypotheses <- hypotheses(name = c("theta_0", "eff_n_0", "theta_1", "eff_n_1", "het_n_mean", "het_n_sd"),
-                         param_matrix = matrix(c(0.2, 15, 0.3, 15, 100, 10), ncol = 1))
+hypotheses <- hypotheses(par_name = c("theta_0", "eff_n_0", "theta_1", "eff_n_1", "het_n_mean", "het_n_sd"),
+                         values = matrix(c(0.2, 15, 0.3, 15, 100, 10), ncol = 1),
+                         hyp_names = c("alt"))
 
 constraints <- constraints(name = c("a"),
-                   out_i = c(1),
-                   hyp_i = c(1),
+                   out = c("s"),
+                   hyp = c("alt"),
                    nom = c(0.4),
                    delta =c(0.95),
                    stoch = c(TRUE))
 
 objectives <- objectives(name = c("f1", "f2", "f3"),
-                 out_i = c(1, 2, 3),
-                 hyp_i = c(1, 1, 1),
+                 out = c("s", "m", "N"),
+                 hyp = c("alt", "alt", "alt"),
                  weight = c(100, 10, 1),
                  stoch = c(TRUE, FALSE, FALSE))
 
-prob <- BOSSS_problem(sim_bayes, design_space, hypotheses, constraints, objectives, det_obj = bayes_det)
+prob <- BOSSS_problem(sim_bayes, design_space, hypotheses, constraints, objectives, det_func = det_bayes)
 
 size <- 20
 N <- 100
@@ -512,7 +521,13 @@ print(sol)
 plot(sol)
 ```
 
-
+```{r}
+for(i in 1:19) {
+  sol <- iterate(sol, prob, N) 
+}
+print(sol)
+plot(sol)
+```
 
 ## Multi-state models
 
