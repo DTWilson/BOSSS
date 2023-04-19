@@ -83,13 +83,14 @@ fit_models <- function(DoE, results, to_model, problem)
 #' design <- c(250, 35)
 #' hypotheses <- t(c(0.3))
 #' calc_rates(design, hypotheses, N = 100, sim = sim_trial)
-calc_rates <- function(design, hypotheses, N, sim)
+MC_estimates <- function(design, hypotheses, N, sim)
 {
   # Run the simulation under each hypothesis and store the results
   results <- NULL
   hypotheses <- t(hypotheses)
   for(i in 1:nrow(hypotheses)){
     sims <- replicate(N, sim(design, as.data.frame(hypotheses)[i,]))
+    sims <- matrix(sims, ncol = N)
     for(j in 1:nrow(sims)){
       # Results are the mean and variance of each of the simulation outputs
       results <- c(results, mean(sims[j,]), stats::var(sims[j,])/N)
@@ -100,6 +101,12 @@ calc_rates <- function(design, hypotheses, N, sim)
   }
   results
 }
+
+t <- function() {
+  return(c(3,6))
+}
+
+sims <- replicate(N, t())
 
 # Now redundant?
 extract_outputs <- function(sim_trial)

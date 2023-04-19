@@ -423,6 +423,8 @@ objectives <- data.frame(name = c("f1", "f2", "f3"),
 Note that the method extends trivially to any kind of Bayesian analysis. We just use the hypotheses parameters to describe hyperparameters for the priors we want to simulate under, and use a Bayesian analysis (or freq if using a hybrid approach). This would include a decision-theoretic approach, where the analysis would give us a utility and we would use the expectation of this as an objective to maximise. One difficulty would be avoiding model compilation when using Stan or brms. We could potentially deal with this by storing a pre-compiled model as a file, and then loading and updating it for each iteration.
 
 ```{r}
+library(lme4)
+
 sim_bayes <- function(design = c(20, 10),
                       hypothesis = c(0.2, 15, 0.3, 15, 100, 10))
 {
@@ -468,16 +470,18 @@ sim_bayes <- function(design = c(20, 10),
   se <- sqrt(diag(vcov(fit)))[[2]]
   
   s <- est/se < qnorm(0.975)
-  return(c(s, m, 2*n*m))
+  return(c(s=s))
 }
 
 sim_bayes()
 
-bayes_det <- function(design = c(20, 10),
+det_bayes <- function(design = c(20, 10),
                       hypothesis = c(0.2, 15, 0.3, 15, 100, 10))
 {
-  return(c(0, design[1], 2*design[1]*design[2]))
+  return(c(m = design[1], N = 2*design[1]*design[2]))
 }
+
+det_bayes()
 ```
 
 ```{r}
@@ -496,15 +500,15 @@ constraints <- constraints(name = c("a"),
                    stoch = c(TRUE))
 
 objectives <- objectives(name = c("f1", "f2", "f3"),
-                 out_i = c(1, 2, 3),
-                 hyp_i = c(1, 1, 1),
+                 out = c("s", "m", "N"),
+                 hyp = c("b", "b", "b"),
                  weight = c(100, 10, 1),
                  stoch = c(TRUE, FALSE, FALSE))
 
-prob <- BOSSS_problem(sim_bayes, design_space, hypotheses, constraints, objectives, det_obj = bayes_det)
+prob <- BOSSS_problem(sim_bayes, design_space, hypotheses, constraints, objectives, det_obj = det_bayes)
 
-size <- 20
-N <- 100
+size <- 5
+N <- 50
 
 sol <- BOSSS_solution(size, N, prob)
 
