@@ -44,14 +44,18 @@ BOSSS_solution <- function(size, N, problem){
   } else {
     r_sim <- r_1
   }
-  r_det <- t(apply(DoE, 1, det_values, hypotheses=problem$hypotheses, det_func=problem$det_func))
 
-  r <- cbind(r_sim, r_det)
+  if(is.null(problem$det_func)) {
+    r <- r_sim
+  } else {
+    r_det <- t(apply(DoE, 1, det_values, hypotheses=problem$hypotheses, det_func=problem$det_func))
+    r <- cbind(r_sim, r_det)
+  }
 
   # Put results into a (# hyps) x (# outputs) matrix
-  out_dimen <- ncol(r)/2
-  out_names <- rep(NA, out_dimen)
   n_hyp <- ncol(problem$hypotheses)
+  out_dimen <- ncol(r)/(2*n_hyp)
+  out_names <- rep(NA, out_dimen)
   results <- vector(mode = "list", length = n_hyp*out_dimen)
   for(i in 1:n_hyp){
     for(j in 1:out_dimen){
