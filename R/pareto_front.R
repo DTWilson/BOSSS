@@ -25,14 +25,16 @@ pareto_front <- function(solution, problem)
   exp_pen <- 1
   for(i in 1:nrow(problem$constraints)){
 
-    out_i <- problem$constraints[i, "out_i"]
-    hyp_i <- problem$constraints[i, "hyp_i"]
+    out <- problem$constraints[i, "out"]
+    hyp <- problem$constraints[i, "hyp"]
 
-    # Models are in order of to_model
-    model_index <- which(solution$to_model$out_i == out_i & solution$to_model$hyp_i == hyp_i)
+    if(problem$constraints$stoch[i]) {
 
-    nom <- problem$constraints[i, "nom"]
-    if(problem$constraints[i, "stoch"]){
+      # Models are in order of to_model
+      model_index <- which(solution$to_model$out == out & solution$to_model$hyp == hyp)
+
+      nom <- problem$constraints[i, "nom"]
+
       p <- DiceKriging::predict.km(solution$models[[model_index]],
                                    newdata = solution$DoE[,1:dimen, drop=F],
                                    type="UK", light.return = TRUE)
@@ -42,7 +44,7 @@ pareto_front <- function(solution, problem)
       pen <- ifelse(pen < constraints[i, "delta"], 0.0000001, 1)
       exp_pen <- exp_pen*pen
     } else {
-      pen <- ifelse(solution$results[[hyp_i, out_i]][,1] > nom, 0.0000001, 1)
+      pen <- ifelse(solution$results[[hyp, out]][,1] > nom, 0.0000001, 1)
       exp_pen <- exp_pen*pen
     }
   }

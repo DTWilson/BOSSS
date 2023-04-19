@@ -23,11 +23,15 @@ iterate <- function(solution, problem, N) {
 
   solution$DoE <- rbind(solution$DoE, c(to_eval, N))
 
-  y <- calc_rates(to_eval, hypotheses=problem$hypotheses, N=N, sim=problem$simulation)
+  y <- MC_estimates(to_eval, hypotheses=problem$hypotheses, N=N, sim=problem$simulation)
+  if(!is.null(problem$det_func)) {
+    y <- c(y, det_values(to_eval, hypotheses=problem$hypotheses, det_func = problem$det_func))
+  }
 
   n_hyp <- ncol(problem$hypotheses)
+  out_dimen <- length(y)/(2*n_hyp)
   for(i in 1:n_hyp){
-    for(j in 1:problem$out_dimen){
+    for(j in 1:out_dimen){
       s <- i*6 - 6 + j*2 - 1
       solution$results[[i,j]] <- rbind(solution$results[[i,j]], y[s:(s+1)])
     }

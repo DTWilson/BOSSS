@@ -83,60 +83,49 @@ fit_models <- function(DoE, results, to_model, problem)
 #' design <- c(250, 35)
 #' hypotheses <- t(c(0.3))
 #' calc_rates(design, hypotheses, N = 100, sim = sim_trial)
-calc_rates <- function(design, hypotheses, N, sim)
+MC_estimates <- function(design, hypotheses, N, sim)
 {
   # Run the simulation under each hypothesis and store the results
   results <- NULL
   hypotheses <- t(hypotheses)
-  for(i in 1:nrow(hypotheses)){
+  for(i in 1:nrow(hypotheses)) {
     sims <- replicate(N, sim(design, as.data.frame(hypotheses)[i,]))
-    for(j in 1:nrow(sims)){
-      # Results are the mean and variance of each of the simulation outputs
-      results <- c(results, mean(sims[j,]), stats::var(sims[j,])/N)
+    # Handle this depending on if there is 1 or more than one output
+    if(is.matrix(sims)) {
+      for(j in 1:nrow(sims)) {
+        # Results are the mean and variance of each of the simulation outputs
+        results <- c(results, mean(sims[j,]), stats::var(sims[j,])/N)
+        # Use the output variable names to name the result columns
+        names(results)[(length(results) -1)] <- paste0(rownames(sims)[j], "_m_", rownames(hypotheses)[i])
+        names(results)[length(results)] <- paste0(rownames(sims)[j], "_v_", rownames(hypotheses)[i])
+      }
+    } else {
+      results <- c(results, mean(sims), stats::var(sims)/N)
       # Use the output variable names to name the result columns
-      names(results)[(length(results) -1)] <- paste0(rownames(sims)[j], "_m_", rownames(hypotheses)[i])
-      names(results)[length(results)] <- paste0(rownames(sims)[j], "_v_", rownames(hypotheses)[i])
+      names(results)[(length(results) -1)] <- paste0(names(sims)[1], "_m_", rownames(hypotheses)[i])
+      names(results)[length(results)] <- paste0(names(sims)[1], "_v_", rownames(hypotheses)[i])
     }
   }
   results
 }
 
-# Now redundant?
-extract_outputs <- function(sim_trial)
-{
-  str_func <- format(sim_trial)
-  found_return <- FALSE
-  i <- 1
-  while(found_return == FALSE & i <= length(str_func)){
-    line <- str_func[i]
-    r_index <- regexpr(pattern = "return", format(sim_trial)[i])[[1]]
-    i <- i + 1
-  }
-  if(r_index != -1){
-    line_split <- strsplit(line, "=")[[1]]
-    n_out <- length(line_split) - 1
-    out_names <- rep("", n_out)
-    for(i in 1:n_out){
-      line_chars <- strsplit(line_split[i], "")[[1]]
-      done <- FALSE
-      j <- length(line_chars)
-      while(!done){
-        e <- line_chars[j]
-        if(e == " "){
-          j <- j - 1
-        } else if(e == "(" | e == ","){
-          done <- TRUE
-        } else {
-          out_names[i] <- paste0(e, out_names[i])
-          j <- j - 1
-        }
-      }
+det_values <- function(design, hypotheses, det_func) {
+  # Evaluate the objective functions under each hypothesis
+  results <- NULL
+  hypotheses <- t(hypotheses)
+  for(i in 1:nrow(hypotheses)) {
+    vals <- det_func(design, as.data.frame(hypotheses)[i,])
+    # Handle this depending on if there is 1 or more than one output
+    for(j in 1:length(vals)) {
+      # Deterministic, so variance is 0
+      results <- c(results, vals[j], 0)
+      # Use the output variable names to name the result columns
+      names(results)[(length(results) -1)] <- paste0(names(vals)[j], "_m_", rownames(hypotheses)[i])
+      names(results)[length(results)] <- paste0(names(vals)[j], "_v_", rownames(hypotheses)[i])
     }
   }
-  return(out_names)
+  results
 }
-
-
 
 
 

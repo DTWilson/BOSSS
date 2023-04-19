@@ -34,30 +34,45 @@ BOSSS_solution <- function(size, N, problem){
   # Get a rough estimate of how long initialisation will take
   cat("Checking simulation speed...\n")
   t <- Sys.time()
-  r <- calc_rates(DoE[1,], hypotheses=problem$hypotheses, N=N, sim=problem$simulation)
-  dif <- utils::capture.output((Sys.time() - t)*size)
-  cat("Initialisation will take approximately", substr(dif, 20, nchar(dif)), "\n")
+  r_1 <- MC_estimates(DoE[1,], hypotheses=problem$hypotheses, N=N, sim=problem$simulation)
 
-  r <-  t(apply(DoE, 1, calc_rates, hypotheses=problem$hypotheses, N=N, sim=problem$simulation))
+  if(nrow(DoE) > 1) {
+    dif <- utils::capture.output((Sys.time() - t)*(size-1))
+    cat("Initialisation will take approximately", substr(dif, 20, nchar(dif)), "\n")
+    r_rest <- t(apply(DoE[2:nrow(DoE),], 1, MC_estimates, hypotheses=problem$hypotheses, N=N, sim=problem$simulation))
+    r_sim <- rbind(r_1, r_rest)
+  } else {
+    r_sim <- r_1
+  }
+
+  if(is.null(problem$det_func)) {
+    r <- r_sim
+  } else {
+    r_det <- t(apply(DoE, 1, det_values, hypotheses=problem$hypotheses, det_func=problem$det_func))
+    r <- cbind(r_sim, r_det)
+  }
 
   # Put results into a (# hyps) x (# outputs) matrix
   n_hyp <- ncol(problem$hypotheses)
-  results <- vector(mode = "list", length = n_hyp*problem$out_dimen)
+  out_dimen <- ncol(r)/(2*n_hyp)
+  out_names <- rep(NA, out_dimen)
+  results <- vector(mode = "list", length = n_hyp*out_dimen)
   for(i in 1:n_hyp){
-    for(j in 1:problem$out_dimen){
+    for(j in 1:out_dimen){
       s <- i*6 - 6 + j*2 - 1
       e <- j + i*3 - 3
       results[[e]]  <- r[, s:(s+1)]
+      out_names[j] <- substr(colnames(r)[s], 1, 1)
     }
   }
   results <- matrix(results, nrow = n_hyp, byrow = TRUE)
+  rownames(results) <- names(problem$hypotheses)
+  colnames(results) <- out_names
 
-  # For now, assume all outputs in all hypotheses are being modelled
-  to_model <- data.frame(out_i = rep(1:problem$out_dimen, each = n_hyp),
-                         hyp_i = rep(1:n_hyp, problem$out_dimen))
-
-  to_model <- rbind(problem$constraints[,c("out_i", "hyp_i")],
-                    problem$objectives[,c("out_i", "hyp_i")])
+  # Find the hypothesis x output combinations which need to be modelled
+  # (i.e. those forming stochastic constraints or objectives)
+  to_model <- rbind(problem$constraints[problem$constraints$stoch, c("out", "hyp")],
+                    problem$objectives[problem$objectives$stoch, c("out", "hyp")])
   to_model <- unique(to_model)
 
   mods <- fit_models(DoE, results, to_model, problem)

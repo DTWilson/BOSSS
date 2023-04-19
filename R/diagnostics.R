@@ -67,7 +67,7 @@ one_d_plots <- function(design, problem, solution) {
 #'
 check_point <- function(design, problem, solution, N, current = NULL) {
 
-  r <- calc_rates(design, problem$hypotheses, N, problem$simulation)
+  r <- MC_estimates(design, problem$hypotheses, N, problem$simulation)
 
   if(is.null(current)){
     current <- matrix(rep(0, nrow(solution$to_model)*3), ncol = 3)
@@ -79,9 +79,9 @@ check_point <- function(design, problem, solution, N, current = NULL) {
                                  light.return = TRUE)
     cat(paste0("Model ", i, " prediction interval: [", round(p$lower95, 3), ", ", round(p$upper95, 3), "]\n"))
 
-    out_i <- solution$to_model$out_i[i]
-    hyp_i <- solution$to_model$hyp_i[i]
-    index <- hyp_i*6 - 6 + out_i*2 - 1
+    out <- solution$to_model$out[i]
+    hyp <- solution$to_model$hyp[i]
+    index <- which(names(r) == paste0(out,"_m_",hyp))
     emp_mean <- r[index]
     emp_var <- r[index + 1]
 

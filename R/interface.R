@@ -31,10 +31,10 @@ design_space <- function(name, lower, upper) {
 #' @export
 #'
 #'
-hypotheses <- function(name, param_matrix) {
-  df <- as.data.frame(param_matrix)
-  row.names(df) <- name
-  names(df) <- paste0("hyp_", 1:ncol(param_matrix))
+hypotheses <- function(par_name, values, hyp_names) {
+  df <- data.frame(v = values)
+  row.names(df) <- par_name
+  names(df) <- hyp_names
   df
 }
 
@@ -42,9 +42,9 @@ hypotheses <- function(name, param_matrix) {
 #' Create a set of constraints
 #'
 #' @param name Character vector of constraint names.
-#' @param out_i Numeric vector denoting which simulation output each constraint
+#' @param out Character vector denoting which simulation output each constraint
 #' pertains to.
-#' @param hyp_i Numeric vector denoting which hypothesis each constraint
+#' @param hyp Character vector denoting which hypothesis each constraint
 #' pertains to.
 #' @param nom Numeric vector of nominal upper limits.
 #' @param delta Numeric vector of probabilities.
@@ -55,11 +55,11 @@ hypotheses <- function(name, param_matrix) {
 #' @export
 #'
 #'
-constraints <- function(name, out_i, hyp_i, nom, delta, stoch) {
+constraints <- function(name, out, hyp, nom, delta, stoch) {
 
   data.frame(name = name,
-             out_i= out_i,
-             hyp_i = hyp_i,
+             out = out,
+             hyp = hyp,
              nom = nom,
              delta = delta,
              stoch = stoch)
@@ -69,9 +69,9 @@ constraints <- function(name, out_i, hyp_i, nom, delta, stoch) {
 #' Create a set of objectives
 #'
 #' @param name Character vector of objective names.
-#' @param out_i Numeric vector denoting which simulation output each objective
+#' @param out Character vector denoting which simulation output each objective
 #' pertains to.
-#' @param hyp_i Numeric vector denoting which hypothesis each objective
+#' @param hyp Character vector denoting which hypothesis each objective
 #' pertains to.
 #' @param weight Numeric vector of weights assigned to each objective.
 #' @param stoch Boolean vector denoting if the objective function is stochastic
@@ -81,11 +81,11 @@ constraints <- function(name, out_i, hyp_i, nom, delta, stoch) {
 #' @export
 #'
 #'
-objectives <- function(name, out_i, hyp_i, weight, stoch) {
+objectives <- function(name, out, hyp, weight, stoch) {
 
   data.frame(name = name,
-             out_i= out_i,
-             hyp_i = hyp_i,
+             out = out,
+             hyp = hyp,
              weight = weight,
              stoch = stoch)
 }

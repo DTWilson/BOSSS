@@ -1,13 +1,13 @@
 # Constructor
 new_BOSSS_problem <- function(sim_trial, design_space, hypotheses,
-                              constraints, objectives, det_obj = NULL){
+                              constraints, objectives, det_func = NULL){
   # Check types
   stopifnot(is.function(sim_trial))
   stopifnot(is.data.frame(design_space))
   stopifnot(is.data.frame(hypotheses))
   stopifnot(is.data.frame(constraints))
   stopifnot(is.data.frame(objectives))
-  stopifnot(is.function(det_obj) | is.null(det_obj))
+  stopifnot(is.function(det_func) | is.null(det_func))
 
   # Normalise objective weights
   objectives$weight <- objectives$weight/sum(objectives$weight)
@@ -17,8 +17,8 @@ new_BOSSS_problem <- function(sim_trial, design_space, hypotheses,
                hypotheses = hypotheses,
                constraints = constraints,
                objectives = objectives,
-               det_obj = det_obj,
-               out_dimen = length(sim_trial()),
+               det_func = det_func,
+               #out_dimen = length(sim_trial()),
                dimen = nrow(design_space))
 
   structure(prob,
@@ -49,10 +49,7 @@ validate_BOSSS_problem <- function(prob) {
 #' @param sim_trial Function which generates a single (possibly multivariate)
 #' Monte Carlo outcome of a design under a hypothesis.
 #' @param design_space Data frame constructed via design_space().
-#' @param hypotheses Data frame constructed via hypotheses().
-#' @param constraints Data frame constructed via constraints().
-#' @param objectives Data frame constructed via objectives().
-#' @param det_obj Optional function which generates deterministic outcomes of a
+#' @param hypofunc Optional function which generates deterministic outcomes of a
 #' design under a hypothesis.
 #'
 #' @return An object of class BOSSS_problem.
@@ -60,10 +57,10 @@ validate_BOSSS_problem <- function(prob) {
 #'
 #'
 BOSSS_problem <- function(sim_trial, design_space, hypotheses,
-                              constraints, objectives, det_obj = NULL){
+                              constraints, objectives, det_func = NULL){
 
   prob <- new_BOSSS_problem(sim_trial, design_space, hypotheses,
-                                        constraints, objectives, det_obj)
+                                        constraints, objectives, det_func)
   #validate_BOSSS_problem(prob)
   prob
 }

@@ -35,17 +35,17 @@ exp_penalty <- function(design, problem, solution){
   exp_pen <- 1
   for(i in 1:nrow(problem$constraints)){
 
-    out_i <- problem$constraints[i, "out_i"]
-    hyp_i <- problem$constraints[i, "hyp_i"]
-
-    # Models are in order of to_model
-    model_index <- which(solution$to_model$out_i == out_i & solution$to_model$hyp_i == hyp_i)
+    out <- problem$constraints[i, "out"]
+    hyp <- problem$constraints[i, "hyp"]
 
     nom <- problem$constraints[i, "nom"]
 
-    if(problem$constraints[i, "nom"]){
+    if(problem$constraints[i, "stoch"]){
 
       # If constraint is stochastic, predict constraint at design point
+
+      model_index <- which(solution$to_model$out == out & solution$to_model$hyp == hyp)
+
       p <- DiceKriging::predict.km(solution$models[[model_index]],
                                    newdata=design[,1:problem$dimen, drop=F],
                                    type="SK",
