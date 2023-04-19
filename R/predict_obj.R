@@ -8,13 +8,14 @@ predict_obj <- function(design, problem, solution){
   obj_vals <- matrix(rep(NA, nrow(design)*nrow(problem$objectives)), nrow = nrow(design))
   for(i in 1:nrow(problem$objectives)){
 
-    out_i <- problem$objectives[i, "out_i"]
-    hyp_i <- problem$objectives[i, "hyp_i"]
+    out <- problem$objectives[i, "out"]
+    hyp <- problem$objectives[i, "hyp"]
 
-    model_index <- which(solution$to_model$out_i == out_i & solution$to_model$hyp_i == hyp_i)
 
     if(problem$objectives$stoch[i]){
       ## For stochastic objectives, we use the model to predict
+      model_index <- which(solution$to_model$out == out & solution$to_model$hyp == hyp)
+
       p <- DiceKriging::predict.km(solution$models[[model_index]],
                                    newdata=design[,1:problem$dimen, drop=F], type="UK",
                                    light.return = TRUE)
@@ -23,7 +24,7 @@ predict_obj <- function(design, problem, solution){
     } else {
       ## For deterministic objectives, use the user-written function
       ## For now, assume independent of hypothesis
-      f <- apply(design, 1, problem$simulation, hypothesis = problem$hypotheses[,hyp_i])[out_i,]
+      f <- apply(design, 1, problem$det_func, hypothesis = problem$hypotheses[,hyp])[out,]
       #f <- as.numeric(problem$det_obj(design)[problem$objectives[i, "out_i"]])
       obj_vals[,i] <- f*problem$objectives$weight[i]
     }

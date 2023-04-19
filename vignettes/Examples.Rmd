@@ -478,6 +478,7 @@ sim_bayes()
 det_bayes <- function(design = c(20, 10),
                       hypothesis = c(0.2, 15, 0.3, 15, 100, 10))
 {
+  design <- as.numeric(design); hypothesis <- as.numeric(hypothesis)
   return(c(m = design[1], N = 2*design[1]*design[2]))
 }
 
@@ -489,23 +490,24 @@ design_space <- design_space(name = c("m", "n"),
                              lower = c(10,5), 
                              upper = c(50,40))
 
-hypotheses <- hypotheses(name = c("theta_0", "eff_n_0", "theta_1", "eff_n_1", "het_n_mean", "het_n_sd"),
-                         param_matrix = matrix(c(0.2, 15, 0.3, 15, 100, 10), ncol = 1))
+hypotheses <- hypotheses(par_name = c("theta_0", "eff_n_0", "theta_1", "eff_n_1", "het_n_mean", "het_n_sd"),
+                         values = matrix(c(0.2, 15, 0.3, 15, 100, 10), ncol = 1),
+                         hyp_names = c("alt"))
 
 constraints <- constraints(name = c("a"),
-                   out_i = c(1),
-                   hyp_i = c(1),
+                   out = c("s"),
+                   hyp = c("alt"),
                    nom = c(0.4),
                    delta =c(0.95),
                    stoch = c(TRUE))
 
 objectives <- objectives(name = c("f1", "f2", "f3"),
                  out = c("s", "m", "N"),
-                 hyp = c("b", "b", "b"),
+                 hyp = c("alt", "alt", "alt"),
                  weight = c(100, 10, 1),
                  stoch = c(TRUE, FALSE, FALSE))
 
-prob <- BOSSS_problem(sim_bayes, design_space, hypotheses, constraints, objectives, det_obj = det_bayes)
+prob <- BOSSS_problem(sim_bayes, design_space, hypotheses, constraints, objectives, det_func = det_bayes)
 
 size <- 5
 N <- 50
