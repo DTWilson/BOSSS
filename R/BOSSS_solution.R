@@ -34,11 +34,16 @@ BOSSS_solution <- function(size, N, problem){
   # Get a rough estimate of how long initialisation will take
   cat("Checking simulation speed...\n")
   t <- Sys.time()
-  r <- MC_estimates(DoE[1,], hypotheses=problem$hypotheses, N=N, sim=problem$simulation)
-  dif <- utils::capture.output((Sys.time() - t)*size)
-  cat("Initialisation will take approximately", substr(dif, 20, nchar(dif)), "\n")
+  r_1 <- MC_estimates(DoE[1,], hypotheses=problem$hypotheses, N=N, sim=problem$simulation)
 
-  r_sim <- t(apply(DoE, 1, MC_estimates, hypotheses=problem$hypotheses, N=N, sim=problem$simulation))
+  if(nrow(DoE) > 1) {
+    dif <- utils::capture.output((Sys.time() - t)*(size-1))
+    cat("Initialisation will take approximately", substr(dif, 20, nchar(dif)), "\n")
+    r_rest <- t(apply(DoE[2:nrow(DoE),], 1, MC_estimates, hypotheses=problem$hypotheses, N=N, sim=problem$simulation))
+    r_sim <- rbind(r_1, r_rest)
+  } else {
+    r_sim <- r_1
+  }
   r_det <- t(apply(DoE, 1, det_values, hypotheses=problem$hypotheses, det_func=problem$det_func))
 
   r <- cbind(r_sim, r_det)
