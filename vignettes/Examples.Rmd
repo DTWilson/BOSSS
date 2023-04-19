@@ -464,7 +464,7 @@ sim_bayes <- function(design = c(20, 10),
                    c_id = rep(1:(2*m), each = n),
                    y = c(p_0, p_1))
   
-  fit <- glmer(y ~ trt + (1 | c_id), family = binomial, data = df)
+  fit <- suppressMessages(glmer(y ~ trt + (1 | c_id), family = binomial, data = df))
   
   est <- fixef(fit)[[2]]
   se <- sqrt(diag(vcov(fit)))[[2]]
@@ -509,8 +509,8 @@ objectives <- objectives(name = c("f1", "f2", "f3"),
 
 prob <- BOSSS_problem(sim_bayes, design_space, hypotheses, constraints, objectives, det_func = det_bayes)
 
-size <- 5
-N <- 50
+size <- 20
+N <- 100
 
 sol <- BOSSS_solution(size, N, prob)
 
@@ -518,7 +518,13 @@ print(sol)
 plot(sol)
 ```
 
-
+```{r}
+for(i in 1:2) {
+  sol <- iterate(sol, prob, N) 
+}
+print(sol)
+plot(sol)
+```
 
 ## Multi-state models
 

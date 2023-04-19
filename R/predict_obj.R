@@ -49,12 +49,14 @@ predict_next_obj <- function(n_samp, design, problem, solution){
   obj_vals <- matrix(rep(NA, n_samp*nrow(problem$objectives)), nrow = n_samp)
   for(i in 1:nrow(problem$objectives)){
 
-    out_i <- problem$objectives[i, "out_i"]
-    hyp_i <- problem$objectives[i, "hyp_i"]
+    out <- problem$objectives[i, "out"]
+    hyp <- problem$objectives[i, "hyp"]
 
-    model_index <- which(solution$to_model$out_i == out_i & solution$to_model$hyp_i == hyp_i)
 
     if(problem$objectives$stoch[i]){
+
+      model_index <- which(solution$to_model$out == out & solution$to_model$hyp == hyp)
+
       ## For stochastic objectives, we use the reinterpolated model to predict
       p <- DiceKriging::predict.km(solution$models_reint[[model_index]],
                                    newdata=design[,1:problem$dimen, drop=F], type="UK",
@@ -63,9 +65,9 @@ predict_next_obj <- function(n_samp, design, problem, solution){
       obj_vals[,i] <- f*problem$objectives$weight[i]
     } else {
       ## For deterministic objectives
-      f <- apply(design, 1, problem$simulation, hypothesis = hypotheses[,hyp_i])[out_i,]
+      f <- apply(design, 1, problem$det_func, hypothesis = problem$hypotheses[,hyp])[out,]
       #f <- as.numeric(problem$det_obj(design)[problem$objectives[i, "out_i"]])
-      obj_vals[,i] <- f*objectives$weight[i]
+      obj_vals[,i] <- f*problem$objectives$weight[i]
     }
   }
   return(obj_vals)
