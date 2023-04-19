@@ -4,15 +4,15 @@
 \alias{objectives}
 \title{Create a set of objectives}
 \usage{
-objectives(name, out_i, hyp_i, weight, stoch)
+objectives(name, out, hyp, weight, stoch)
 }
 \arguments{
 \item{name}{Character vector of objective names.}
 
-\item{out_i}{Numeric vector denoting which simulation output each objective
+\item{out}{Character vector denoting which simulation output each objective
 pertains to.}
 
-\item{hyp_i}{Numeric vector denoting which hypothesis each objective
+\item{hyp}{Character vector denoting which hypothesis each objective
 pertains to.}
 
 \item{weight}{Numeric vector of weights assigned to each objective.}

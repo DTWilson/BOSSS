@@ -62,7 +62,7 @@ exp_penalty <- function(design, problem, solution){
       # If constraint is deterministic, penalise by ~0 if violated
 
       # Results are a hyp x out matrix
-      ests <- solution$results[hyp_i, out_i]
+      ests <- solution$results[hyp, out]
 
       exp_pen <- ifelse(ests[, 1] > nom, 0.0000001, 1)
     }

@@ -10,7 +10,7 @@ BOSSS_problem(
   hypotheses,
   constraints,
   objectives,
-  det_obj = NULL
+  det_func = NULL
 )
 }
 \arguments{
@@ -25,7 +25,7 @@ Monte Carlo outcome of a design under a hypothesis.}
 
 \item{objectives}{Data frame constructed via objectives().}
 
-\item{det_obj}{Optional function which generates deterministic outcomes of a
+\item{det_func}{Optional function which generates deterministic outcomes of a
 design under a hypothesis.}
 }
 \value{

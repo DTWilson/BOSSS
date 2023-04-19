@@ -23,9 +23,10 @@ design_space <- function(name, lower, upper) {
 
 #' Create a set of hypotheses
 #'
-#' @param name Character vector of hypothesis names.
-#' @param param_matrix Numeric matrix, each column giving the model parameter
+#' @param par_name Character vector of model parameter names.
+#' @param values Numeric matrix, each column giving the model parameter
 #' values under a specific hypothesis.
+#' @param hyp_names Character vector of hypothesis names.
 #'
 #' @return A data.frame defining the hypotheses.
 #' @export

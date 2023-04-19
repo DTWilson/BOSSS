@@ -49,7 +49,10 @@ validate_BOSSS_problem <- function(prob) {
 #' @param sim_trial Function which generates a single (possibly multivariate)
 #' Monte Carlo outcome of a design under a hypothesis.
 #' @param design_space Data frame constructed via design_space().
-#' @param hypofunc Optional function which generates deterministic outcomes of a
+#' @param hypotheses Data frame constructed via hypotheses().
+#' @param constraints Data frame constructed via constraints().
+#' @param objectives Data frame constructed via objectives().
+#' @param det_func Optional function which generates deterministic outcomes of a
 #' design under a hypothesis.
 #'
 #' @return An object of class BOSSS_problem.

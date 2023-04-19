@@ -4,15 +4,15 @@
 \alias{constraints}
 \title{Create a set of constraints}
 \usage{
-constraints(name, out_i, hyp_i, nom, delta, stoch)
+constraints(name, out, hyp, nom, delta, stoch)
 }
 \arguments{
 \item{name}{Character vector of constraint names.}
 
-\item{out_i}{Numeric vector denoting which simulation output each constraint
+\item{out}{Character vector denoting which simulation output each constraint
 pertains to.}
 
-\item{hyp_i}{Numeric vector denoting which hypothesis each constraint
+\item{hyp}{Character vector denoting which hypothesis each constraint
 pertains to.}
 
 \item{nom}{Numeric vector of nominal upper limits.}
