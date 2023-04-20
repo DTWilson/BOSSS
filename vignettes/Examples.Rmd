@@ -429,8 +429,8 @@ Note that the method extends trivially to any kind of Bayesian analysis. We just
 library(lme4)
 
 sim_bayes <- function(design = c(20, 10),
-                      hypothesis = c(0.2, 15, 0.3, 15, 100, 10))
-{
+                      hypothesis = c(0.2, 15, 0.3, 15, 100, 10)) {
+  
   design <- as.numeric(design); hypothesis <- as.numeric(hypothesis)
   
   # Number of clusters in each arm
@@ -443,7 +443,12 @@ sim_bayes <- function(design = c(20, 10),
   theta_0 <- hypothesis[1]; eff_n_0 <- hypothesis[2]
   theta_1 <- hypothesis[3]; eff_n_1 <- hypothesis[4]
   
-  het_n <- rnorm(1, hypothesis[5], hypothesis[6])
+  # het_n is the effective sample size used in the beta prior
+  # of cluster rates - it encapsulates our degree of certainty
+  # about the between-cluster variance.
+  het_n_mean <- hypothesis[5]; het_n_sd <- hypothesis[6]
+  
+  het_n <- rgamma(1, shape = (het_n_mean/het_n_sd)^2, rate = het_n_mean/het_n_sd^2) + 2
   
   a_0 <- theta_0*eff_n_0; b_0 <- eff_n_0 - a_0
   a_1 <- theta_1*eff_n_1; b_1 <- eff_n_1 - a_1
@@ -528,6 +533,25 @@ for(i in 1:19) {
 print(sol)
 plot(sol)
 ```
+
+```{r}
+sa_hypothesis <- data.frame(hyp = "alt",
+                            sa_param = 5,
+                            lower = 10,
+                            upper = 100)
+
+sa <- as.data.frame(sensitivity(sa_hypothesis, design, prob, sol, num_eval = 5, N = 100))
+
+# Plot these to examine sensitivity:
+ggplot(sa, aes(p01relative, s_m)) + geom_point() + 
+  geom_errorbar(aes(ymin = s_m - 1.96*sqrt(s_v), ymax = s_m + 1.96*sqrt(s_v))) +
+  theme_minimal()
+
+ggplot(sa, aes(p01relative, n_m)) + geom_point() + 
+  geom_errorbar(aes(ymin = n_m - 1.96*sqrt(n_v), ymax = n_m + 1.96*sqrt(n_v))) +
+  theme_minimal()
+```
+
 
 ## Multi-state models
 

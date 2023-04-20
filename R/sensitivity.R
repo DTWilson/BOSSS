@@ -25,10 +25,16 @@ sensitivity <- function(sa_hypothesis, design, problem, solution, num_eval = 20,
       sims <- replicate(N, problem$simulation(design, as.data.frame(to_eval)[j,]))
       r <- NULL
       n <- NULL
-      for(k in 1:nrow(sims)){
-        # Results are the mean and variance of each of the simulation outputs
-        r <- c(r, c(mean(sims[k,]), stats::var(sims[k,])/N))
-        n <- c(n, c(paste0(rownames(sims)[k], "_m"), paste0(rownames(sims)[k], "_v")))
+      # Handle this depending on if there is 1 or more than one output
+      if(is.matrix(sims)) {
+        for(j in 1:nrow(sims)) {
+          # Results are the mean and variance of each of the simulation outputs
+          r <- c(r, c(mean(sims[k,]), stats::var(sims[k,])/N))
+          n <- c(n, c(paste0(rownames(sims)[k], "_m"), paste0(rownames(sims)[k], "_v")))
+        }
+      } else {
+        r <- c(r, mean(sims), stats::var(sims)/N)
+        n <- c(n, c(paste0(names(sims)[1], "_m"), paste0(names(sims)[1], "_v")))
       }
       results <- rbind(results, r)
     }
