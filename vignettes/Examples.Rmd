@@ -478,7 +478,7 @@ sim_bayes <- function(design = c(20, 10),
   se <- sqrt(diag(vcov(fit)))[[2]]
   
   s <- est/se < qnorm(0.975)
-  return(c(s=s))
+  return(c(s = s))
 }
 
 sim_bayes()
