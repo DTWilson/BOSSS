@@ -46,7 +46,7 @@ The first ingredient of a BOSSS problem is the simulation function. This functio
 
 The second argument, `hypothesis` is a vector containing the values of all _model parameters_ which we will vary in our problem. In this case this vector has four entries corresponding to the probability of the interim outcome in the control and experimental arms, and the probability of the final outcome in the control and experimental arms. Again, we extract these variables from the `hypothesis` vector at the start of the function.
 
-The other element of interface the simulation function must conform to is in its return value, which should be a vector of the quantities who's mean values we want to estimate using the Monte Carlo method. Here, we have three such quantities: a boolean indicator of an overall positive decision (`g`), a boolean indicator of a negative decision (`s`), and the final sample size (`n`).
+The other element of interface the simulation function must conform to is in its return value, which should be a vector of the quantities who's mean values we want to estimate using the Monte Carlo method. Here, we have three such quantities: a boolean indicator of an overall positive decision (`g`), a boolean indicator of a negative decision (`s`), and the final sample size (`n`). The elements of this returned vector output should all be named.
 
 ```{r}
 #n is the total sample size
@@ -421,9 +421,13 @@ objectives <- data.frame(name = c("f1", "f2", "f3"),
                  stoch = c(FALSE, FALSE, TRUE))
 ```
 
-## Bayesian / decision theoretic multilevel model
+## Hybrid Bayesian multilevel model
 
-Note that the method extends trivially to any kind of Bayesian analysis. We just use the hypotheses parameters to describe hyperparameters for the priors we want to simulate under, and use a Bayesian analysis (or freq if using a hybrid approach). This would include a decision-theoretic approach, where the analysis would give us a utility and we would use the expectation of this as an objective to maximise. One difficulty would be avoiding model compilation when using Stan or brms. We could potentially deal with this by storing a pre-compiled model as a file, and then loading and updating it for each iteration.
+Consider the design of a cluster randomised trial with $m$ clusters per arm, $n$ patients per cluster and a binary outcome for each patient. The trial will be analysed using a mixed effects model fitted using the `glmer` function from the `lme4` package, using a Wald test of the null hypothesis of no difference between arms at the 0.025 (one-sided) level.
+
+A design is defined by the choice of $m$ and $n$. We want to find designs which minimise the number of clusters, the number of patients, and the overal probability of failure when marginalising over a joint prior distribution on the model parameters. A hypothesis, then, is not a set of point parameter values but a set of prior hyperparameter values.
+
+In contrast to the NIFTy example, we now have some objectives (the number of clusters and number of patients) which are deterministic. To acknowledge this we specify two functions: the simulation function is as before, returning a single Monte Carlo sample of the stochastic outputs. The deterministic function takes the same arguments (i.e. a design and a hypothesis), and returns the deterministic outputs (as with the simulation function, this should take the form of a named vector).
 
 ```{r}
 library(lme4)
@@ -492,6 +496,8 @@ det_bayes <- function(design = c(20, 10),
 
 det_bayes()
 ```
+
+
 
 ```{r}
 design_space <- design_space(name = c("m", "n"),
