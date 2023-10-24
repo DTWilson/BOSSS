@@ -241,9 +241,11 @@ print(sol)
 plot(sol)
 ```
 
+The `print()` function will give a table of the Pareto set with associated objective function values. The `plot()` function will plot the Pareto front.
+
 ### Iteration
 
-We can now start improving this solution by calling the `iterate()` function. Each call uses the fitted GP models to decide on the next design to be evaluated, computes the MC estimates at that point, and then updates the estimated Pareto set and front. 
+We can now start improving this solution by calling the `iterate()` function. Each call uses the fitted Gaussian Process models to decide on the next design to be evaluated, computes the Monte Carlo estimates at that point, and then updates the estimated Pareto set and front. 
 
 ```{r}
 for(i in 1:3) {
@@ -252,6 +254,8 @@ for(i in 1:3) {
 print(sol)
 plot(sol)
 ```
+
+We find that all three of the newly evaluated designs make it into the new Pareto set, with three of the former members remaining and two being discarded.
 
 ### Diagnostics
 
@@ -268,7 +272,7 @@ for(i in 1:length(plots)) {
 }
 ```
 
-When we've chosen our design, we might want to check its properties by running computing more MC estimates, which we can also compare against the model predictions. 
+When we've chosen our design, we might want to check its properties by computing more MC estimates, which we can also compare against the model predictions. 
 
 ```{r}
 r <- check_point(design, prob, sol, N=10^2) 
