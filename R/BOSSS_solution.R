@@ -55,19 +55,19 @@ BOSSS_solution <- function(size, N, problem){
   # Put results into a (# hyps) x (# outputs) matrix
   n_hyp <- ncol(problem$hypotheses)
   out_dimen <- ncol(r)/(2*n_hyp)
-  out_names <- rep(NA, out_dimen)
+  out_names <- rep(rep(names(problem$simulation()), each=2), n_hyp)
   results <- vector(mode = "list", length = n_hyp*out_dimen)
   for(i in 1:n_hyp){
     for(j in 1:out_dimen){
       s <- i*6 - 6 + j*2 - 1
       e <- j + i*3 - 3
       results[[e]]  <- r[, s:(s+1)]
-      out_names[j] <- substr(colnames(r)[s], 1, 1)
+      #out_names[j] <- out_names[j] #colnames(r)[s] #substr(colnames(r)[s], 1, 1)
     }
   }
   results <- matrix(results, nrow = n_hyp, byrow = TRUE)
   rownames(results) <- names(problem$hypotheses)
-  colnames(results) <- out_names
+  colnames(results) <- names(problem$simulation())
 
   # Find the hypothesis x output combinations which need to be modelled
   # (i.e. those forming stochastic constraints or objectives)
