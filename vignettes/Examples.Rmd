@@ -211,14 +211,15 @@ constraints <- constraints(name = c("a", "b"),
                    stoch = c(TRUE, TRUE))
 ```
 
-The final ingredient of the problem is the set of objectives we want to minimise. Similar to constraints, objectives are tied to a specific simulation output and hypothesis, and can be stochastic or deterministic. We also specify weights for each objective which help guide the optimisation process. For example, here we want to minimise both the type I and type II error rates and the expected sample size, with the former carrying a weight of 100 times of the latter.
+The final ingredient of the problem is the set of objectives we want to minimise. Similar to constraints, objectives are tied to a specific simulation output and hypothesis, and can be stochastic or deterministic. We also specify weights for each objective which help guide the optimisation process, and note whether or not the output for each objective is binary or continuous. For example, here we want to minimise both the type I and type II error rates and the expected sample size, with the former carrying a weight of 100 times of the latter.
 
 ```{r}
 objectives <- objectives(name = c("f1", "f2", "f3"),
                  out = c("g", "s", "n"),
                  hyp = c("null", "alt", "null"),
                  weight = c(100, 100, 1),
-                 stoch = c(TRUE, TRUE, TRUE))
+                 stoch = c(TRUE, TRUE, TRUE),
+                 binary = c(TRUE, TRUE, FALSE))
 ```
 
 We now put this simulation function and set of data frames together to create an object of class `BOSSS_problem`. 
@@ -248,7 +249,7 @@ The `print()` function will give a table of the Pareto set with associated objec
 We can now start improving this solution by calling the `iterate()` function. Each call uses the fitted Gaussian Process models to decide on the next design to be evaluated, computes the Monte Carlo estimates at that point, and then updates the estimated Pareto set and front. 
 
 ```{r}
-for(i in 1:10) {
+for(i in 1:40) {
   sol <- iterate(sol, prob, N) 
 }
 print(sol)

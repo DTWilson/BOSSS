@@ -34,6 +34,7 @@ pareto_front <- function(solution, problem)
       model_index <- which(solution$to_model$out == out & solution$to_model$hyp == hyp)
 
       nom <- problem$constraints[i, "nom"]
+      nom <- log(nom/(1-nom))
 
       p <- DiceKriging::predict.km(solution$models[[model_index]],
                                    newdata = solution$DoE[,1:dimen, drop=F],

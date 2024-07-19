@@ -77,16 +77,19 @@ constraints <- function(name, out, hyp, nom, delta, stoch) {
 #' @param weight Numeric vector of weights assigned to each objective.
 #' @param stoch Boolean vector denoting if the objective function is stochastic
 #' (TRUE) or deterministic (FALSE).
+#' @param binary Boolean vector denoting if the output of the objective
+#' function is binary (TRUE) or continuous (FALSE).
 #'
 #' @return A data.frame defining the objectives.
 #' @export
 #'
 #'
-objectives <- function(name, out, hyp, weight, stoch) {
+objectives <- function(name, out, hyp, weight, stoch, binary) {
 
   data.frame(name = name,
              out = out,
              hyp = hyp,
              weight = weight,
-             stoch = stoch)
+             stoch = stoch,
+             binary = binary)
 }

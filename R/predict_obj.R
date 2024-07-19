@@ -20,6 +20,7 @@ predict_obj <- function(design, problem, solution){
                                    newdata=design[,1:problem$dimen, drop=F], type="UK",
                                    light.return = TRUE)
       f <- p$mean
+      if(problem$objectives[i, "binary"]) f <- exp(f)/(exp(f) + 1)
       obj_vals[,i] <- f*problem$objectives$weight[i]
     } else {
       ## For deterministic objectives, use the user-written function
@@ -62,6 +63,7 @@ predict_next_obj <- function(n_samp, design, problem, solution){
                                    newdata=design[,1:problem$dimen, drop=F], type="UK",
                                    light.return = TRUE)
       f <- stats::rnorm(n_samp, p$mean, p$sd)
+      if(problem$objectives[i, "binary"]) f <- exp(f)/(exp(f) + 1)
       obj_vals[,i] <- f*problem$objectives$weight[i]
     } else {
       ## For deterministic objectives
