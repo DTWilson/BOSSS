@@ -1,18 +1,4 @@
-#' Set up initial space-filling design
-#'
-#' @param size integer
-#' @param design_space data.frame
-#'
-#' @return data.frame
-#' @export
-#'
-#' @examples
-#' design_space <- data.frame(name = c("n", "k"),
-#' low = c(100, 10),
-#' up = c(500, 100),
-#' int = c(TRUE, TRUE))
-#'
-#' init_DoE(10, design_space)
+# Set up initial space-filling design
 init_DoE <- function(size, design_space)
 {
   dim <- nrow(design_space)
@@ -26,17 +12,7 @@ init_DoE <- function(size, design_space)
   DoE
 }
 
-#' Fit surrogate models
-#'
-#' @param DoE data.frame
-#' @param results Matrix of estimates
-#' @param to_model data.frame
-#' @param problem BOSSS problem
-#'
-#' @return list of objects of class km
-#' @export
-#'
-#'
+# Fit surrogate models
 fit_models <- function(DoE, results, to_model, problem)
 {
   ## To do: change to updating models if already initialised
@@ -59,30 +35,7 @@ fit_models <- function(DoE, results, to_model, problem)
   return(c(models, models_reint))
 }
 
-#' Generate MC estimates
-#'
-#' @param design vector
-#' @param hypotheses vector
-#' @param N integer
-#' @param sim function
-#'
-#' @return vector
-#' @export
-#'
-#' @examples
-#' sim_trial <- function(design, hypothesis)
-#' {
-#'   n <- design[1]; k <- design[2]
-#'   mu <- hypothesis[1]
-#'
-#'   m <- n/k
-#'   s_c <- sqrt(0.05 + 0.95/m)
-#'   x0 <- rnorm(k, 0, s_c); x1 <- rnorm(k, mu, s_c)
-#'   c(t.test(x0, x1)$p.value >= 0.05, n, k)
-#' }
-#' design <- c(250, 35)
-#' hypotheses <- t(c(0.3))
-#' calc_rates(design, hypotheses, N = 100, sim = sim_trial)
+# Generate MC estimates
 MC_estimates <- function(design, hypotheses, N, sim)
 {
   # Run the simulation under each hypothesis and store the results

@@ -1,12 +1,4 @@
-#' Get the Pareto front of a BOSSS problem and solution
-#'
-#' @param solution BOSSS solution.
-#' @param problem BOSSS problem.
-#'
-#' @return A data.frame containing the (weighted, penalised) Pareto front.
-#' @export
-#'
-#'
+
 pareto_front <- function(solution, problem)
 {
   ## Return the objective values of current Pareto optimal solutions,
@@ -59,6 +51,5 @@ pareto_front <- function(solution, problem)
   return(list(unique(pf), obj_v[,ncol(obj_v)]))
 }
 
-#m <- t(nondominated_points(t(as.matrix(sols[,c("f1", "f2")]))))
-#z <- sols[match(m[,1], sols[,"f1"]),]
+
 

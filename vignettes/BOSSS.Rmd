@@ -1,8 +1,8 @@
 ---
-title: "Examples"
+title: "BOSSS"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Examples}
+  %\VignetteIndexEntry{BOSSS}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -13,13 +13,6 @@ knitr::opts_chunk$set(
   comment = "#>",
   eval = FALSE
 )
-```
-
-Install the development version of BOSSS from GitHub:
-
-```{r, eval = FALSE}
-# install.packages("devtools")
-devtools::install_github("DTWilson/BOSSS")
 ```
 
 ```{r setup}
@@ -234,7 +227,7 @@ Having set up the problem, we now need to create an initial solution to it. This
 
 ```{r}
 size <- 40
-N <- 50
+N <- 500
 
 sol <- BOSSS_solution(size, N, prob)
 
@@ -249,7 +242,7 @@ The `print()` function will give a table of the Pareto set with associated objec
 We can now start improving this solution by calling the `iterate()` function. Each call uses the fitted Gaussian Process models to decide on the next design to be evaluated, computes the Monte Carlo estimates at that point, and then updates the estimated Pareto set and front. 
 
 ```{r}
-for(i in 1:40) {
+for(i in 1:7) {
   sol <- iterate(sol, prob, N) 
 }
 print(sol)
@@ -353,7 +346,8 @@ objectives <- objectives(name = c("f1", "f2"),
                  out = c("s", "n"),
                  hyp = c("alt", "null"),
                  weight = c(100, 1),
-                 stoch = c(TRUE, TRUE))
+                 stoch = c(TRUE, TRUE),
+                 binary = c(TRUE, FALSE))
 
 prob <- BOSSS_problem(sim_trial, design_space, hypotheses, constraints, objectives)
 
@@ -670,7 +664,8 @@ objectives <- objectives(name = c("f1", "f2", "f3"),
                  out = c("trial_sig", "trial_non_sig", "N_trial"),
                  hyp = c("null", "alt", "null"),
                  weight = c(100, 100, 1),
-                 stoch = c(TRUE, TRUE, TRUE))
+                 stoch = c(TRUE, TRUE, TRUE),
+                 binary = c(TRUE, TRUE, FALSE))
 ```
 
 We now put this simulation function and set of data frames together to create an object of class `BOSSS_problem`. 
@@ -683,8 +678,8 @@ prob <- BOSSS_problem(sim_trial, design_space, hypotheses, constraints, objectiv
 
 
 ```{r}
-size <- 10
-N <- 20
+size <- 40
+N <- 50
 
 sol <- BOSSS_solution(size, N, prob)
 
