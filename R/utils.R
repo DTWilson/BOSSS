@@ -90,20 +90,24 @@ MC_estimates <- function(design, hypotheses, N, sim)
   hypotheses <- t(hypotheses)
   for(i in 1:nrow(hypotheses)) {
     sims <- replicate(N, sim(design, as.data.frame(hypotheses)[i,]))
-    # Handle this depending on if there is 1 or more than one output
-    if(is.matrix(sims)) {
-      for(j in 1:nrow(sims)) {
-        # Results are the mean and variance of each of the simulation outputs
+    # Make sure output is in matrix form where row = output
+    # sims <- matrix(sims, nrow = length(sims)/N)
+    for(j in 1:nrow(sims)) {
+      # Results are the mean and variance of each of the simulation outputs
+      if(all(sims[j,] %in% 0:1)){
+        # If the outcome in binary, use a conjugate Beta for estimating mean
+        # and variance to avoid getting estimates of 0 with no uncertainty
+        # (could try to address with a nugget in the GP models instead?)
+        a <- 0.2 + sum(sims[j,] == 1); b <- 0.2 + sum(sims[j,] == 0)
+        m <- a/(a+b); v <- (N*m*(1-m)/(0.2+N)^2)*(1/m + 1/(1-m))^2
+        #results <- c(results, a/(a + b), a*b/((a+b)^2*(a+b+1)))
+        results <- c(results, log(m/(1-m)), v)
+      } else {
         results <- c(results, mean(sims[j,]), stats::var(sims[j,])/N)
-        # Use the output variable names to name the result columns
-        names(results)[(length(results) -1)] <- paste0(rownames(sims)[j], "_m_", rownames(hypotheses)[i])
-        names(results)[length(results)] <- paste0(rownames(sims)[j], "_v_", rownames(hypotheses)[i])
       }
-    } else {
-      results <- c(results, mean(sims), stats::var(sims)/N)
       # Use the output variable names to name the result columns
-      names(results)[(length(results) -1)] <- paste0(names(sims)[1], "_m_", rownames(hypotheses)[i])
-      names(results)[length(results)] <- paste0(names(sims)[1], "_v_", rownames(hypotheses)[i])
+      names(results)[(length(results) -1)] <- paste0(rownames(sims)[j], "_m_", rownames(hypotheses)[i])
+      names(results)[length(results)] <- paste0(rownames(sims)[j], "_v_", rownames(hypotheses)[i])
     }
   }
   results

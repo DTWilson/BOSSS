@@ -39,6 +39,7 @@ exp_penalty <- function(design, problem, solution){
     hyp <- problem$constraints[i, "hyp"]
 
     nom <- problem$constraints[i, "nom"]
+    nom <- log(nom/(1-nom))
 
     if(problem$constraints[i, "stoch"]){
 
@@ -52,7 +53,8 @@ exp_penalty <- function(design, problem, solution){
                                    light.return=TRUE)
 
       # assuming worst case MC error, get mean and variance of the predicted quantile
-      mc_vars <- 0.25/design$N
+      #mc_vars <- 0.25/design$N
+      mc_vars <- (design$N*0.25*(1-0.25)/(0.2+design$N)^2)*(1/0.25 + 1/(1-0.25))^2
       pred_q_mean <- p$mean + stats::qnorm(problem$constraints[i, "delta"])*sqrt(mc_vars*(p$sd^2)/(mc_vars+(p$sd^2)))
       pred_q_var <- ((p$sd^2)^2)/(mc_vars+(p$sd^2))
 
