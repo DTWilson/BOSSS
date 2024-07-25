@@ -36,13 +36,27 @@ fit_models <- function(DoE, results, to_model, problem)
 }
 
 # Generate MC estimates
-MC_estimates <- function(design, hypotheses, N, sim)
+MC_estimates <- function(design, hypotheses, N, sim, clust = NULL)
 {
   # Run the simulation under each hypothesis and store the results
   results <- NULL
   hypotheses <- t(hypotheses)
   for(i in 1:nrow(hypotheses)) {
-    sims <- replicate(N, sim(design, as.data.frame(hypotheses)[i,]))
+
+    #n.cores <- parallel::detectCores()
+    #clust <- parallel::makeCluster(n.cores)
+    #parallel::stopCluster(clust)
+
+    if(is.null(clust)){
+      sims <- sapply(1:N,
+                     eval.parent(substitute(function(...) sim(design, as.data.frame(hypotheses)[i,]) )),
+                     simplify = "array")
+    } else {
+      sims <- parallel::parSapply(clust, 1:N,
+                                  eval.parent(substitute(function(...) sim(design, as.data.frame(hypotheses)[i,]) )),
+                                  simplify = "array")
+    }
+
     # Make sure output is in matrix form where row = output
     # sims <- matrix(sims, nrow = length(sims)/N)
     for(j in 1:nrow(sims)) {

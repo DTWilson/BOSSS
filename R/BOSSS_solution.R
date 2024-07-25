@@ -1,5 +1,5 @@
 # Constructor
-new_BOSSS_solution <- function(DoE, results, models, models_reint, p_front, p_set, to_model){
+new_BOSSS_solution <- function(DoE, results, models, models_reint, p_front, p_set, to_model, clust){
 
   sol <- list(DoE = DoE,
               results = results,
@@ -7,7 +7,8 @@ new_BOSSS_solution <- function(DoE, results, models, models_reint, p_front, p_se
               models_reint = models_reint,
               p_front = p_front,
               p_set = p_set,
-              to_model = to_model)
+              to_model = to_model,
+              clust = clust)
 
   structure(sol,
             class = "BOSSS_solution"
@@ -31,8 +32,8 @@ BOSSS_solution <- function(size, N, problem){
   DoE <- init_DoE(size, problem$design_space)
   DoE$N <- N
 
-  n.cores <- detectCores()
-  clust <- makeCluster(n.cores)
+  n.cores <- parallel::detectCores()
+  clust <- parallel::makeCluster(n.cores)
 
   # Get a rough estimate of how long initialisation will take
   cat("Checking simulation speed...\n")
@@ -43,14 +44,11 @@ BOSSS_solution <- function(size, N, problem){
     dif <- utils::capture.output((Sys.time() - t)*(size-1)/n.cores)
     cat("Initialisation will take approximately", substr(dif, 20, nchar(dif)), "\n")
 
-    #r_rest <- t(apply(DoE[2:nrow(DoE),], 1, MC_estimates, hypotheses=problem$hypotheses, N=N, sim=problem$simulation))
-    r_rest <- t(parApply(clust, DoE[2:nrow(DoE),], 1, MC_estimates, hypotheses=problem$hypotheses, N=N, sim=problem$simulation))
+    r_rest <- t(parallel::parApply(clust, DoE[2:nrow(DoE),], 1, MC_estimates, hypotheses=problem$hypotheses, N=N, sim=problem$simulation))
     r_sim <- rbind(r_1, r_rest)
   } else {
     r_sim <- r_1
   }
-
-  stopCluster(clust)
 
   if(is.null(problem$det_func)) {
     r <- r_sim
@@ -87,7 +85,7 @@ BOSSS_solution <- function(size, N, problem){
   models_reint <- mods[(nrow(to_model)+1):length(mods)]
   cat("Models fitted\n")
 
-  sol <- new_BOSSS_solution(DoE, results, models, models_reint, p_front = NULL, p_set = NULL, to_model)
+  sol <- new_BOSSS_solution(DoE, results, models, models_reint, p_front = NULL, p_set = NULL, to_model, clust)
 
   pf_out <- pareto_front(sol, problem)
   p_front <- pf_out[[1]]
@@ -100,7 +98,7 @@ BOSSS_solution <- function(size, N, problem){
   p_set <- cbind(p_set, obj_vals)
   names(p_set)[(problem$dimen + 1):ncol(p_set)] <- problem$objectives$name
 
-  sol <- new_BOSSS_solution(DoE, results, models, models_reint, p_front, p_set, to_model)
+  sol <- new_BOSSS_solution(DoE, results, models, models_reint, p_front, p_set, to_model, clust)
   sol
 }
 

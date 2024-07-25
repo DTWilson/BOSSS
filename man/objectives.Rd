@@ -4,7 +4,7 @@
 \alias{objectives}
 \title{Create a set of objectives}
 \usage{
-objectives(name, out, hyp, weight, stoch)
+objectives(name, out, hyp, weight, stoch, binary)
 }
 \arguments{
 \item{name}{Character vector of objective names.}
@@ -19,6 +19,9 @@ pertains to.}
 
 \item{stoch}{Boolean vector denoting if the objective function is stochastic
 (TRUE) or deterministic (FALSE).}
+
+\item{binary}{Boolean vector denoting if the output of the objective
+function is binary (TRUE) or continuous (FALSE).}
 }
 \value{
 A data.frame defining the objectives.
