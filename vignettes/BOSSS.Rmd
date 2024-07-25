@@ -55,18 +55,12 @@ The other element of interface the simulation function must conform to is in its
 #p01_relative is s.t. p01_relative*pexplong = probability of having 
 # a long term outcome after no short term outcome
 
-sim_trial <- function(design = c(300, 0.5, 0.4, 0.1),
-                      hypothesis = c(0.25, 0.125, 0.1, 0.03, 0))
+#sim_trial <- function(design = c(300, 0.5, 0.4, 0.1),
+#                      hypothesis = c(0.25, 0.125, 0.1, 0.03, 0))
+sim_trial <- function(n = 300, ninterim = 0.5, ainterim = 0.4, afinal = 0.1,
+                      pcontshort = 0.25, pexpshort = 0.125,
+                      pcontlong = 0.1, pexplong = 0.03, p01_relative = 0)
 {
-  design <- as.numeric(design); hypothesis <- as.numeric(hypothesis)
-  
-  n <- design[1]; ninterim <- design[2]
-  ainterim <- design[3]; afinal <- design[4]
-  
-  pcontshort <- hypothesis[1]; pexpshort <- hypothesis[2]
-  pcontlong <- hypothesis[3]; pexplong <- hypothesis[4]
-  p01_relative <- hypothesis[5]
-  
   ninterim <- floor(ninterim*n)
   
   patients<-c(1:n) #create patients
@@ -174,21 +168,21 @@ sim_trial <- function(design = c(300, 0.5, 0.4, 0.1),
 sim_trial()
 ```
 
-Next, we need to note the ranges of the design variables which we plan to search over. We use the `design_space()` function for this:
+Next, we need to note the ranges of the design variables which we plan to search over. We use the `design_space()` function for this, specifying the lower and uppwer limits of the design variables in the order they appear as simulation function arguments:
 
 ```{r}
-design_space <- design_space(name = c("n", "ninterim", "ainterim", "afinal"),
-                             lower = c(300,0.05,0,0), 
-                             upper = c(700,0.5,1,1))
+design_space <- design_space(lower = c(300,0.05,0,0), 
+                             upper = c(700,0.5,1,1),
+                             sim = sim_trial)
 ```
 
-We also need to specify the hypotheses which we're planning to simulate under, using the `hypotheses()` function. We need two hypotheses, corresponding to a null and an alternative:
+We also need to specify the hypotheses which we're planning to simulate under, using the `hypotheses()` function, again specifying in the order that parameters appear as simulation function argument. We need two hypotheses, corresponding to a null and an alternative:
 
 ```{r}
-hypotheses <- hypotheses(par_name = c("pcontshort", "pexpshort", "pcontlong", "pexplong", "p01relative"),
-                         values = matrix(c(0.25, 0.25, 0.1, 0.1, 0, 
+hypotheses <- hypotheses(values = matrix(c(0.25, 0.25, 0.1, 0.1, 0, 
                                            0.25, 0.125, 0.1, 0.03, 0), ncol = 2),
-                         hyp_names = c("null", "alt"))
+                         hyp_names = c("null", "alt"),
+                         sim = sim_trial)
 ```
 
 Note that for both the design space and the hypotheses, the names are just for reference and do not need to correspond exactly to the variables names used in the simulation function.

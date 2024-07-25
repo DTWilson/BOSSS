@@ -4,15 +4,28 @@
 
 #' Create a design space
 #'
-#' @param name Character vector of design variable names.
-#' @param lower Numeric vector of lower limits.
-#' @param upper Numeric vector of upper limits.
+#' @param name optional character vector of design variable names.
+#' @param sim optional simulation function.
+#' @param lower numeric vector of lower limits.
+#' @param upper numeric vector of upper limits.
 #'
 #' @return A data.frame defining the design space.
 #' @export
 #'
 #'
-design_space <- function(name, lower, upper) {
+design_space <- function(name = NULL, sim = NULL, lower, upper) {
+
+  if(is.null(name)){
+    dim <- length(lower)
+    if(is.null(sim)){
+      stop(
+        "name or sim must be specified.",
+        call. = FALSE
+      )
+    }
+    name <- formalArgs(sim)[1:dim]
+  }
+
   stopifnot(upper > lower)
 
   data.frame(name = name,
@@ -23,16 +36,30 @@ design_space <- function(name, lower, upper) {
 
 #' Create a set of hypotheses
 #'
-#' @param par_name Character vector of model parameter names.
-#' @param values Numeric matrix, each column giving the model parameter
+#' @param par_name optional character vector of model parameter names.
+#' @param sim optional simulation function.
+#' @param values numeric matrix, each column giving the model parameter
 #' values under a specific hypothesis.
-#' @param hyp_names Character vector of hypothesis names.
+#' @param hyp_names character vector of hypothesis names.
 #'
 #' @return A data.frame defining the hypotheses.
 #' @export
 #'
 #'
-hypotheses <- function(par_name, values, hyp_names) {
+hypotheses <- function(par_name = NULL, sim = NULL, values, hyp_names) {
+
+  if(is.null(par_name)){
+    dim <- nrow(values)
+    if(is.null(sim)){
+      stop(
+        "parname or sim must be specified.",
+        call. = FALSE
+      )
+    }
+    num_args <- length(formalArgs(sim))
+    par_name <- formalArgs(sim)[(num_args - dim + 1):num_args]
+  }
+
   df <- data.frame(v = values)
   row.names(df) <- par_name
   names(df) <- hyp_names
@@ -42,14 +69,14 @@ hypotheses <- function(par_name, values, hyp_names) {
 
 #' Create a set of constraints
 #'
-#' @param name Character vector of constraint names.
-#' @param out Character vector denoting which simulation output each constraint
+#' @param name character vector of constraint names.
+#' @param out character vector denoting which simulation output each constraint
 #' pertains to.
-#' @param hyp Character vector denoting which hypothesis each constraint
+#' @param hyp character vector denoting which hypothesis each constraint
 #' pertains to.
-#' @param nom Numeric vector of nominal upper limits.
-#' @param delta Numeric vector of probabilities.
-#' @param stoch Boolean vector denoting if the constraint function is stochastic
+#' @param nom numeric vector of nominal upper limits.
+#' @param delta numeric vector of probabilities.
+#' @param stoch boolean vector denoting if the constraint function is stochastic
 #' (TRUE) or deterministic (FALSE).
 #'
 #' @return A data.frame defining the constraints.
@@ -69,15 +96,15 @@ constraints <- function(name, out, hyp, nom, delta, stoch) {
 
 #' Create a set of objectives
 #'
-#' @param name Character vector of objective names.
-#' @param out Character vector denoting which simulation output each objective
+#' @param name character vector of objective names.
+#' @param out character vector denoting which simulation output each objective
 #' pertains to.
-#' @param hyp Character vector denoting which hypothesis each objective
+#' @param hyp character vector denoting which hypothesis each objective
 #' pertains to.
-#' @param weight Numeric vector of weights assigned to each objective.
-#' @param stoch Boolean vector denoting if the objective function is stochastic
+#' @param weight numeric vector of weights assigned to each objective.
+#' @param stoch boolean vector denoting if the objective function is stochastic
 #' (TRUE) or deterministic (FALSE).
-#' @param binary Boolean vector denoting if the output of the objective
+#' @param binary boolean vector denoting if the output of the objective
 #' function is binary (TRUE) or continuous (FALSE).
 #'
 #' @return A data.frame defining the objectives.
