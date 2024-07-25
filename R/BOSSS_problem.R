@@ -106,8 +106,35 @@ validate_BOSSS_problem <- function(prob) {
 BOSSS_problem <- function(sim_trial, design_space, hypotheses,
                               constraints, objectives, det_func = NULL){
 
-  prob <- new_BOSSS_problem(sim_trial, design_space, hypotheses,
+  internal_sim_trial <- reformat_sim(sim_trial, design_space)
+
+  prob <- new_BOSSS_problem(internal_sim_trial, design_space, hypotheses,
                                         constraints, objectives, det_func)
   validate_BOSSS_problem(prob)
   prob
+}
+
+# Create an internal version of the simulation function which takes
+# design and hypotheses vectors as arguments
+
+reformat_sim <- function(sim_trial, design_space){
+
+  arg_names <- formalArgs(sim_trial)
+  defaults <- as.numeric(formals(sim_trial))
+  dim <- nrow(design_space)
+
+  int_sim <- function(design, hypothesis = defaults[(dim+1):length(names)]){
+
+    design <- as.numeric(design); hypothesis <- as.numeric(hypothesis)
+
+    args <- as.list(c(design, hypothesis))
+    names(args) <- arg_names
+
+    do.call("sim_trial", args)
+  }
+
+  formals(int_sim)$design <- defaults[1:dim]
+  formals(int_sim)$hypothesis <- defaults[(dim+1):length(arg_names)]
+
+  int_sim
 }

@@ -237,11 +237,9 @@ We can now start improving this solution by calling the `iterate()` function. Ea
 
 ```{r}
 N <- 10000
-ptm <- Sys.time()
-for(i in 1:9) {
+for(i in 1:10) {
   sol <- iterate(sol, prob, N) 
 }
-Sys.time() - ptm
 print(sol)
 plot(sol)
 ```
