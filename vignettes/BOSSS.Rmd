@@ -168,7 +168,7 @@ sim_trial <- function(n = 300, ninterim = 0.5, ainterim = 0.4, afinal = 0.1,
 sim_trial()
 ```
 
-Next, we need to note the ranges of the design variables which we plan to search over. We use the `design_space()` function for this, specifying the lower and uppwer limits of the design variables in the order they appear as simulation function arguments:
+Next, we need to note the ranges of the design variables which we plan to search over. We use the `design_space()` function for this, specifying the lower and upper limits of the design variables in the order they appear as simulation function arguments:
 
 ```{r}
 design_space <- design_space(lower = c(300,0.05,0,0), 
@@ -429,20 +429,18 @@ sim_bayes <- function(m = 20, n = 10,
                       theta_1 = 0.3, eff_n_1 = 15,
                       het_n_mean = 100, het_n_sd = 10) {
   
-  # Number of clusters in each arm
-  m <- round(design[1])
-  # Number of patients per cluster
-  n <- round(design[2])
+  library(lme4)
   
-  # Overall probability of outcome and effective prior sample size
-  # in each arm
-  theta_0 <- hypothesis[1]; eff_n_0 <- hypothesis[2]
-  theta_1 <- hypothesis[3]; eff_n_1 <- hypothesis[4]
+  # m = Number of clusters in each arm
+  # n = Number of patients per cluster
+  m <- round(m); n <- round(n)
+  
+  # thetas, eff_ns = Overall probability of outcome and effective prior 
+  # sample size in each arm
   
   # het_n is the effective sample size used in the beta prior
   # of cluster rates - it encapsulates our degree of certainty
   # about the between-cluster variance.
-  het_n_mean <- hypothesis[5]; het_n_sd <- hypothesis[6]
   
   het_n <- rgamma(1, shape = (het_n_mean/het_n_sd)^2, rate = het_n_mean/het_n_sd^2) + 2
   
@@ -479,11 +477,14 @@ sim_bayes <- function(m = 20, n = 10,
 
 sim_bayes()
 
-det_bayes <- function(design = c(20, 10),
-                      hypothesis = c(0.2, 15, 0.3, 15, 100, 10))
-{
-  design <- as.numeric(design); hypothesis <- as.numeric(hypothesis)
-  return(c(m = design[1], N = 2*design[1]*design[2]))
+det_bayes <- function(m = 20, n = 10,
+                      theta_0 = 0.2, eff_n_0 = 50,
+                      theta_1 = 0.4, eff_n_1 = 50,
+                      het_n_mean = 100, het_n_sd = 10) {
+  
+  m <- round(m); n <- round(n)
+  
+  return(c(m = m, N = 2*m*n))
 }
 
 det_bayes()
@@ -492,13 +493,13 @@ det_bayes()
 
 
 ```{r}
-design_space <- design_space(name = c("m", "n"),
-                             lower = c(10,5), 
-                             upper = c(50,40))
+design_space <- design_space(lower = c(10,5), 
+                             upper = c(50,40),
+                             sim = sim_bayes)
 
-hypotheses <- hypotheses(par_name = c("theta_0", "eff_n_0", "theta_1", "eff_n_1", "het_n_mean", "het_n_sd"),
-                         values = matrix(c(0.2, 15, 0.3, 15, 100, 10), ncol = 1),
-                         hyp_names = c("alt"))
+hypotheses <- hypotheses(values = matrix(c(0.2, 30, 0.4, 30, 100, 10), ncol = 1),
+                         hyp_names = c("alt"),
+                         sim = sim_bayes)
 
 constraints <- constraints(name = c("a"),
                    out = c("s"),
@@ -511,43 +512,26 @@ objectives <- objectives(name = c("f1", "f2", "f3"),
                  out = c("s", "m", "N"),
                  hyp = c("alt", "alt", "alt"),
                  weight = c(100, 10, 1),
-                 stoch = c(TRUE, FALSE, FALSE))
+                 stoch = c(TRUE, FALSE, FALSE),
+                 binary = c(TRUE, FALSE, FALSE))
 
-prob <- BOSSS_problem(sim_bayes, design_space, hypotheses, constraints, objectives, det_func = det_bayes)
+problem <- BOSSS_problem(sim_bayes, design_space, hypotheses, constraints, objectives, det_func = det_bayes)
 
 size <- 20
 N <- 100
 
-sol <- BOSSS_solution(size, N, prob)
+solution <- BOSSS_solution(size, N, problem)
 
-print(sol)
-plot(sol)
+print(solution)
+plot(solution)
 ```
 
 ```{r}
-for(i in 1:1) {
-  sol <- iterate(sol, prob, N) 
+for(i in 1:9) {
+  solution <- iterate(solution, problem, N) 
 }
-print(sol)
-plot(sol)
-```
-
-```{r}
-sa_hypothesis <- data.frame(hyp = "alt",
-                            sa_param = 5,
-                            lower = 10,
-                            upper = 100)
-
-sa <- as.data.frame(sensitivity(sa_hypothesis, design, prob, sol, num_eval = 5, N = 100))
-
-# Plot these to examine sensitivity:
-ggplot(sa, aes(p01relative, s_m)) + geom_point() + 
-  geom_errorbar(aes(ymin = s_m - 1.96*sqrt(s_v), ymax = s_m + 1.96*sqrt(s_v))) +
-  theme_minimal()
-
-ggplot(sa, aes(p01relative, n_m)) + geom_point() + 
-  geom_errorbar(aes(ymin = n_m - 1.96*sqrt(n_v), ymax = n_m + 1.96*sqrt(n_v))) +
-  theme_minimal()
+print(solution)
+plot(solution)
 ```
 
 

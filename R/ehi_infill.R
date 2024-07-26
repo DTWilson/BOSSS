@@ -9,9 +9,9 @@ ehi_infill <- function(design, N, problem, solution)
 
   design <- as.data.frame(matrix(design, ncol = dim))
   names(design) <- problem$design_space$name
-  design$N <- N
+  #design$N <- N
 
-  exp_pen <- exp_penalty(design, problem, solution)
+  exp_pen <- exp_penalty(design, problem, solution, N)
 
   # Get EHI by sampling from predictive dists of stochastic objectives and
   # taking average of the improvement in dominated hypervolumes
@@ -29,7 +29,7 @@ ehi_infill <- function(design, N, problem, solution)
   return(imp)
 }
 
-exp_penalty <- function(design, problem, solution){
+exp_penalty <- function(design, problem, solution, N){
   ## Get expected penalisation if we were to evaluate at design,
   ## using the models of constraint functions
   exp_pen <- 1
@@ -53,8 +53,7 @@ exp_penalty <- function(design, problem, solution){
                                    light.return=TRUE)
 
       # assuming worst case MC error, get mean and variance of the predicted quantile
-      #mc_vars <- 0.25/design$N
-      mc_vars <- (design$N*0.25*(1-0.25)/(0.2+design$N)^2)*(1/0.25 + 1/(1-0.25))^2
+      mc_vars <- (N*0.25*(1-0.25)/(0.2+design$N)^2)*(1/0.25 + 1/(1-0.25))^2
       pred_q_mean <- p$mean + stats::qnorm(problem$constraints[i, "delta"])*sqrt(mc_vars*(p$sd^2)/(mc_vars+(p$sd^2)))
       pred_q_var <- ((p$sd^2)^2)/(mc_vars+(p$sd^2))
 

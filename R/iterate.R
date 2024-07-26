@@ -25,7 +25,7 @@ iterate <- function(solution, problem, N) {
 
   y <- MC_estimates(to_eval, hypotheses=problem$hypotheses, N=N, sim=problem$simulation, clust=solution$clust)
   if(!is.null(problem$det_func)) {
-    y <- c(y, det_values(to_eval, hypotheses=problem$hypotheses, det_func = problem$det_func))
+    y <- c(y, det_values(to_eval, hypotheses=problem$hypotheses, det_func=problem$det_func))
   }
 
   n_hyp <- ncol(problem$hypotheses)
