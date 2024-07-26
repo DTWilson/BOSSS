@@ -417,17 +417,17 @@ objectives <- data.frame(name = c("f1", "f2", "f3"),
 
 Consider the design of a cluster randomised trial with $m$ clusters per arm, $n$ patients per cluster and a binary outcome for each patient. The trial will be analysed using a mixed effects model fitted using the `glmer` function from the `lme4` package, using a Wald test of the null hypothesis of no difference between arms at the 0.025 (one-sided) level.
 
-A design is defined by the choice of $m$ and $n$. We want to find designs which minimise the number of clusters, the number of patients, and the overal probability of failure when marginalising over a joint prior distribution on the model parameters. A hypothesis, then, is not a set of point parameter values but a set of prior hyperparameter values.
+A design is defined by the choice of $m$ and $n$. We want to find designs which minimise the number of clusters, the number of patients, and the overall probability of failure when marginalising over a joint prior distribution on the model parameters. A hypothesis, then, is not a set of point parameter values but a set of prior hyperparameter values.
 
 In contrast to the NIFTy example, we now have some objectives (the number of clusters and number of patients) which are deterministic. To acknowledge this we specify two functions: the simulation function is as before, returning a single Monte Carlo sample of the stochastic outputs. The deterministic function takes the same arguments (i.e. a design and a hypothesis), and returns the deterministic outputs (as with the simulation function, this should take the form of a named vector).
 
 ```{r}
 library(lme4)
 
-sim_bayes <- function(design = c(20, 10),
-                      hypothesis = c(0.2, 15, 0.3, 15, 100, 10)) {
-  
-  design <- as.numeric(design); hypothesis <- as.numeric(hypothesis)
+sim_bayes <- function(m = 20, n = 10,
+                      theta_0 = 0.2, eff_n_0 = 15,
+                      theta_1 = 0.3, eff_n_1 = 15,
+                      het_n_mean = 100, het_n_sd = 10) {
   
   # Number of clusters in each arm
   m <- round(design[1])
