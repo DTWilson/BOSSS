@@ -1,25 +1,32 @@
 
 #' Perform one iteration of Bayesian optimisation
 #'
-#' @param solution Current BOSSS solution.
+#' @param solution current BOSSS solution.
 #' @param problem BOSSS problem.
-#' @param N Number of simulations to use when computing Monte Carlo estimates.
+#' @param N number of simulations to use when computing Monte Carlo estimates.
+#' @param design optional vector in the design space to be evaluated. If left
+#' NULL, an optimal design will be sought.
 #'
 #' @return An updated BOSSS solution object.
 #' @export
 #'
 #'
-iterate <- function(solution, problem, N) {
+iterate <- function(solution, problem, N, design = NULL) {
 
-  opt <- RcppDE::DEoptim(ehi_infill,
-                         lower = problem$design_space$lower,
-                         upper = problem$design_space$upper,
-                         control=list(trace=FALSE, itermax=100, reltol=1e-1, steptol=50),
-                         N = N,
-                         problem = problem,
-                         solution = solution)
 
-  to_eval <- as.numeric(opt$optim$bestmem)
+  if(is.null(design)) {
+    opt <- RcppDE::DEoptim(ehi_infill,
+                           lower = problem$design_space$lower,
+                           upper = problem$design_space$upper,
+                           control=list(trace=FALSE, itermax=100, reltol=1e-1, steptol=50),
+                           N = N,
+                           problem = problem,
+                           solution = solution)
+
+    to_eval <- as.numeric(opt$optim$bestmem)
+  } else {
+    to_eval <- as.numeric(design)
+  }
 
   solution$DoE <- rbind(solution$DoE, c(to_eval, N))
 

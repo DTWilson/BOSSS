@@ -185,8 +185,6 @@ hypotheses <- hypotheses(values = matrix(c(0.25, 0.25, 0.1, 0.1, 0,
                          sim = sim_trial)
 ```
 
-Note that for both the design space and the hypotheses, the names are just for reference and do not need to correspond exactly to the variables names used in the simulation function.
-
 Constraints should be specified using the `constraints` function. Each constraint should be named, and should be defined with respect to a specific simulation output and a specific hypothesis. It should have a nominal maximum value, and a probability `delta` used to judge if it is satisfied. Finally, it should note if the function is stochastic, or deterministic. Here, our fist constraint is that the mean of the first simulation output (i.e. the probability of a positive result) under the first hypothesis (the null) should be less than 0.2 with a probability of at least 0.95.
 
 ```{r}
