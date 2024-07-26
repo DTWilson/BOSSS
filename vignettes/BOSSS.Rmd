@@ -527,29 +527,11 @@ plot(solution)
 ```
 
 ```{r}
-for(i in 1:1) {
-  sol <- iterate(sol, prob, N) 
+for(i in 1:9) {
+  solution <- iterate(solution, problem, N) 
 }
-print(sol)
-plot(sol)
-```
-
-```{r}
-sa_hypothesis <- data.frame(hyp = "alt",
-                            sa_param = 5,
-                            lower = 10,
-                            upper = 100)
-
-sa <- as.data.frame(sensitivity(sa_hypothesis, design, prob, sol, num_eval = 5, N = 100))
-
-# Plot these to examine sensitivity:
-ggplot(sa, aes(p01relative, s_m)) + geom_point() + 
-  geom_errorbar(aes(ymin = s_m - 1.96*sqrt(s_v), ymax = s_m + 1.96*sqrt(s_v))) +
-  theme_minimal()
-
-ggplot(sa, aes(p01relative, n_m)) + geom_point() + 
-  geom_errorbar(aes(ymin = n_m - 1.96*sqrt(n_v), ymax = n_m + 1.96*sqrt(n_v))) +
-  theme_minimal()
+print(solution)
+plot(solution)
 ```
 
 
