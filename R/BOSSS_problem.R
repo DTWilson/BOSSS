@@ -107,9 +107,14 @@ BOSSS_problem <- function(sim_trial, design_space, hypotheses,
                               constraints, objectives, det_func = NULL){
 
   internal_sim_trial <- reformat_sim(sim_trial, design_space)
+  if(is.null(det_func)) {
+    internal_det_func <- NULL
+  } else {
+    internal_det_func <- reformat_det(det_func, design_space)
+  }
 
   prob <- new_BOSSS_problem(internal_sim_trial, design_space, hypotheses,
-                                        constraints, objectives, det_func)
+                                        constraints, objectives, internal_det_func)
   validate_BOSSS_problem(prob)
   prob
 }
@@ -137,4 +142,26 @@ reformat_sim <- function(sim_trial, design_space){
   formals(int_sim)$hypothesis <- defaults[(dim+1):length(arg_names)]
 
   int_sim
+}
+
+reformat_det <- function(det_func, design_space){
+
+  arg_names <- formalArgs(det_func)
+  defaults <- as.numeric(formals(det_func))
+  dim <- nrow(design_space)
+
+  int_det <- function(design, hypothesis = defaults[(dim+1):length(names)]){
+
+    design <- as.numeric(design); hypothesis <- as.numeric(hypothesis)
+
+    args <- as.list(c(design, hypothesis))
+    names(args) <- arg_names
+
+    do.call("det_func", args)
+  }
+
+  formals(int_det)$design <- defaults[1:dim]
+  formals(int_det)$hypothesis <- defaults[(dim+1):length(arg_names)]
+
+  int_det
 }

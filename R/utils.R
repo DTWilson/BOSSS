@@ -58,7 +58,12 @@ MC_estimates <- function(design, hypotheses, N, sim, clust = NULL)
     }
 
     # Make sure output is in matrix form where row = output
-    # sims <- matrix(sims, nrow = length(sims)/N)
+    if(is.null(nrow(sims))){
+      output_names <- names(sims[1])
+    } else {
+      output_names <- rownames(sims)
+    }
+    sims <- matrix(sims, nrow = length(sims)/N)
     for(j in 1:nrow(sims)) {
       # Results are the mean and variance of each of the simulation outputs
       if(all(sims[j,] %in% 0:1)){
@@ -73,8 +78,8 @@ MC_estimates <- function(design, hypotheses, N, sim, clust = NULL)
         results <- c(results, mean(sims[j,]), stats::var(sims[j,])/N)
       }
       # Use the output variable names to name the result columns
-      names(results)[(length(results) -1)] <- paste0(rownames(sims)[j], "_m_", rownames(hypotheses)[i])
-      names(results)[length(results)] <- paste0(rownames(sims)[j], "_v_", rownames(hypotheses)[i])
+      names(results)[(length(results) -1)] <- paste0(output_names[j], "_m_", rownames(hypotheses)[i])
+      names(results)[length(results)] <- paste0(output_names[j], "_v_", rownames(hypotheses)[i])
     }
   }
   results

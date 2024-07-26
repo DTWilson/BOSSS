@@ -53,7 +53,7 @@ BOSSS_solution <- function(size, N, problem){
   if(is.null(problem$det_func)) {
     r <- r_sim
   } else {
-    r_det <- t(apply(DoE, 1, det_values, hypotheses=problem$hypotheses, det_func=problem$det_func))
+    r_det <- t(apply(DoE[,1:problem$dimen], 1, det_values, hypotheses=problem$hypotheses, det_func=problem$det_func))
     r <- cbind(r_sim, r_det)
   }
 
@@ -72,7 +72,12 @@ BOSSS_solution <- function(size, N, problem){
   }
   results <- matrix(results, nrow = n_hyp, byrow = TRUE)
   rownames(results) <- names(problem$hypotheses)
-  colnames(results) <- names(problem$simulation())
+
+  if(is.null(problem$det_func)){
+    colnames(results) <- names(problem$simulation())
+  } else {
+    colnames(results) <- c(names(problem$simulation()), names(problem$det_func()))
+  }
 
   # Find the hypothesis x output combinations which need to be modelled
   # (i.e. those forming stochastic constraints or objectives)
