@@ -321,14 +321,14 @@ Again, no clear trend.
 Using the same simulation, we can change the problem slightly by now only constraining the type I error rate (and not treating its minimisation as an objective), and only minimising the power (not constraining it) and expected sample size:
 
 ```{r}
-design_space <- design_space(name = c("n", "ninterim", "ainterim", "afinal"),
-                             lower = c(300,0.05,0,0), 
-                             upper = c(700,0.5,1,1))
+design_space <- design_space(lower = c(300,0.05,0,0), 
+                             upper = c(700,0.5,1,1),
+                             sim = sim_trial)
 
-hypotheses <- hypotheses(par_name = c("pcontshort", "pexpshort", "pcontlong", "pexplong", "p01relative"),
-                         values = matrix(c(0.25, 0.25, 0.1, 0.1, 0, 
+hypotheses <- hypotheses(values = matrix(c(0.25, 0.25, 0.1, 0.1, 0, 
                                                  0.25, 0.125, 0.1, 0.03, 0), ncol = 2),
-                         hyp_names = c("null", "alt"))
+                         hyp_names = c("null", "alt"),
+                         sim = sim_trial)
 
 constraints <- constraints(name = c("a", "b"),
                    out = c("g"),
