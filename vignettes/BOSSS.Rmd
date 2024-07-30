@@ -223,7 +223,7 @@ N <- 5000
 
 sol <- BOSSS_solution(size, N, prob)
 
-print(sol)
+print(sol) 
 plot(sol)
 ```
 
@@ -234,7 +234,7 @@ The `print()` function will give a table of the Pareto set with associated objec
 We can now start improving this solution by calling the `iterate()` function. Each call uses the fitted Gaussian Process models to decide on the next design to be evaluated, computes the Monte Carlo estimates at that point, and then updates the estimated Pareto set and front. 
 
 ```{r}
-N <- 10000
+N <- 5000
 for(i in 1:10) {
   sol <- iterate(sol, prob, N) 
 }

@@ -53,7 +53,7 @@ exp_penalty <- function(design, problem, solution, N){
                                    light.return=TRUE)
 
       # assuming worst case MC error, get mean and variance of the predicted quantile
-      mc_vars <- (N*0.25*(1-0.25)/(0.2+design$N)^2)*(1/0.25 + 1/(1-0.25))^2
+      mc_vars <- (N*0.25*(1-0.25)/(0.2+N)^2)*(1/0.25 + 1/(1-0.25))^2
       pred_q_mean <- p$mean + stats::qnorm(problem$constraints[i, "delta"])*sqrt(mc_vars*(p$sd^2)/(mc_vars+(p$sd^2)))
       pred_q_var <- ((p$sd^2)^2)/(mc_vars+(p$sd^2))
 
