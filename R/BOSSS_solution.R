@@ -67,7 +67,6 @@ BOSSS_solution <- function(size, N, problem){
       s <- i*6 - 6 + j*2 - 1
       e <- j + i*3 - 3
       results[[e]]  <- r[, s:(s+1)]
-      #out_names[j] <- out_names[j] #colnames(r)[s] #substr(colnames(r)[s], 1, 1)
     }
   }
   results <- matrix(results, nrow = n_hyp, byrow = TRUE)
@@ -78,6 +77,9 @@ BOSSS_solution <- function(size, N, problem){
   } else {
     colnames(results) <- c(names(problem$simulation()), names(problem$det_func()))
   }
+
+  # Set the reference point
+  #ref <- ref_point(results, problem)
 
   # Find the hypothesis x output combinations which need to be modelled
   # (i.e. those forming stochastic constraints or objectives)
@@ -169,4 +171,15 @@ plot.BOSSS_solution <- function(x, y, ...) {
     )
   }
   p
+}
+
+ref_point <- function(results, problem) {
+  ref <- NULL
+  for(i in 1:nrow(problem$objectives)){
+    f <- results[[problem$objectives[i, "hyp"], problem$objectives[i, "out"]]][,1]
+    if(problem$objectives[i, "binary"]) f <- exp(f)/(exp(f) + 1)
+    f <- f*problem$objectives$weight[i]
+    ref <- c(ref, max(f))
+  }
+  ref
 }

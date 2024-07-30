@@ -199,7 +199,7 @@ constraints <- constraints(name = c("a", "b"),
 The final ingredient of the problem is the set of objectives we want to minimise. Similar to constraints, objectives are tied to a specific simulation output and hypothesis, and can be stochastic or deterministic. We also specify weights for each objective which help guide the optimisation process, and note whether or not the output for each objective is binary or continuous. For example, here we want to minimise both the type I and type II error rates and the expected sample size, with the former carrying a weight of 100 times of the latter.
 
 ```{r}
-objectives <- objectives(name = c("f1", "f2", "f3"),
+objectives <- objectives(name = c("TI", "TII", "EN"),
                  out = c("g", "s", "n"),
                  hyp = c("null", "alt", "null"),
                  weight = c(100, 100, 1),
@@ -219,7 +219,7 @@ Having set up the problem, we now need to create an initial solution to it. This
 
 ```{r}
 size <- 40
-N <- 5000
+N <- 500
 
 sol <- BOSSS_solution(size, N, prob)
 
@@ -234,7 +234,7 @@ The `print()` function will give a table of the Pareto set with associated objec
 We can now start improving this solution by calling the `iterate()` function. Each call uses the fitted Gaussian Process models to decide on the next design to be evaluated, computes the Monte Carlo estimates at that point, and then updates the estimated Pareto set and front. 
 
 ```{r}
-N <- 5000
+N <- 500
 for(i in 1:10) {
   sol <- iterate(sol, prob, N) 
 }
@@ -248,7 +248,7 @@ To check the GP models are giving sensible predictions, we can choose a specific
 
 ```{r}
 # Pick a specific design from the Pareto set
-design <- sol$p_set[1,]
+design <- sol$p_set[nrow(sol$p_set),]
 
 plots <- one_d_plots(design, prob, sol)
 
