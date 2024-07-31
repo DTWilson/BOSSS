@@ -4,15 +4,17 @@
 \alias{hypotheses}
 \title{Create a set of hypotheses}
 \usage{
-hypotheses(par_name, values, hyp_names)
+hypotheses(par_name = NULL, sim = NULL, values, hyp_names)
 }
 \arguments{
-\item{par_name}{Character vector of model parameter names.}
+\item{par_name}{optional character vector of model parameter names.}
 
-\item{values}{Numeric matrix, each column giving the model parameter
+\item{sim}{optional simulation function.}
+
+\item{values}{numeric matrix, each column giving the model parameter
 values under a specific hypothesis.}
 
-\item{hyp_names}{Character vector of hypothesis names.}
+\item{hyp_names}{character vector of hypothesis names.}
 }
 \value{
 A data.frame defining the hypotheses.

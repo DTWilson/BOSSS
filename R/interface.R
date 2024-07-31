@@ -23,7 +23,7 @@ design_space <- function(name = NULL, sim = NULL, lower, upper) {
         call. = FALSE
       )
     }
-    name <- formalArgs(sim)[1:dim]
+    name <- methods::formalArgs(sim)[1:dim]
   }
 
   stopifnot(upper > lower)
@@ -56,8 +56,8 @@ hypotheses <- function(par_name = NULL, sim = NULL, values, hyp_names) {
         call. = FALSE
       )
     }
-    num_args <- length(formalArgs(sim))
-    par_name <- formalArgs(sim)[(num_args - dim + 1):num_args]
+    num_args <- length(methods::formalArgs(sim))
+    par_name <- methods::formalArgs(sim)[(num_args - dim + 1):num_args]
   }
 
   df <- data.frame(v = values)

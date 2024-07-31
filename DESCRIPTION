@@ -27,5 +27,6 @@ Imports:
     ggplot2,
     RcppDE,
     emoa,
-    parallel
+    parallel,
+    methods
 VignetteBuilder: knitr

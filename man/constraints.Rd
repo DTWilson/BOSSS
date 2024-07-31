@@ -7,19 +7,19 @@
 constraints(name, out, hyp, nom, delta, stoch)
 }
 \arguments{
-\item{name}{Character vector of constraint names.}
+\item{name}{character vector of constraint names.}
 
-\item{out}{Character vector denoting which simulation output each constraint
+\item{out}{character vector denoting which simulation output each constraint
 pertains to.}
 
-\item{hyp}{Character vector denoting which hypothesis each constraint
+\item{hyp}{character vector denoting which hypothesis each constraint
 pertains to.}
 
-\item{nom}{Numeric vector of nominal upper limits.}
+\item{nom}{numeric vector of nominal upper limits.}
 
-\item{delta}{Numeric vector of probabilities.}
+\item{delta}{numeric vector of probabilities.}
 
-\item{stoch}{Boolean vector denoting if the constraint function is stochastic
+\item{stoch}{boolean vector denoting if the constraint function is stochastic
 (TRUE) or deterministic (FALSE).}
 }
 \value{

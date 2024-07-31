@@ -37,10 +37,10 @@ one_d_plots <- function(design, problem, solution) {
       pl <- ggplot2::ggplot(df, ggplot2::aes(v, m)) +
         ggplot2::geom_ribbon(ggplot2::aes(ymin = m - 1.96*sd, ymax = m + 1.96*sd), alpha = 0.2) +
         ggplot2::geom_line() +
-        ggplot2::ylab(paste("Mean outcome", solution$to_model$out_i[i], ", hypothesis", solution$to_model$hyp_i[i])) +
+        ggplot2::ylab(paste("Mean outcome", solution$to_model$out[i], ", hypothesis", solution$to_model$hyp[i])) +
         ggplot2::xlab(names(design)[j]) +
         ggplot2::geom_point(data = df[nrow(df),]) +
-        geom_vline(xintercept = solution$DoE[,j], alpha = 0.3) +
+        ggplot2::geom_vline(xintercept = solution$DoE[,j], alpha = 0.3) +
         ggplot2::theme_minimal()
 
       plots[[count]] <- pl

@@ -7,20 +7,20 @@
 objectives(name, out, hyp, weight, stoch, binary)
 }
 \arguments{
-\item{name}{Character vector of objective names.}
+\item{name}{character vector of objective names.}
 
-\item{out}{Character vector denoting which simulation output each objective
+\item{out}{character vector denoting which simulation output each objective
 pertains to.}
 
-\item{hyp}{Character vector denoting which hypothesis each objective
+\item{hyp}{character vector denoting which hypothesis each objective
 pertains to.}
 
-\item{weight}{Numeric vector of weights assigned to each objective.}
+\item{weight}{numeric vector of weights assigned to each objective.}
 
-\item{stoch}{Boolean vector denoting if the objective function is stochastic
+\item{stoch}{boolean vector denoting if the objective function is stochastic
 (TRUE) or deterministic (FALSE).}
 
-\item{binary}{Boolean vector denoting if the output of the objective
+\item{binary}{boolean vector denoting if the output of the objective
 function is binary (TRUE) or continuous (FALSE).}
 }
 \value{

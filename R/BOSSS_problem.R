@@ -124,7 +124,7 @@ BOSSS_problem <- function(sim_trial, design_space, hypotheses,
 
 reformat_sim <- function(sim_trial, design_space){
 
-  arg_names <- formalArgs(sim_trial)
+  arg_names <- methods::formalArgs(sim_trial)
   defaults <- as.numeric(formals(sim_trial))
   dim <- nrow(design_space)
 
@@ -146,7 +146,7 @@ reformat_sim <- function(sim_trial, design_space){
 
 reformat_det <- function(det_func, design_space){
 
-  arg_names <- formalArgs(det_func)
+  arg_names <- methods::formalArgs(det_func)
   defaults <- as.numeric(formals(det_func))
   dim <- nrow(design_space)
 
