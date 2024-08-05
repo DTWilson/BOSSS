@@ -40,13 +40,16 @@ BOSSS_solution <- function(size, N, problem){
   t <- Sys.time()
   r_1 <- MC_estimates(DoE[1,1:problem$dimen], hypotheses=problem$hypotheses, N=N, sim=problem$simulation)
 
+  
   if(nrow(DoE) > 1) {
     dif <- utils::capture.output((Sys.time() - t)*(size-1))
+    r_rest <- r_1
+    
     cat("Initialisation will take approximately", substr(dif, 20, nchar(dif)), "\n")
-
-    r_rest <- t(apply(DoE[2:nrow(DoE),1:problem$dimen], 1, MC_estimates, hypotheses=problem$hypotheses, N=N, sim=problem$simulation))
+    for( ind in 2:nrow(DoE) ){
+      r_sim <- rbind(r_rest,MC_estimates(DoE[ind,1:problem$dimen], hypotheses=problem$hypotheses, N=N, sim=problem$simulation))
+    }
     cat("Initialised r")
-    r_sim <- rbind(r_1, r_rest)
   } else {
     r_sim <- r_1
   }
