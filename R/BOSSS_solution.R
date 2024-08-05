@@ -45,6 +45,7 @@ BOSSS_solution <- function(size, N, problem){
     cat("Initialisation will take approximately", substr(dif, 20, nchar(dif)), "\n")
 
     r_rest <- t(apply(DoE[2:nrow(DoE),1:problem$dimen], 1, MC_estimates, hypotheses=problem$hypotheses, N=N, sim=problem$simulation))
+    cat("Initialised r")
     r_sim <- rbind(r_1, r_rest)
   } else {
     r_sim <- r_1
@@ -56,7 +57,7 @@ BOSSS_solution <- function(size, N, problem){
     r_det <- t(apply(DoE[,1:problem$dimen], 1, det_values, hypotheses=problem$hypotheses, det_func=problem$det_func))
     r <- cbind(r_sim, r_det)
   }
-
+  cat("put output into matrix")
   # Put results into a (# hyps) x (# outputs) matrix
   n_hyp <- ncol(problem$hypotheses)
   out_dimen <- ncol(r)/(2*n_hyp)
