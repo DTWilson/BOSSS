@@ -49,9 +49,11 @@ MC_estimates <- function(design, hypotheses, N, sim, clust = NULL)
     #parallel::stopCluster(clust)
 
     if(is.null(clust)){
+      cat("HERE001a")
       sims <- sapply(1:N,
                      eval.parent(substitute(function(...) sim(design, as.data.frame(hypotheses)[i,]) )),
                      simplify = "array")
+      cat("HERE001b")
     } else {
       sims <- parallel::parSapply(clust, 1:N,
                                   eval.parent(substitute(function(...) sim(design, as.data.frame(hypotheses)[i,]) )),
