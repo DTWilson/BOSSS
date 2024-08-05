@@ -94,7 +94,9 @@ MC_estimates <- function(design, hypotheses, N, sim, clust = NULL)
 det_values <- function(design, hypotheses, det_func) {
   # Evaluate the objective functions under each hypothesis
   results <- NULL
+  cat("transposing hypotheses...Start")
   hypotheses <- t(hypotheses)
+  cat("transposing hypotheses...Done")
   for(i in 1:nrow(hypotheses)) {
     vals <- det_func(design, as.data.frame(hypotheses)[i,])
     # Handle this depending on if there is 1 or more than one output
