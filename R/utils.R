@@ -39,6 +39,7 @@ fit_models <- function(DoE, results, to_model, problem)
 MC_estimates <- function(design, hypotheses, N, sim, clust = NULL)
 {
   # Run the simulation under each hypothesis and store the results
+  cat("Run the simulation under each hypothesis and store the results")
   results <- NULL
   hypotheses <- t(hypotheses)
   for(i in 1:nrow(hypotheses)) {
