@@ -57,7 +57,9 @@ BOSSS_solution <- function(size, N, problem){
   if(is.null(problem$det_func)) {
     r <- r_sim
   } else {
+    cat("test1")
     r_det <- t(apply(DoE[,1:problem$dimen], 1, det_values, hypotheses=problem$hypotheses, det_func=problem$det_func))
+    cat("test2")
     r <- cbind(r_sim, r_det)
   }
   cat("put output into matrix")
