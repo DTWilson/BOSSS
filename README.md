@@ -8,7 +8,9 @@
 [![R-CMD-check](https://github.com/DTWilson/BOSSS/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/DTWilson/BOSSS/actions/workflows/R-CMD-check.yaml)
 <!-- badges: end -->
 
-The goal of BOSSS is to …
+The goal of BOSSS is to help people use Bayesain optimisation to solve
+sample size determination problems when simulation is required to
+calculate operating characteristics.
 
 ## Installation
 
@@ -81,8 +83,7 @@ constraints <- constraints(name = c("tII"),
                    out = c("s"),
                    hyp = c("alt"),
                    nom = c(0.1),
-                   delta =c(0.95),
-                   stoch = c(TRUE))
+                   delta = c(0.95))
 ```
 
 Finally, we formalise the **objectives** we want to minimise:
@@ -91,9 +92,7 @@ Finally, we formalise the **objectives** we want to minimise:
 objectives <- objectives(name = c("f1", "f2"),
                  out = c("n", "k"),
                  hyp = c("alt", "alt"),
-                 weight = c(10, 1),
-                 stoch = c(FALSE, FALSE),
-                 binary = c(FALSE, FALSE))
+                 weight = c(10, 1))
 ```
 
 Together, these are the ingredients of a **problem** object:
@@ -112,14 +111,12 @@ N <- 500
 
 solution <- BOSSS_solution(size, N, problem)
 #> Checking simulation speed...
-#> Initialisation will take approximately 0.2420796 secs 
+#> Initialisation will take approximately 0.3574152 secs 
 #> Models fitted
 #> Initial solution found
 print(solution)
 #>           n        k       f1       f2
-#> 9  346.8750 41.18750 346.8750 41.18750
 #> 13 408.1250 35.31250 408.1250 35.31250
-#> 17 300.9375 48.53125 300.9375 48.53125
 #> 21 484.6875 30.90625 484.6875 30.90625
 #> 29 392.8125 39.71875 392.8125 39.71875
 #> 37 461.7188 33.10938 461.7188 33.10938
@@ -130,7 +127,7 @@ there are more than one objectives.
 
 To improve the solution we can **iterate** as many times as we like,
 where each iteration will try to select the design which will give us
-the biggest improvement:
+the biggest improvement and evaluate it :
 
 ``` r
 for(i in 1:5){
@@ -139,11 +136,9 @@ for(i in 1:5){
 
 print(solution)
 #>           n        k       f1       f2
-#> 9  346.8750 41.18750 346.8750 41.18750
 #> 13 408.1250 35.31250 408.1250 35.31250
-#> 21 484.6875 30.90625 484.6875 30.90625
-#> 43 441.1153 31.93494 441.1153 31.93494
-#> 44 375.8672 38.12792 375.8672 38.12792
+#> 29 392.8125 39.71875 392.8125 39.71875
+#> 41 429.5927 29.01392 429.5927 29.01392
 ```
 
 We can also visualise our solution by plotting the Pareto front:

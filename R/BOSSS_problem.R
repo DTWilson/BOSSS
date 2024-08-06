@@ -118,6 +118,20 @@ BOSSS_problem <- function(sim_trial, design_space, hypotheses,
     internal_det_func <- reformat_det(det_func, design_space)
   }
 
+  # Flag if constraints / objectives are stochastic
+  test_out <- sim_trial()
+  sim_out_names <- names(test_out)
+  objectives$stoch <- objectives$out %in% sim_out_names
+  constraints$stoch <- constraints$out %in% sim_out_names
+
+  # Flag if constraints / objectives are binary
+  if(!is.null(det_func)){
+    test_out_det <- det_func()
+  }
+
+  if(!("binary" %in% names(objectives))) objectives <- check_binary(objectives, test_out, test_out_det)
+  if(!("binary" %in% names(constraints))) constraints <- check_binary(constraints, test_out, test_out_det)
+
   prob <- new_BOSSS_problem(internal_sim_trial, design_space, hypotheses,
                                         constraints, objectives, internal_det_func)
   validate_BOSSS_problem(prob)
@@ -183,4 +197,16 @@ reformat_det <- function(det_func, design_space){
   formals(int_det)$hypothesis <- defaults[(dim+1):length(arg_names)]
 
   int_det
+}
+
+check_binary <- function(df, test_out, test_out_det){
+  for(i in 1:nrow(df)){
+    x <- df$out[i]
+    if(x %in% names(test_out)){
+      df$binary[i] <- is.logical(test_out[names(test_out) == x])
+    } else {
+      df$binary[i] <- is.logical(test_out_det[names(test_out_det) == x])
+    }
+  }
+  df
 }

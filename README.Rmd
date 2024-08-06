@@ -19,7 +19,7 @@ knitr::opts_chunk$set(
   [![R-CMD-check](https://github.com/DTWilson/BOSSS/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/DTWilson/BOSSS/actions/workflows/R-CMD-check.yaml)
 <!-- badges: end -->
 
-The goal of BOSSS is to ...
+The goal of BOSSS is to help people use Bayesain optimisation to solve sample size determination problems when simulation is required to calculate operating characteristics.
 
 ## Installation
 
@@ -81,8 +81,7 @@ constraints <- constraints(name = c("tII"),
                    out = c("s"),
                    hyp = c("alt"),
                    nom = c(0.1),
-                   delta =c(0.95),
-                   stoch = c(TRUE))
+                   delta = c(0.95))
 ```
 
 Finally, we formalise the **objectives** we want to minimise:
@@ -91,9 +90,7 @@ Finally, we formalise the **objectives** we want to minimise:
 objectives <- objectives(name = c("f1", "f2"),
                  out = c("n", "k"),
                  hyp = c("alt", "alt"),
-                 weight = c(10, 1),
-                 stoch = c(FALSE, FALSE),
-                 binary = c(FALSE, FALSE))
+                 weight = c(10, 1))
 ```
 
 Together, these are the ingredients of a **problem** object:
@@ -115,7 +112,8 @@ print(solution)
 Note that a BOSSS solution will be an estimated Pareto set whenever there are more than one objectives.
 
 
-To improve the solution we can **iterate** as many times as we like, where each iteration will try to select the design which will give us the biggest improvement:
+To improve the solution we can **iterate** as many times as we like, where each iteration will try to select the design which will give us the biggest improvement and evaluate it
+:
 
 ```{r}
 for(i in 1:5){
@@ -131,4 +129,5 @@ We can also visualise our solution by plotting the Pareto front:
 ```{r}
 plot(solution)
 ```
+
 

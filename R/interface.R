@@ -76,21 +76,18 @@ hypotheses <- function(par_name = NULL, sim = NULL, values, hyp_names) {
 #' pertains to.
 #' @param nom numeric vector of nominal upper limits.
 #' @param delta numeric vector of probabilities.
-#' @param stoch boolean vector denoting if the constraint function is stochastic
-#' (TRUE) or deterministic (FALSE).
 #'
 #' @return A data.frame defining the constraints.
 #' @export
 #'
 #'
-constraints <- function(name, out, hyp, nom, delta, stoch) {
+constraints <- function(name, out, hyp, nom, delta) {
 
   data.frame(name = name,
              out = out,
              hyp = hyp,
              nom = nom,
-             delta = delta,
-             stoch = stoch)
+             delta = delta)
 }
 
 
@@ -102,21 +99,22 @@ constraints <- function(name, out, hyp, nom, delta, stoch) {
 #' @param hyp character vector denoting which hypothesis each objective
 #' pertains to.
 #' @param weight numeric vector of weights assigned to each objective.
-#' @param stoch boolean vector denoting if the objective function is stochastic
-#' (TRUE) or deterministic (FALSE).
-#' @param binary boolean vector denoting if the output of the objective
+#' @param binary optional boolean vector denoting if the output of the objective
 #' function is binary (TRUE) or continuous (FALSE).
 #'
 #' @return A data.frame defining the objectives.
 #' @export
 #'
 #'
-objectives <- function(name, out, hyp, weight, stoch, binary) {
+objectives <- function(name, out, hyp, weight, binary = NULL) {
 
-  data.frame(name = name,
+  df <- data.frame(name = name,
              out = out,
              hyp = hyp,
-             weight = weight,
-             stoch = stoch,
-             binary = binary)
+             weight = weight)
+
+  if(!is.null(binary)) df$binary = binary
+
+  df
+
 }

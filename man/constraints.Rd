@@ -4,7 +4,7 @@
 \alias{constraints}
 \title{Create a set of constraints}
 \usage{
-constraints(name, out, hyp, nom, delta, stoch)
+constraints(name, out, hyp, nom, delta)
 }
 \arguments{
 \item{name}{character vector of constraint names.}
@@ -18,9 +18,6 @@ pertains to.}
 \item{nom}{numeric vector of nominal upper limits.}
 
 \item{delta}{numeric vector of probabilities.}
-
-\item{stoch}{boolean vector denoting if the constraint function is stochastic
-(TRUE) or deterministic (FALSE).}
 }
 \value{
 A data.frame defining the constraints.

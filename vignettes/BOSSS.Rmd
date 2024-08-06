@@ -148,17 +148,17 @@ sim_trial <- function(n = 300, ninterim = 0.5, ainterim = 0.4, afinal = 0.1,
   #if p2>afinal, trial unsuccessful at final analysis
   #if p2<afinal, trial successful at final analysis
   if(test>=ainterim){
-    return(c(g = 0, s = 1, n = ninterim))
+    return(c(g = FALSE, s = TRUE, n = ninterim))
   }
   if(test<ainterim){
     if(mean(data2[data2$treat == 1,"short"]) < mean(data2[data2$treat == 2,"short"])){
-      return(c(g = 0, s = 1, n = ninterim))
+      return(c(g = FALSE, s = TRUE, n = ninterim))
     } else {
       if(test2>afinal){
-        return(c(g = 0, s = 1, n = n))
+        return(c(g = FALSE, s = TRUE, n = n))
       }
       if(test2<afinal){
-        return(c(g = 1, s = 0, n = n))
+        return(c(g = TRUE, s = FALSE, n = n))
       }
     }
   }
@@ -192,8 +192,7 @@ constraints <- constraints(name = c("a", "b"),
                    out = c("g", "s"),
                    hyp = c("null", "alt"),
                    nom = c(0.1, 0.2),
-                   delta =c(0.95, 0.95),
-                   stoch = c(TRUE, TRUE))
+                   delta =c(0.95, 0.95))
 ```
 
 The final ingredient of the problem is the set of objectives we want to minimise. Similar to constraints, objectives are tied to a specific simulation output and hypothesis, and can be stochastic or deterministic. We also specify weights for each objective which help guide the optimisation process, and note whether or not the output for each objective is binary or continuous. For example, here we want to minimise both the type I and type II error rates and the expected sample size, with the former carrying a weight of 100 times of the latter.
@@ -203,7 +202,6 @@ objectives <- objectives(name = c("TI", "TII", "EN"),
                  out = c("g", "s", "n"),
                  hyp = c("null", "alt", "null"),
                  weight = c(100, 100, 1),
-                 stoch = c(TRUE, TRUE, TRUE),
                  binary = c(TRUE, TRUE, FALSE))
 ```
 
@@ -361,64 +359,6 @@ print(sol)
 plot(sol)
 ```
 
-## Simple two-sample t-test
-
-
-```{r}
-sim_trial <- function(n=200, k=10, mu=0.3, var_u=0.05, var_e=0.95){
-
-  # Number of patients in each cluster
-  m <- n/k
-  
-  # SD of cluster means
-  s_c <- sqrt(var_u + var_e/m)
-  
-  # Simulate cluster means
-  x0 <- stats::rnorm(k, 0, s_c); x1 <- stats::rnorm(k, mu, s_c)
-  
-  return(c(s = stats::t.test(x0, x1)$p.value >= 0.05))
-}
-
-det_func <- function(n=200, k=10, mu=0.3, var_u=0.05, var_e=0.95){
-  return(c(n=n, k=k))
-}
-
-design_space <- design_space(lower = c(10, 3),
-                             upper = c(500, 50),
-                             sim = sim_trial)
-
-hypotheses <- hypotheses(values = matrix(c(0.3, 0.05, 0.95), ncol = 1),
-                         hyp_names = c("alt"),
-                         sim = sim_trial)
-
-constraints <- constraints(name = c("tII"),
-                   out = c("s"),
-                   hyp = c("alt"),
-                   nom = c(0.1),
-                   delta =c(0.95),
-                   stoch = c(TRUE))
-
-objectives <- objectives(name = c("f1", "f2"),
-                 out = c("n", "k"),
-                 hyp = c("alt", "alt"),
-                 weight = c(10, 1),
-                 stoch = c(FALSE, FALSE),
-                 binary = c(FALSE, FALSE))
-
-prob <- BOSSS_problem(sim_trial, design_space, hypotheses, constraints, objectives, det_func = det_func)
-
-size <- 40
-N <- 500
-
-sol <- BOSSS_solution(size, N, prob)
-```
-
-```{r}
-sol <- iterate(sol, prob, N) 
-
-print(sol)
-plot(sol)
-```
 
 ## Hybrid Bayesian multilevel model
 
