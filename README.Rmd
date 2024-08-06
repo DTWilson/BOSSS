@@ -112,12 +112,23 @@ solution <- BOSSS_solution(size, N, problem)
 print(solution)
 ```
 
+Note that a BOSSS solution will be an estimated Pareto set whenever there are more than one objectives.
+
+
 To improve the solution we can **iterate** as many times as we like, where each iteration will try to select the design which will give us the biggest improvement:
 
 ```{r}
-solution <- iterate(solution, problem, N) 
+for(i in 1:5){
+  solution <- iterate(solution, problem, N)
+}
 
 print(solution)
+```
+
+
+We can also visualise our solution by plotting the Pareto front:
+
+```{r}
 plot(solution)
 ```
 

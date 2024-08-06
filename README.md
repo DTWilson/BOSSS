@@ -112,33 +112,44 @@ N <- 500
 
 solution <- BOSSS_solution(size, N, problem)
 #> Checking simulation speed...
-#> Initialisation will take approximately 0.3594012 secs 
+#> Initialisation will take approximately 0.2420796 secs 
 #> Models fitted
 #> Initial solution found
 print(solution)
 #>           n        k       f1       f2
 #> 9  346.8750 41.18750 346.8750 41.18750
 #> 13 408.1250 35.31250 408.1250 35.31250
+#> 17 300.9375 48.53125 300.9375 48.53125
 #> 21 484.6875 30.90625 484.6875 30.90625
 #> 29 392.8125 39.71875 392.8125 39.71875
 #> 37 461.7188 33.10938 461.7188 33.10938
 ```
+
+Note that a BOSSS solution will be an estimated Pareto set whenever
+there are more than one objectives.
 
 To improve the solution we can **iterate** as many times as we like,
 where each iteration will try to select the design which will give us
 the biggest improvement:
 
 ``` r
-solution <- iterate(solution, problem, N) 
+for(i in 1:5){
+  solution <- iterate(solution, problem, N)
+}
 
 print(solution)
 #>           n        k       f1       f2
 #> 9  346.8750 41.18750 346.8750 41.18750
 #> 13 408.1250 35.31250 408.1250 35.31250
 #> 21 484.6875 30.90625 484.6875 30.90625
-#> 29 392.8125 39.71875 392.8125 39.71875
-#> 37 461.7188 33.10938 461.7188 33.10938
+#> 43 441.1153 31.93494 441.1153 31.93494
+#> 44 375.8672 38.12792 375.8672 38.12792
+```
+
+We can also visualise our solution by plotting the Pareto front:
+
+``` r
 plot(solution)
 ```
 
-<img src="man/figures/README-unnamed-chunk-9-1.png" width="100%" />
+<img src="man/figures/README-unnamed-chunk-10-1.png" width="100%" />
