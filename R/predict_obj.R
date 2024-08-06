@@ -2,8 +2,6 @@
 # deterministic objective function.
 
 predict_obj <- function(design, problem, solution){
-  # Return a matrix with n_samp rows, each giving objective values
-  # at design, sampling from stochastic objective models.
   # Note - design can be a matrix
   obj_vals <- matrix(rep(NA, nrow(design)*nrow(problem$objectives)), nrow = nrow(design))
   for(i in 1:nrow(problem$objectives)){
@@ -24,9 +22,7 @@ predict_obj <- function(design, problem, solution){
       obj_vals[,i] <- f*problem$objectives$weight[i]
     } else {
       ## For deterministic objectives, use the user-written function
-      ## For now, assume independent of hypothesis
       f <- apply(design, 1, problem$det_func, hypothesis = problem$hypotheses[,hyp])[out,]
-      #f <- as.numeric(problem$det_obj(design)[problem$objectives[i, "out_i"]])
       obj_vals[,i] <- f*problem$objectives$weight[i]
     }
   }

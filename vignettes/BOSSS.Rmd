@@ -363,52 +363,61 @@ plot(sol)
 
 ## Simple two-sample t-test
 
-To do.
 
 ```{r}
-sim_trial <- function(design, hypothesis){
-  # Exctract the design variables and parameters
-  design <- as.numeric(design); hypothesis <- as.numeric(hypothesis)
-  n <- design[1]; k <- design[2]
-  mu <- hypothesis[1]; var_u <- hypothesis[2]; var_e <- hypothesis[3]
-  
+sim_trial <- function(n=200, k=10, mu=0.3, var_u=0.05, var_e=0.95){
+
   # Number of patients in each cluster
   m <- n/k
+  
   # SD of cluster means
   s_c <- sqrt(var_u + var_e/m)
+  
   # Simulate cluster means
   x0 <- stats::rnorm(k, 0, s_c); x1 <- stats::rnorm(k, mu, s_c)
   
-  return(c(s = stats::t.test(x0, x1)$p.value >= 0.05, n = n, k = k))
+  return(c(s = stats::t.test(x0, x1)$p.value >= 0.05))
 }
 
-det_obj <- function(design){
-    #o <- matrix(design, ncol = 2)[,1:2]
-    #c(s = NA, p = o[1], c = o[2])
-  cbind(NA, design)
+det_func <- function(n=200, k=10, mu=0.3, var_u=0.05, var_e=0.95){
+  return(c(n=n, k=k))
 }
 
-design_space <- data.frame(name = c("n", "k"),
-                 low = c(50, 5),
-                 up = c(500, 50),
-                 int = c(TRUE, TRUE))
+design_space <- design_space(lower = c(10, 3),
+                             upper = c(500, 50),
+                             sim = sim_trial)
 
-hypotheses <- data.frame(mu = c(0.3, 0),
-                   var_u = c(0.05, 0.05),
-                   var_e = c(0.95, 0.95))
+hypotheses <- hypotheses(values = matrix(c(0.3, 0.05, 0.95), ncol = 1),
+                         hyp_names = c("alt"),
+                         sim = sim_trial)
 
-constraints <- data.frame(name = "a",
-                   out_i = 1,
-                   hyp_i = 2,
-                   nom = 0.2,
-                   delta = 0.975,
-                   stoch = TRUE)
+constraints <- constraints(name = c("tII"),
+                   out = c("s"),
+                   hyp = c("alt"),
+                   nom = c(0.1),
+                   delta =c(0.95),
+                   stoch = c(TRUE))
 
-objectives <- data.frame(name = c("f1", "f2", "f3"),
-                 out_i = c(2, 3, 1),
-                 hyp_i = c(1, 1, 1),
-                 weight = c(2, 5, 50),
-                 stoch = c(FALSE, FALSE, TRUE))
+objectives <- objectives(name = c("f1", "f2"),
+                 out = c("n", "k"),
+                 hyp = c("alt", "alt"),
+                 weight = c(10, 1),
+                 stoch = c(FALSE, FALSE),
+                 binary = c(FALSE, FALSE))
+
+prob <- BOSSS_problem(sim_trial, design_space, hypotheses, constraints, objectives, det_func = det_func)
+
+size <- 40
+N <- 500
+
+sol <- BOSSS_solution(size, N, prob)
+```
+
+```{r}
+sol <- iterate(sol, prob, N) 
+
+print(sol)
+plot(sol)
 ```
 
 ## Hybrid Bayesian multilevel model

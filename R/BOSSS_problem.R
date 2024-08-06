@@ -18,7 +18,6 @@ new_BOSSS_problem <- function(sim_trial, design_space, hypotheses,
                constraints = constraints,
                objectives = objectives,
                det_func = det_func,
-               #out_dimen = length(sim_trial()),
                dimen = nrow(design_space))
 
   structure(prob,
@@ -67,6 +66,9 @@ validate_BOSSS_problem <- function(prob) {
     stop("Objective stochasticity indicators must be logical")
   }
 
+  # Are all function arguments given defaults?
+
+
   # Do all outputs referred to appear in the function outputs?
   all_req_names <- c(prob$objectives$out, prob$constraints$out)
   not_in <- !sapply(all_req_names, function(x) (x %in% out_names))
@@ -100,9 +102,12 @@ validate_BOSSS_problem <- function(prob) {
 #' design under a hypothesis.
 #'
 #' @return An object of class BOSSS_problem.
+#'
+#' @examples
+#'
+#'
+#'
 #' @export
-#'
-#'
 BOSSS_problem <- function(sim_trial, design_space, hypotheses,
                               constraints, objectives, det_func = NULL){
 
@@ -123,6 +128,13 @@ BOSSS_problem <- function(sim_trial, design_space, hypotheses,
 # design and hypotheses vectors as arguments
 
 reformat_sim <- function(sim_trial, design_space){
+
+  arg_num <- length(formals(sim_trial))
+  for(i in 1:arg_num){
+    if(is.symbol(formals(sim_trial)[[i]])){
+      stop("Determinsitic function missing default argument(s)")
+    }
+  }
 
   arg_names <- methods::formalArgs(sim_trial)
   defaults <- as.numeric(formals(sim_trial))
@@ -145,6 +157,13 @@ reformat_sim <- function(sim_trial, design_space){
 }
 
 reformat_det <- function(det_func, design_space){
+
+  arg_num <- length(formals(det_func))
+  for(i in 1:arg_num){
+    if(is.symbol(formals(det_func)[[i]])){
+      stop("Determinsitic function missing default argument(s)")
+    }
+  }
 
   arg_names <- methods::formalArgs(det_func)
   defaults <- as.numeric(formals(det_func))
