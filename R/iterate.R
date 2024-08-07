@@ -8,9 +8,8 @@
 #' NULL, an optimal design will be sought.
 #'
 #' @return An updated BOSSS solution object.
+#'
 #' @export
-#'
-#'
 iterate <- function(solution, problem, N, design = NULL) {
 
 

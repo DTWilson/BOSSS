@@ -10,9 +10,13 @@
 #' @param upper numeric vector of upper limits.
 #'
 #' @return A data.frame defining the design space.
+#'
+#' @examples
+#' design_space(lower = c(10, 3),
+#'              upper = c(500, 50),
+#'              name = c("n", "k"))
+#'
 #' @export
-#'
-#'
 design_space <- function(name = NULL, sim = NULL, lower, upper) {
 
   if(is.null(name)){
@@ -43,9 +47,13 @@ design_space <- function(name = NULL, sim = NULL, lower, upper) {
 #' @param hyp_names character vector of hypothesis names.
 #'
 #' @return A data.frame defining the hypotheses.
+#'
+#' @examples
+#' hypotheses(values = matrix(c(0.3, 0.05, 0.95), ncol = 1),
+#'            hyp_names = c("alt"),
+#'            par_name = c("mu", "var_u", "var_e"))
+#'
 #' @export
-#'
-#'
 hypotheses <- function(par_name = NULL, sim = NULL, values, hyp_names) {
 
   if(is.null(par_name)){
@@ -78,9 +86,15 @@ hypotheses <- function(par_name = NULL, sim = NULL, values, hyp_names) {
 #' @param delta numeric vector of probabilities.
 #'
 #' @return A data.frame defining the constraints.
+#'
+#' @examples
+#' constraints(name = c("tII"),
+#'             out = c("s"),
+#'             hyp = c("alt"),
+#'             nom = c(0.1),
+#'             delta = c(0.95))
+#'
 #' @export
-#'
-#'
 constraints <- function(name, out, hyp, nom, delta) {
 
   data.frame(name = name,
@@ -103,9 +117,13 @@ constraints <- function(name, out, hyp, nom, delta) {
 #' function is binary (TRUE) or continuous (FALSE).
 #'
 #' @return A data.frame defining the objectives.
+#'
+#' @examples objectives(name = c("min_n", "min_k"),
+#'                      out = c("n", "k"),
+#'                      hyp = c("alt", "alt"),
+#'                      weight = c(10, 1))
+#'
 #' @export
-#'
-#'
 objectives <- function(name, out, hyp, weight, binary = NULL) {
 
   df <- data.frame(name = name,
@@ -116,5 +134,4 @@ objectives <- function(name, out, hyp, weight, binary = NULL) {
   if(!is.null(binary)) df$binary = binary
 
   df
-
 }
