@@ -33,39 +33,41 @@ exp_penalty <- function(design, problem, solution, N){
   ## Get expected penalisation if we were to evaluate at design,
   ## using the models of constraint functions
   exp_pen <- 1
-  for(i in 1:nrow(problem$constraints)){
+  if(!is.null(problem$constraints)){
+    for(i in 1:nrow(problem$constraints)){
 
-    out <- problem$constraints[i, "out"]
-    hyp <- problem$constraints[i, "hyp"]
+      out <- problem$constraints[i, "out"]
+      hyp <- problem$constraints[i, "hyp"]
 
-    nom <- problem$constraints[i, "nom"]
-    nom <- log(nom/(1-nom))
+      nom <- problem$constraints[i, "nom"]
+      nom <- log(nom/(1-nom))
 
-    if(problem$constraints[i, "stoch"]){
+      if(problem$constraints[i, "stoch"]){
 
-      # If constraint is stochastic, predict constraint at design point
+        # If constraint is stochastic, predict constraint at design point
 
-      model_index <- which(solution$to_model$out == out & solution$to_model$hyp == hyp)
+        model_index <- which(solution$to_model$out == out & solution$to_model$hyp == hyp)
 
-      p <- DiceKriging::predict.km(solution$models[[model_index]],
-                                   newdata=design[,1:problem$dimen, drop=F],
-                                   type="SK",
-                                   light.return=TRUE)
+        p <- DiceKriging::predict.km(solution$models[[model_index]],
+                                     newdata=design[,1:problem$dimen, drop=F],
+                                     type="SK",
+                                     light.return=TRUE)
 
-      # assuming worst case MC error, get mean and variance of the predicted quantile
-      mc_vars <- (N*0.25*(1-0.25)/(0.2+N)^2)*(1/0.25 + 1/(1-0.25))^2
-      pred_q_mean <- p$mean + stats::qnorm(problem$constraints[i, "delta"])*sqrt(mc_vars*(p$sd^2)/(mc_vars+(p$sd^2)))
-      pred_q_var <- ((p$sd^2)^2)/(mc_vars+(p$sd^2))
+        # assuming worst case MC error, get mean and variance of the predicted quantile
+        mc_vars <- (N*0.25*(1-0.25)/(0.2+N)^2)*(1/0.25 + 1/(1-0.25))^2
+        pred_q_mean <- p$mean + stats::qnorm(problem$constraints[i, "delta"])*sqrt(mc_vars*(p$sd^2)/(mc_vars+(p$sd^2)))
+        pred_q_var <- ((p$sd^2)^2)/(mc_vars+(p$sd^2))
 
-      # Incorporate prob of constraint violation into penalisation
-      exp_pen <- exp_pen*stats::pnorm(nom, pred_q_mean, sqrt(pred_q_var))
-    } else {
-      # If constraint is deterministic, penalise by ~0 if violated
+        # Incorporate prob of constraint violation into penalisation
+        exp_pen <- exp_pen*stats::pnorm(nom, pred_q_mean, sqrt(pred_q_var))
+      } else {
+        # If constraint is deterministic, penalise by ~0 if violated
 
-      # Results are a hyp x out matrix
-      ests <- solution$results[hyp, out]
+        # Results are a hyp x out matrix
+        ests <- solution$results[hyp, out]
 
-      exp_pen <- ifelse(ests[, 1] > nom, 0.0000001, 1)
+        exp_pen <- ifelse(ests[, 1] > nom, 0.0000001, 1)
+      }
     }
   }
   return(exp_pen)

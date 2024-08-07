@@ -12,7 +12,6 @@
 #' @export
 iterate <- function(solution, problem, N, design = NULL) {
 
-
   if(is.null(design)) {
     opt <- RcppDE::DEoptim(ehi_infill,
                            lower = problem$design_space$lower,

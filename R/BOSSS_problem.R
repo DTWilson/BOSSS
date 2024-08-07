@@ -1,11 +1,11 @@
 # Constructor
 new_BOSSS_problem <- function(sim_trial, design_space, hypotheses,
-                              constraints, objectives, det_func = NULL){
+                              objectives, constraints, det_func = NULL){
   # Check types
   stopifnot(is.function(sim_trial))
   stopifnot(is.data.frame(design_space))
   stopifnot(is.data.frame(hypotheses))
-  stopifnot(is.data.frame(constraints))
+  if(!is.null(constraints)) stopifnot(is.data.frame(constraints))
   stopifnot(is.data.frame(objectives))
   stopifnot(is.function(det_func) | is.null(det_func))
 
@@ -54,11 +54,13 @@ validate_BOSSS_problem <- function(prob) {
   }
 
   # Are constraints defined properly?
-  if(any(prob$constraints$delta < 0 | prob$constraints$delta > 1)){
-    stop("Constraint deltas must lie in [0,1]")
-  }
-  if(!is.logical(prob$constraints$stoch)){
-    stop("Constraint stochasticity indicators must be logical")
+  if(!is.null(prob$constraints)) {
+    if(any(prob$constraints$delta < 0 | prob$constraints$delta > 1)){
+      stop("Constraint deltas must lie in [0,1]")
+    }
+    if(!is.logical(prob$constraints$stoch)){
+      stop("Constraint stochasticity indicators must be logical")
+    }
   }
 
   # Are objectives defined properly?
@@ -70,7 +72,8 @@ validate_BOSSS_problem <- function(prob) {
 
 
   # Do all outputs referred to appear in the function outputs?
-  all_req_names <- c(prob$objectives$out, prob$constraints$out)
+  all_req_names <- prob$objectives$out
+  if(!is.null(prob$constraints)) all_req_names <- c(all_req_names, prob$constraints$out)
   not_in <- !sapply(all_req_names, function(x) (x %in% out_names))
   if(any(not_in)){
     stop(paste("Outputs", all_req_names[not_in], " referred to in objectives
@@ -79,6 +82,8 @@ validate_BOSSS_problem <- function(prob) {
   }
 
   # Is there a deterministic function if required?
+  need_det <- any(prob$objectives$stoch == F)
+  if(!is.null(prob$constraints)) need_det <- any(c(need_det, any(prob$constraints$stoch == F)))
   if(any( c(prob$constraints$stoch, prob$objectives$stoch) == F)) {
     if(is.null(prob$det_func)) {
       stop("Determinsitic function required by objectives and or constraints,
@@ -92,24 +97,20 @@ validate_BOSSS_problem <- function(prob) {
 
 #' Create a BOSSS problem
 #'
-#' @param sim_trial Function which generates a single (possibly multivariate)
+#' @param sim_trial function which generates a single (possibly multivariate)
 #' Monte Carlo outcome of a design under a hypothesis.
-#' @param design_space Data frame constructed via design_space().
-#' @param hypotheses Data frame constructed via hypotheses().
-#' @param constraints Data frame constructed via constraints().
-#' @param objectives Data frame constructed via objectives().
-#' @param det_func Optional function which generates deterministic outcomes of a
+#' @param design_space data frame constructed via `design_space()`.
+#' @param hypotheses data frame constructed via `hypotheses()`.
+#' @param objectives data frame constructed via `objectives()`.
+#' @param constraints optional ata frame constructed via `constraints()`.
+#' @param det_func optional function which generates deterministic outcomes of a
 #' design under a hypothesis.
 #'
 #' @return An object of class BOSSS_problem.
 #'
-#' @examples
-#'
-#'
-#'
 #' @export
 BOSSS_problem <- function(sim_trial, design_space, hypotheses,
-                              constraints, objectives, det_func = NULL){
+                              objectives, constraints = NULL, det_func = NULL){
 
   internal_sim_trial <- reformat_sim(sim_trial, design_space)
   if(is.null(det_func)) {
@@ -122,7 +123,7 @@ BOSSS_problem <- function(sim_trial, design_space, hypotheses,
   test_out <- sim_trial()
   sim_out_names <- names(test_out)
   objectives$stoch <- objectives$out %in% sim_out_names
-  constraints$stoch <- constraints$out %in% sim_out_names
+  if(!is.null(constraints)) constraints$stoch <- constraints$out %in% sim_out_names
 
   # Flag if constraints / objectives are binary
   if(!is.null(det_func)){
@@ -130,10 +131,12 @@ BOSSS_problem <- function(sim_trial, design_space, hypotheses,
   }
 
   if(!("binary" %in% names(objectives))) objectives <- check_binary(objectives, test_out, test_out_det)
-  if(!("binary" %in% names(constraints))) constraints <- check_binary(constraints, test_out, test_out_det)
+  if(!is.null(constraints)) {
+    if(!("binary" %in% names(constraints))) constraints <- check_binary(constraints, test_out, test_out_det)
+  }
 
   prob <- new_BOSSS_problem(internal_sim_trial, design_space, hypotheses,
-                                        constraints, objectives, internal_det_func)
+                                        objectives, constraints, internal_det_func)
   validate_BOSSS_problem(prob)
   prob
 }

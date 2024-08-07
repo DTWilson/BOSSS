@@ -108,7 +108,7 @@ As with constraints, objectives are defined with respect to an output and a hypo
 Together, these are the ingredients of a **problem** object:
 
 ```{r}
-problem <- BOSSS_problem(sim_trial, design_space, hypotheses, constraints, objectives, det_func = det_func)
+problem <- BOSSS_problem(sim_trial, design_space, hypotheses, objectives, constraints, det_func = det_func)
 ```
 
 With our problem specified, we generate a **solution** by evaluating a first set of 20 possible designs, evenly spread over our design space, using `N` simulations each time. Printing the result will show us the estimated Pareto set (that is, the set of non-dominated designs):
@@ -146,3 +146,4 @@ design <- solution$p_set[1,]
 
 r <- check_point(design, problem, solution, N=10^5) 
 ```
+

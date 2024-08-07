@@ -22,7 +22,11 @@ predict_obj <- function(design, problem, solution){
       obj_vals[,i] <- f*problem$objectives$weight[i]
     } else {
       ## For deterministic objectives, use the user-written function
-      f <- apply(design, 1, problem$det_func, hypothesis = problem$hypotheses[,hyp])[out,]
+      if(length(problem$det_func()) > 1){
+        f <- apply(design, 1, problem$det_func, hypothesis = problem$hypotheses[,hyp])[out,]
+      } else {
+        f <- apply(design, 1, problem$det_func, hypothesis = problem$hypotheses[,hyp])
+      }
       obj_vals[,i] <- f*problem$objectives$weight[i]
     }
   }
@@ -62,9 +66,12 @@ predict_next_obj <- function(n_samp, design, problem, solution){
       if(problem$objectives[i, "binary"]) f <- exp(f)/(exp(f) + 1)
       obj_vals[,i] <- f*problem$objectives$weight[i]
     } else {
-      ## For deterministic objectives
-      f <- apply(design, 1, problem$det_func, hypothesis = problem$hypotheses[,hyp])[out,]
-      #f <- as.numeric(problem$det_obj(design)[problem$objectives[i, "out_i"]])
+      ## For deterministic objectives, use the user-written function
+      if(length(problem$det_func()) > 1){
+        f <- apply(design, 1, problem$det_func, hypothesis = problem$hypotheses[,hyp])[out,]
+      } else {
+        f <- apply(design, 1, problem$det_func, hypothesis = problem$hypotheses[,hyp])
+      }
       obj_vals[,i] <- f*problem$objectives$weight[i]
     }
   }

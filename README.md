@@ -133,7 +133,7 @@ minimising the number of participant.
 Together, these are the ingredients of a **problem** object:
 
 ``` r
-problem <- BOSSS_problem(sim_trial, design_space, hypotheses, constraints, objectives, det_func = det_func)
+problem <- BOSSS_problem(sim_trial, design_space, hypotheses, objectives, constraints, det_func = det_func)
 ```
 
 With our problem specified, we generate a **solution** by evaluating a
@@ -147,7 +147,7 @@ N <- 500
 
 solution <- BOSSS_solution(size, N, problem)
 #> Checking simulation speed...
-#> Initialisation will take approximately 0.1230094 secs 
+#> Initialisation will take approximately 0.1271686 secs 
 #> Models fitted
 #> Initial solution found
 print(solution)
@@ -167,9 +167,9 @@ for(i in 1:10){
 
 print(solution)
 #>           n        k       f1       f2
-#> 22 363.0777 36.10199 363.0777 36.10199
-#> 26 344.6226 37.20389 344.6226 37.20389
-#> 29 376.8533 33.97347 376.8533 33.97347
+#> 22 367.1897 37.66545 367.1897 37.66545
+#> 26 377.4575 35.39215 377.4575 35.39215
+#> 30 383.0935 34.26130 383.0935 34.26130
 ```
 
 We can also visualise our solution by plotting the Pareto front (that
@@ -192,6 +192,6 @@ Process surrogate model as a diagnostic.
 design <- solution$p_set[1,]
 
 r <- check_point(design, problem, solution, N=10^5) 
-#> Model 1 prediction interval: [0.081, 0.096]
-#> Model 1 empirical interval: [0.088, 0.091]
+#> Model 1 prediction interval: [0.082, 0.099]
+#> Model 1 empirical interval: [0.086, 0.089]
 ```
