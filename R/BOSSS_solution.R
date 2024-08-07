@@ -49,7 +49,7 @@ BOSSS_solution <- function(size, N, problem){
     for( ind in 2:nrow(DoE) ){
       r_sim <- rbind(r_sim,MC_estimates(DoE[ind,1:problem$dimen], hypotheses=problem$hypotheses, N=N, sim=problem$simulation))
     }
-    cat("Initialised r")
+    
   } else {
     r_sim <- r_1
   }
@@ -57,12 +57,12 @@ BOSSS_solution <- function(size, N, problem){
   if(is.null(problem$det_func)) {
     r <- r_sim
   } else {
-    cat("test1")
+
     r_det <- t(apply(DoE[,1:problem$dimen], 1, det_values, hypotheses=problem$hypotheses, det_func=problem$det_func))
-    cat("test2")
+
     r <- cbind(r_sim, r_det)
   }
-  cat("put output into matrix")
+
   # Put results into a (# hyps) x (# outputs) matrix
   n_hyp <- ncol(problem$hypotheses)
   out_dimen <- ncol(r)/(2*n_hyp)
