@@ -26,3 +26,10 @@ A data.frame defining the objectives.
 \description{
 Create a set of objectives
 }
+\examples{
+objectives(name = c("min_n", "min_k"),
+                     out = c("n", "k"),
+                     hyp = c("alt", "alt"),
+                     weight = c(10, 1))
+
+}

@@ -21,3 +21,9 @@ A data.frame defining the design space.
 \description{
 Create a design space
 }
+\examples{
+design_space(lower = c(10, 3),
+             upper = c(500, 50),
+             name = c("n", "k"))
+
+}

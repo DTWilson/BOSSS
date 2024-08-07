@@ -8,24 +8,24 @@ BOSSS_problem(
   sim_trial,
   design_space,
   hypotheses,
-  constraints,
   objectives,
+  constraints = NULL,
   det_func = NULL
 )
 }
 \arguments{
-\item{sim_trial}{Function which generates a single (possibly multivariate)
+\item{sim_trial}{function which generates a single (possibly multivariate)
 Monte Carlo outcome of a design under a hypothesis.}
 
-\item{design_space}{Data frame constructed via design_space().}
+\item{design_space}{data frame constructed via \code{design_space()}.}
 
-\item{hypotheses}{Data frame constructed via hypotheses().}
+\item{hypotheses}{data frame constructed via \code{hypotheses()}.}
 
-\item{constraints}{Data frame constructed via constraints().}
+\item{objectives}{data frame constructed via \code{objectives()}.}
 
-\item{objectives}{Data frame constructed via objectives().}
+\item{constraints}{optional ata frame constructed via \code{constraints()}.}
 
-\item{det_func}{Optional function which generates deterministic outcomes of a
+\item{det_func}{optional function which generates deterministic outcomes of a
 design under a hypothesis.}
 }
 \value{

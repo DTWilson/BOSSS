@@ -22,3 +22,9 @@ A data.frame defining the hypotheses.
 \description{
 Create a set of hypotheses
 }
+\examples{
+hypotheses(values = matrix(c(0.3, 0.05, 0.95), ncol = 1),
+           hyp_names = c("alt"),
+           par_name = c("mu", "var_u", "var_e"))
+
+}

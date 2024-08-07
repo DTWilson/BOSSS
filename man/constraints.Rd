@@ -25,3 +25,11 @@ A data.frame defining the constraints.
 \description{
 Create a set of constraints
 }
+\examples{
+constraints(name = c("tII"),
+            out = c("s"),
+            hyp = c("alt"),
+            nom = c(0.1),
+            delta = c(0.95))
+
+}
