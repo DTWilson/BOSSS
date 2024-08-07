@@ -39,7 +39,7 @@ fit_models <- function(DoE, results, to_model, problem)
 MC_estimates <- function(design, hypotheses, N, sim, clust = NULL)
 {
   # Run the simulation under each hypothesis and store the results
-  cat("Run the simulation under each hypothesis and store the results")
+
   results <- NULL
   hypotheses <- t(hypotheses)
   for(i in 1:nrow(hypotheses)) {
@@ -49,24 +49,24 @@ MC_estimates <- function(design, hypotheses, N, sim, clust = NULL)
     #parallel::stopCluster(clust)
 
     if(is.null(clust)){
-      cat("HERE001a")
+
       sims <- sapply(1:N,
                      eval.parent(substitute(function(...) sim(design, as.data.frame(hypotheses)[i,]) )),
                      simplify = "array")
-      cat("HERE001b")
+
     } else {
       sims <- parallel::parSapply(clust, 1:N,
                                   eval.parent(substitute(function(...) sim(design, as.data.frame(hypotheses)[i,]) )),
                                   simplify = "array")
     }
-    cat("here01")
+ 
     # Make sure output is in matrix form where row = output
     if(is.null(nrow(sims))){
       output_names <- names(sims[1])
     } else {
       output_names <- rownames(sims)
     }
-     cat("here02")                                         
+                                        
     sims <- matrix(sims, nrow = length(sims)/N)
     for(j in 1:nrow(sims)) {
       # Results are the mean and variance of each of the simulation outputs
@@ -84,9 +84,9 @@ MC_estimates <- function(design, hypotheses, N, sim, clust = NULL)
       # Use the output variable names to name the result columns
       names(results)[(length(results) -1)] <- paste0(output_names[j], "_m_", rownames(hypotheses)[i])
       names(results)[length(results)] <- paste0(output_names[j], "_v_", rownames(hypotheses)[i])
-      cat("here03") 
+
     }
-                                              cat("here04") 
+                                   
   }
   results
 }
