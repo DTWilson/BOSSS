@@ -307,7 +307,7 @@ plot(sol)
 ```
 
 
-## Hybrid Bayesian multilevel model
+## Bayesian-frequentist hybrid multilevel model
 
 Consider the design of a cluster randomised trial with $m$ clusters per arm, $n$ patients per cluster and a binary outcome for each patient. The trial will be analysed using a mixed effects model fitted using the `glmer` function from the `lme4` package, using a Wald test of the null hypothesis of no difference between arms at the 0.025 (one-sided) level.
 
@@ -425,6 +425,7 @@ for(i in 1:10) {
 print(solution)
 plot(solution)
 ```
+
 
 
 
