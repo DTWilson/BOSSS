@@ -40,7 +40,7 @@ exp_penalty <- function(design, problem, solution, N){
       hyp <- problem$constraints[i, "hyp"]
 
       nom <- problem$constraints[i, "nom"]
-      nom <- log(nom/(1-nom))
+      if(problem$constraints$binary[i]) nom <- log(nom/(1-nom))
 
       if(problem$constraints[i, "stoch"]){
 
@@ -64,9 +64,10 @@ exp_penalty <- function(design, problem, solution, N){
         # If constraint is deterministic, penalise by ~0 if violated
 
         # Results are a hyp x out matrix
-        ests <- solution$results[hyp, out]
+        ests <- solution$results[[hyp, out]]
+        dif <- (ests[, 1] > nom)*(ests[, 1] - nom)^2
 
-        exp_pen <- ifelse(ests[, 1] > nom, 0.0000001, 1)
+        exp_pen <- 1/(1 + dif)
       }
     }
   }
