@@ -38,7 +38,14 @@ BOSSS_solution <- function(size, N, problem){
   # Get a rough estimate of how long initialisation will take
   cat("Checking simulation speed...\n")
   t <- Sys.time()
-  r_1 <- MC_estimates(DoE[1,1:problem$dimen], hypotheses=problem$hypotheses, N=N, sim=problem$simulation)
+  r_sim <- try({
+    MC_estimates(DoE[1,1:problem$dimen], hypotheses=problem$hypotheses, N=N, sim=problem$simulation)
+  }, silent = TRUE)
+
+  if (class(r_sim) == "try-error") {
+    r_sim
+    stop(cat("Simulation threw an error at design ", as.numeric(DoE[1,1:problem$dimen])))
+  }
 
   if(nrow(DoE) > 1) {
     #dif <- utils::capture.output((Sys.time() - t)*(size-1)/n.cores)
@@ -46,8 +53,24 @@ BOSSS_solution <- function(size, N, problem){
     cat("Initialisation will take approximately", substr(dif, 20, nchar(dif)), "\n")
 
     #r_rest <- t(parallel::parApply(clust, DoE[2:nrow(DoE),1:problem$dimen], 1, MC_estimates, hypotheses=problem$hypotheses, N=N, sim=problem$simulation))
-    r_rest <- t(apply(DoE[2:nrow(DoE),1:problem$dimen], 1, MC_estimates, hypotheses=problem$hypotheses, N=N, sim=problem$simulation))
-    r_sim <- rbind(r_1, r_rest)
+    # Use a loop so we can easily identify which (if any) design variables casue
+    # the simulation to throw an error
+
+    for(i in 2:nrow(DoE)){
+      r_next <- try({
+        MC_estimates(DoE[i,1:problem$dimen], hypotheses=problem$hypotheses, N=N, sim=problem$simulation)
+      }, silent = TRUE)
+
+      if (class(r_next) == "try-error") {
+        r_next
+        stop(cat("Simulation threw an error at design ", as.numeric(DoE[i,1:problem$dimen])))
+      }
+
+      r_sim <- rbind(r_sim, r_next)
+    }
+
+    #r_rest <- t(apply(DoE[2:nrow(DoE),1:problem$dimen], 1, MC_estimates, hypotheses=problem$hypotheses, N=N, sim=problem$simulation))
+    #r_sim <- rbind(r_1, r_rest)
   } else {
     r_sim <- r_1
   }
