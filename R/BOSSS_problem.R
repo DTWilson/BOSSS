@@ -149,7 +149,10 @@ reformat_sim <- function(sim_trial, design_space){
   arg_num <- length(formals(sim_trial))
   for(i in 1:arg_num){
     if(is.symbol(formals(sim_trial)[[i]])){
-      stop("Determinsitic function missing default argument(s)")
+      stop("Simulation function missing default value(s)")
+    }
+    if(!is.numeric(formals(sim_trial)[[i]])){
+      stop(paste0(i, "-th default argument of simulation function is not numeric"))
     }
   }
 
@@ -178,7 +181,10 @@ reformat_det <- function(det_func, design_space){
   arg_num <- length(formals(det_func))
   for(i in 1:arg_num){
     if(is.symbol(formals(det_func)[[i]])){
-      stop("Determinsitic function missing default argument(s)")
+      stop("Determinsitic function missing default value(s)")
+    }
+    if(!is.numeric(formals(det_func)[[i]])){
+      stop(paste0(i, "-th default argument of deterministic function is not numeric"))
     }
   }
 

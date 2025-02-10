@@ -426,6 +426,31 @@ print(solution)
 plot(solution)
 ```
 
+## Instrumental variable
+
+```{r}
+library(AER)
+
+sim_trial <- function(n=200, mu=0.3) {
+  
+  z <- rep(c(0,1), n)
+  u <- rnorm(2*n)
+  
+  lp_x <- 4*z - 2 + u
+  x <- rbinom(2*n, 1, exp(lp_x)/(exp(lp_x) + 1))
+  
+  y <- mu*x + u
+  
+  s <- summary(ivreg(y ~ x | z))$coefficients[2,4] > 0.05
+  
+  # Analytic sample size calc from Freeman 2013
+  (qnorm(0.025) + qnorm(0.2))^2*var(y - x*cov(y, z)/cov(x, z))/(var(x)*mu^2*cor(x, z)^2)
+  
+  return(c(s=s))
+}
+
+mean(replicate(10^4, sim_trial(n=734/2)))
+```
 
 
 
