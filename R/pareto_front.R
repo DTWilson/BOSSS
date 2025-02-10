@@ -21,18 +21,18 @@ pareto_front <- function(solution, problem)
       out <- problem$constraints[i, "out"]
       hyp <- problem$constraints[i, "hyp"]
 
+      nom <- problem$constraints[i, "nom"]
+      if(problem$constraints$binary[i]) nom <- log(nom/(1-nom))
+
       if(problem$constraints$stoch[i]) {
 
         # Models are in order of to_model
         model_index <- which(solution$to_model$out == out & solution$to_model$hyp == hyp)
 
-        nom <- problem$constraints[i, "nom"]
-        nom <- log(nom/(1-nom))
-
         p <- DiceKriging::predict.km(solution$models[[model_index]],
                                      newdata = solution$DoE[,1:dimen, drop=F],
                                      type="UK", light.return = TRUE)
-        # Get probability that constraint is violated
+        # Get probability that constraint is satisfied
         pen <- stats::pnorm(nom, p$mean, p$sd)
         # Penalise based on this probability being below delta
         pen <- ifelse(pen < constraints[i, "delta"], 0.0000001, 1)
