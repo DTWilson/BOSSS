@@ -31,15 +31,13 @@ Every application of BOSSS follows the same set of steps:
 3. Perform a number of iterations, each one updating and (hopefully) improving the `BOSSS_solution` object;
 4. Select a final design and run some diagnostics to check it is valid.
 
-## Adaptive design (NIFTy)
+## Adaptive design
 
 ### Problem
 
-The first ingredient of a BOSSS problem is the simulation function. This function must have two named arguments. The first, `design`, is a vector containing the values of all _design variables_ which we want to vary in our problem. In this example we have 4 design variables representing the total sample size, the fraction of the sample size used in the first stage, the $\alpha$ level used in the interim analysis, and the $\alpha$ level used in the final analysis. Note how these variables are extracted from the `design` vector.
+The first ingredient of a BOSSS problem is the simulation function. The arguments of this function must first specify the _design variables_  which we want to vary in our problem, followed by the _model parameters_. In this example we have 4 design variables representing the total sample size, the fraction of the sample size used in the first stage, the $\alpha$ level used in the interim analysis, and the $\alpha$ level used in the final analysis. The model parameters are the probability of the interim outcome in the control and experimental arms, and the probability of the final outcome in the control and experimental arms, and a parameter describing the dependence between short and long term outcomes.
 
-The second argument, `hypothesis` is a vector containing the values of all _model parameters_ which we will vary in our problem. In this case this vector has four entries corresponding to the probability of the interim outcome in the control and experimental arms, and the probability of the final outcome in the control and experimental arms. Again, we extract these variables from the `hypothesis` vector at the start of the function.
-
-The other element of interface the simulation function must conform to is in its return value, which should be a vector of the quantities who's mean values we want to estimate using the Monte Carlo method. Here, we have three such quantities: a boolean indicator of an overall positive decision (`g`), a boolean indicator of a negative decision (`s`), and the final sample size (`n`). The elements of this returned vector output should all be named.
+The other element of interface the simulation function must conform to is in its return value, which should be a named vector of the quantities who's mean values we want to estimate using the Monte Carlo method. Here, we have three such quantities: a boolean indicator of an overall positive decision (`g`), a boolean indicator of a negative decision (`s`), and the final sample size (`n`). 
 
 ```{r}
 #n is the total sample size
@@ -148,17 +146,17 @@ sim_trial <- function(n = 300, ninterim = 0.5, ainterim = 0.4, afinal = 0.1,
   #if p2>afinal, trial unsuccessful at final analysis
   #if p2<afinal, trial successful at final analysis
   if(test>=ainterim){
-    return(c(g = 0, s = 1, n = ninterim))
+    return(c(g = FALSE, s = TRUE, n = ninterim))
   }
   if(test<ainterim){
     if(mean(data2[data2$treat == 1,"short"]) < mean(data2[data2$treat == 2,"short"])){
-      return(c(g = 0, s = 1, n = ninterim))
+      return(c(g = FALSE, s = TRUE, n = ninterim))
     } else {
       if(test2>afinal){
-        return(c(g = 0, s = 1, n = n))
+        return(c(g = FALSE, s = TRUE, n = n))
       }
       if(test2<afinal){
-        return(c(g = 1, s = 0, n = n))
+        return(c(g = TRUE, s = FALSE, n = n))
       }
     }
   }
@@ -176,7 +174,7 @@ design_space <- design_space(lower = c(300,0.05,0,0),
                              sim = sim_trial)
 ```
 
-We also need to specify the hypotheses which we're planning to simulate under, using the `hypotheses()` function, again specifying in the order that parameters appear as simulation function argument. We need two hypotheses, corresponding to a null and an alternative:
+We also need to specify the hypotheses which we're planning to simulate under, using the `hypotheses()` function, again specifying in the order that parameters appear as simulation function argument. We will need two hypotheses, corresponding to a null and an alternative:
 
 ```{r}
 hypotheses <- hypotheses(values = matrix(c(0.25, 0.25, 0.1, 0.1, 0, 
@@ -185,32 +183,30 @@ hypotheses <- hypotheses(values = matrix(c(0.25, 0.25, 0.1, 0.1, 0,
                          sim = sim_trial)
 ```
 
-Constraints should be specified using the `constraints` function. Each constraint should be named, and should be defined with respect to a specific simulation output and a specific hypothesis. It should have a nominal maximum value, and a probability `delta` used to judge if it is satisfied. Finally, it should note if the function is stochastic, or deterministic. Here, our fist constraint is that the mean of the first simulation output (i.e. the probability of a positive result) under the first hypothesis (the null) should be less than 0.2 with a probability of at least 0.95.
+Constraints should be specified using the `constraints` function. Each constraint should be named, and should be defined with respect to a specific simulation output and a specific hypothesis. It should have a nominal maximum value, and a probability `delta` used to judge if it is satisfied. Here, our fist constraint is that the mean of the first simulation output (i.e. the probability of a positive result) under the first hypothesis (the null) should be less than 0.2 with a probability of at least 0.95.
 
 ```{r}
 constraints <- constraints(name = c("a", "b"),
                    out = c("g", "s"),
                    hyp = c("null", "alt"),
                    nom = c(0.1, 0.2),
-                   delta =c(0.95, 0.95),
-                   stoch = c(TRUE, TRUE))
+                   delta =c(0.95, 0.95))
 ```
 
-The final ingredient of the problem is the set of objectives we want to minimise. Similar to constraints, objectives are tied to a specific simulation output and hypothesis, and can be stochastic or deterministic. We also specify weights for each objective which help guide the optimisation process, and note whether or not the output for each objective is binary or continuous. For example, here we want to minimise both the type I and type II error rates and the expected sample size, with the former carrying a weight of 100 times of the latter.
+The final ingredient of the problem is the set of objectives we want to minimise. Similar to constraints, objectives are tied to a specific simulation output and hypothesis. We also specify weights for each objective which help guide the internal optimisation process, and note whether or not the output for each objective is binary or continuous. For example, here we want to minimise both the type I and type II error rates and the expected sample size, with the former carrying a weight of 100 times of the latter.
 
 ```{r}
-objectives <- objectives(name = c("f1", "f2", "f3"),
+objectives <- objectives(name = c("TI", "TII", "EN"),
                  out = c("g", "s", "n"),
                  hyp = c("null", "alt", "null"),
                  weight = c(100, 100, 1),
-                 stoch = c(TRUE, TRUE, TRUE),
                  binary = c(TRUE, TRUE, FALSE))
 ```
 
 We now put this simulation function and set of data frames together to create an object of class `BOSSS_problem`. 
 
 ```{r}
-prob <- BOSSS_problem(sim_trial, design_space, hypotheses, constraints, objectives)
+prob <- BOSSS_problem(sim_trial, design_space, hypotheses, objectives, constraints)
 ```
 
 ### Initialisation
@@ -219,11 +215,11 @@ Having set up the problem, we now need to create an initial solution to it. This
 
 ```{r}
 size <- 40
-N <- 5000
+N <- 500
 
 sol <- BOSSS_solution(size, N, prob)
 
-print(sol)
+print(sol) 
 plot(sol)
 ```
 
@@ -234,7 +230,7 @@ The `print()` function will give a table of the Pareto set with associated objec
 We can now start improving this solution by calling the `iterate()` function. Each call uses the fitted Gaussian Process models to decide on the next design to be evaluated, computes the Monte Carlo estimates at that point, and then updates the estimated Pareto set and front. 
 
 ```{r}
-N <- 10000
+N <- 500
 for(i in 1:10) {
   sol <- iterate(sol, prob, N) 
 }
@@ -248,19 +244,15 @@ To check the GP models are giving sensible predictions, we can choose a specific
 
 ```{r}
 # Pick a specific design from the Pareto set
-design <- sol$p_set[1,]
+design <- sol$p_set[nrow(sol$p_set),]
 
-plots <- one_d_plots(design, prob, sol)
-
-for(i in 1:length(plots)) {
-  print(plots[[i]])
-}
+one_d_plots(design, prob, sol)
 ```
 
-When we've chosen our design, we might want to check its properties by computing more MC estimates, which we can also compare against the model predictions. 
+When we've chosen our design we might want to check its properties by computing more MC estimates, which we can also compare against the model predictions via the `check_point()` function.
 
 ```{r}
-r <- check_point(design, prob, sol, N=10^2) 
+r <- check_point(design, prob, sol, N=10^3) 
 ```
 
 If we decide we want to run more simulations at the same point, we can pass the previous results in so they are built upon.
@@ -268,55 +260,10 @@ If we decide we want to run more simulations at the same point, we can pass the 
 ```{r}
 r <- check_point(design, prob, sol, N=10^3, r) 
 ```
-To do - have these extra checks incorporated back into the solution so they can be used if we start iterating again.
 
-### Sensitivity analysis
+## Simplified adaptive
 
-Use a generalised hypothesis defined by ranges (which may be degenerate point values) for each parameter. Take a suggested design and fit new models to cover these ranges.
-
-```{r}
-sa_hypothesis <- data.frame(hyp = "null",
-                            sa_param = 5,
-                            lower = 0,
-                            upper = 1)
-
-sa <- as.data.frame(sensitivity(sa_hypothesis, design, prob, sol, num_eval = 20, N = 1000))
-
-# Plot these to examine sensitivity:
-ggplot(sa, aes(p01relative, g_m)) + geom_point() + 
-  geom_errorbar(aes(ymin = g_m - 1.96*sqrt(g_v), ymax = g_m + 1.96*sqrt(g_v))) +
-  theme_minimal()
-
-ggplot(sa, aes(p01relative, n_m)) + geom_point() + 
-  geom_errorbar(aes(ymin = n_m - 1.96*sqrt(n_v), ymax = n_m + 1.96*sqrt(n_v))) +
-  theme_minimal()
-```
-
-From the above we can conclude the type I error rate and the expected sample size under the null are not sensitive to the nuisance parameter. Repeating under the alternative:
-
-```{r}
-sa_hypothesis <- data.frame(hyp = "alt",
-                            sa_param = 5,
-                            lower = 0,
-                            upper = 1)
-
-sa <- as.data.frame(sensitivity(sa_hypothesis, design, prob, sol, num_eval = 20, N = 1000))
-
-# Plot these to examine sensitivity:
-ggplot(sa, aes(p01relative, s_m)) + geom_point() + 
-  geom_errorbar(aes(ymin = s_m - 1.96*sqrt(s_v), ymax = s_m + 1.96*sqrt(s_v))) +
-  theme_minimal()
-
-ggplot(sa, aes(p01relative, n_m)) + geom_point() + 
-  geom_errorbar(aes(ymin = n_m - 1.96*sqrt(n_v), ymax = n_m + 1.96*sqrt(n_v))) +
-  theme_minimal()
-```
-
-Again, no clear trend.
-
-## NIFTY variation
-
-Using the same simulation, we can change the problem slightly by now only constraining the type I error rate (and not treating its minimisation as an objective), and only minimising the power (not constraining it) and expected sample size:
+Using the same simulation as in the preceding section, we can change the problem slightly by now only constraining the type I error rate (and not treating its minimisation as an objective), and only minimising the power (not constraining it) and expected sample size:
 
 ```{r}
 design_space <- design_space(lower = c(300,0.05,0,0), 
@@ -332,17 +279,15 @@ constraints <- constraints(name = c("a", "b"),
                    out = c("g"),
                    hyp = c("null"),
                    nom = c(0.1),
-                   delta =c(0.95),
-                   stoch = c(TRUE))
+                   delta =c(0.95))
 
 objectives <- objectives(name = c("f1", "f2"),
                  out = c("s", "n"),
                  hyp = c("alt", "null"),
                  weight = c(100, 1),
-                 stoch = c(TRUE, TRUE),
                  binary = c(TRUE, FALSE))
 
-prob <- BOSSS_problem(sim_trial, design_space, hypotheses, constraints, objectives)
+prob <- BOSSS_problem(sim_trial, design_space, hypotheses, objectives, constraints)
 
 size <- 40
 N <- 500
@@ -361,61 +306,12 @@ print(sol)
 plot(sol)
 ```
 
-## Simple two-sample t-test
 
-To do.
-
-```{r}
-sim_trial <- function(design, hypothesis){
-  # Exctract the design variables and parameters
-  design <- as.numeric(design); hypothesis <- as.numeric(hypothesis)
-  n <- design[1]; k <- design[2]
-  mu <- hypothesis[1]; var_u <- hypothesis[2]; var_e <- hypothesis[3]
-  
-  # Number of patients in each cluster
-  m <- n/k
-  # SD of cluster means
-  s_c <- sqrt(var_u + var_e/m)
-  # Simulate cluster means
-  x0 <- stats::rnorm(k, 0, s_c); x1 <- stats::rnorm(k, mu, s_c)
-  
-  return(c(s = stats::t.test(x0, x1)$p.value >= 0.05, n = n, k = k))
-}
-
-det_obj <- function(design){
-    #o <- matrix(design, ncol = 2)[,1:2]
-    #c(s = NA, p = o[1], c = o[2])
-  cbind(NA, design)
-}
-
-design_space <- data.frame(name = c("n", "k"),
-                 low = c(50, 5),
-                 up = c(500, 50),
-                 int = c(TRUE, TRUE))
-
-hypotheses <- data.frame(mu = c(0.3, 0),
-                   var_u = c(0.05, 0.05),
-                   var_e = c(0.95, 0.95))
-
-constraints <- data.frame(name = "a",
-                   out_i = 1,
-                   hyp_i = 2,
-                   nom = 0.2,
-                   delta = 0.975,
-                   stoch = TRUE)
-
-objectives <- data.frame(name = c("f1", "f2", "f3"),
-                 out_i = c(2, 3, 1),
-                 hyp_i = c(1, 1, 1),
-                 weight = c(2, 5, 50),
-                 stoch = c(FALSE, FALSE, TRUE))
-```
-
-## Hybrid Bayesian multilevel model
+## Bayesian-frequentist hybrid multilevel model
 
 Consider the design of a cluster randomised trial with $m$ clusters per arm, $n$ patients per cluster and a binary outcome for each patient. The trial will be analysed using a mixed effects model fitted using the `glmer` function from the `lme4` package, using a Wald test of the null hypothesis of no difference between arms at the 0.025 (one-sided) level.
 
-A design is defined by the choice of $m$ and $n$. We want to find designs which minimise the number of clusters, the number of patients, and the overall probability of failure when marginalising over a joint prior distribution on the model parameters. A hypothesis, then, is not a set of point parameter values but a set of prior hyperparameter values.
+A design is defined by the choice of $m$ and $n$. We want to find designs which minimise the cost of sampling (a weighted combination of the number of clusters and the number of patients), and the overall probability of failure when marginalising over a joint prior distribution on the model parameters. A hypothesis, then, is not a set of point parameter values but a set of prior hyperparameter values.
 
 In contrast to the NIFTy example, we now have some objectives (the number of clusters and number of patients) which are deterministic. To acknowledge this we specify two functions: the simulation function is as before, returning a single Monte Carlo sample of the stochastic outputs. The deterministic function takes the same arguments (i.e. a design and a hypothesis), and returns the deterministic outputs (as with the simulation function, this should take the form of a named vector).
 
@@ -482,7 +378,7 @@ det_bayes <- function(m = 20, n = 10,
   
   m <- round(m); n <- round(n)
   
-  return(c(m = m, N = 2*m*n))
+  return(c(c = 2*m*n + 10*m))
 }
 
 det_bayes()
@@ -491,32 +387,24 @@ det_bayes()
 
 
 ```{r}
-design_space <- design_space(lower = c(10,5), 
-                             upper = c(50,40),
+design_space <- design_space(lower = c(5, 5), 
+                             upper = c(50, 50),
                              sim = sim_bayes)
 
 hypotheses <- hypotheses(values = matrix(c(0.2, 30, 0.4, 30, 100, 10), ncol = 1),
                          hyp_names = c("alt"),
                          sim = sim_bayes)
 
-constraints <- constraints(name = c("a"),
-                   out = c("s"),
-                   hyp = c("alt"),
-                   nom = c(0.4),
-                   delta =c(0.95),
-                   stoch = c(TRUE))
+objectives <- objectives(name = c("pow", "cost"),
+                 out = c("s", "c"),
+                 hyp = c("alt", "alt"),
+                 weight = c(100, 1),
+                 binary = c(TRUE, FALSE))
 
-objectives <- objectives(name = c("f1", "f2", "f3"),
-                 out = c("s", "m", "N"),
-                 hyp = c("alt", "alt", "alt"),
-                 weight = c(100, 10, 1),
-                 stoch = c(TRUE, FALSE, FALSE),
-                 binary = c(TRUE, FALSE, FALSE))
+problem <- BOSSS_problem(sim_bayes, design_space, hypotheses, objectives, det_func = det_bayes)
 
-problem <- BOSSS_problem(sim_bayes, design_space, hypotheses, constraints, objectives, det_func = det_bayes)
-
-size <- 20
-N <- 100
+size <- 50
+N <- 50
 
 solution <- BOSSS_solution(size, N, problem)
 
@@ -525,176 +413,44 @@ plot(solution)
 ```
 
 ```{r}
-for(i in 1:9) {
+design <- solution$p_set[nrow(solution$p_set),]
+one_d_plots(design, problem, solution)
+```
+
+
+```{r}
+for(i in 1:10) {
   solution <- iterate(solution, problem, N) 
 }
 print(solution)
 plot(solution)
 ```
 
-
-## Multi-state models
-
-## Neil's example
+## Instrumental variable
 
 ```{r}
-source("C:/Users/meddwilb/OneDrive - University of Leeds/Documents/Research/Projects/BOSSS example/PowCalc_Binary_DGM_5_freq.R")
-source("C:/Users/meddwilb/OneDrive - University of Leeds/Documents/Research/Projects/BOSSS example/PowCalc_Binary_Analysis_5_freq.R")
-source("C:/Users/meddwilb/OneDrive - University of Leeds/Documents/Research/Projects/BOSSS example/PowCalc_Binary_DGM_5a_freq.R")
-source("C:/Users/meddwilb/OneDrive - University of Leeds/Documents/Research/Projects/BOSSS example/PowCalc_Binary_BPPcalculator_5_freq.R")
-source("C:/Users/meddwilb/OneDrive - University of Leeds/Documents/Research/Projects/BOSSS example/PowCalc_Binary_Design_5_freq.R")
+library(AER)
 
-# n = Total sample size
-# n_interim = Interim sample size
-# p0_true and p1_true:= the assumed true probabilities of an event in the control (0) and experimental (1) arms
-# alpha = the threshold used at the final analysis to determine whether the result is significant or not. At final analysis, the bounds of the 100*(1 - alpha/2)% credible interval of the log-odds ratio is compared to 0.
-# BPP_numsims:= how many simulations are used to evaluate Bayesian Predictive Power at the interim analysis
-# BPP_threshold:= BPP must be >= this value in order for the trial to continue to final analysis
-# Remaining: the analysis of the trial assumes beta prior distributions on p0 and p1. p0 ~ beta(APr_p0_alpha, APr_p0_beta) and p1 ~ beta(APr_p1_alpha, APr_p1_beta)
-# by default these are both set to be beta(1,1), non-informative.
-
-sim_trial <- function(design = c(400, 200, 0.2, 0.05), hypothesis = c(0.2, 0.1)) {
+sim_trial <- function(n=200, mu=0.3) {
   
-  design <- as.numeric(design); hypothesis <- as.numeric(hypothesis)
+  z <- rep(c(0,1), n)
+  u <- rnorm(2*n)
   
-  n <- design[1]; n_interim <- design[2]; BPP_threshold <- design[3]; alpha <- design[4]
-  p0_true <- hypothesis[1]; p1_true <- hypothesis[2]
+  lp_x <- 4*z - 2 + u
+  x <- rbinom(2*n, 1, exp(lp_x)/(exp(lp_x) + 1))
   
-  BPP_numsims=200; APr_p0_alpha=1; APr_p0_beta=1; APr_p1_alpha=1; APr_p1_beta=1
+  y <- mu*x + u
   
-  # Generate a dataset
-  chk_DGM_output <- DGM_run(n, n_interim, p0_true, p1_true)
-  #Debugging
-  # print("DGM output DONE")
+  s <- summary(ivreg(y ~ x | z))$coefficients[2,4] > 0.05
   
-  # Analyse
-  chk_Analysis_output <- Analysis_run(compiled_model, interim_data=chk_DGM_output$interim_data, chk_DGM_output$full_data, alpha, BPP_numsims, APr_p0_alpha, APr_p0_beta, APr_p1_alpha, APr_p1_beta)
-  #Debugging
-  # print("Analysis output DONE")
-  BPP_sig <- (chk_Analysis_output$BPP >= BPP_threshold)
-  final_sig <- (chk_Analysis_output$beta1quants[2] <= 0 | chk_Analysis_output$beta1quants[1] >= 0)
-  trial_sig <- (BPP_sig & final_sig)
-  trial_non_sig <- !trial_sig
-  N_trial <- n_interim + BPP_sig*(n-n_interim)
+  # Analytic sample size calc from Freeman 2013
+  (qnorm(0.025) + qnorm(0.2))^2*var(y - x*cov(y, z)/cov(x, z))/(var(x)*mu^2*cor(x, z)^2)
   
-  # Return the results
-  results <- c(
-    # BPP_sig = BPP_sig,
-    trial_sig = trial_sig,
-    trial_non_sig = trial_non_sig,
-    N_trial = N_trial
-  )
-  
-  # Return the results
-  # results <- c(
-  #   beta1_est_int = chk_Analysis_output$beta1mean_interim,
-  #   beta1_lower_int = chk_Analysis_output$beta1quants_interim[1],
-  #   beta1_upper_int = chk_Analysis_output$beta1quants_interim[2],
-  #   beta0_est_int = chk_Analysis_output$beta0mean_interim,
-  #   BPP = chk_Analysis_output$BPP,
-  #   BPP_sig = BPP_sig,
-  #   beta1_est_final = chk_Analysis_output$beta1mean,
-  #   beta1_lower_final = chk_Analysis_output$beta1quants[1],
-  #   beta1_upper_final = chk_Analysis_output$beta1quants[2],
-  #   beta0_est_final = chk_Analysis_output$beta0mean,
-  #   final_sig = final_sig,
-  #   trial_sig = trial_sig,
-  #   trial_non_sig = trial_non_sig,
-  #   N_trial = N_trial
-  # )
-  
-  return(results)
-}  
-
-# For example,
-sim_trial()
-```
-
-
-```{r}
-design_space <- design_space(name = c("n", "n_interim", "BPP_threshold", "alpha"),
-                             lower = c(700,300,0,0), 
-                             upper = c(1400,650,1,0.2))
-```
-
-
-```{r}
-hypotheses <- hypotheses(par_name = c("p0_true", "p1_true"),
-                         values = matrix(c(0.12, 0.12,
-                                           0.12, 0.06), ncol = 2),
-                         hyp_names = c("null", "alt"))
-```
-
-
-```{r}
-constraints <- constraints(name = c("a", "b"),
-                   out = c("trial_sig", "trial_non_sig"),
-                   hyp = c("null", "alt"),
-                   nom = c(0.2, 0.4),
-                   delta =c(0.95, 0.95),
-                   stoch = c(TRUE, TRUE))
-```
-
-
-```{r}
-objectives <- objectives(name = c("f1", "f2", "f3"),
-                 out = c("trial_sig", "trial_non_sig", "N_trial"),
-                 hyp = c("null", "alt", "null"),
-                 weight = c(100, 100, 1),
-                 stoch = c(TRUE, TRUE, TRUE),
-                 binary = c(TRUE, TRUE, FALSE))
-```
-
-We now put this simulation function and set of data frames together to create an object of class `BOSSS_problem`. 
-
-```{r}
-prob <- BOSSS_problem(sim_trial, design_space, hypotheses, constraints, objectives)
-```
-
-### Initialisation
-
-
-```{r}
-size <- 40
-N <- 50
-
-sol <- BOSSS_solution(size, N, prob)
-
-print(sol)
-plot(sol)
-```
-
-
-### Iteration
-
-```{r}
-for(i in 1:10) {
-  sol <- iterate(sol, prob, N) 
+  return(c(s=s))
 }
-print(sol)
-plot(sol)
+
+mean(replicate(10^4, sim_trial(n=734/2)))
 ```
 
-
-### Diagnostics
-
-```{r}
-# Pick a specific design from the Pareto set
-design <- sol$p_set[1,]
-
-plots <- one_d_plots(design, prob, sol)
-
-for(i in 1:length(plots)) {
-  print(plots[[i]])
-}
-```
-
-```{r}
-r <- check_point(design, prob, sol, N=50) 
-```
-
-```{r}
-r <- check_point(design, prob, sol, N=50, r) 
-```
 
 

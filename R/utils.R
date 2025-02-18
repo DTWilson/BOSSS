@@ -44,10 +44,6 @@ MC_estimates <- function(design, hypotheses, N, sim, clust = NULL)
   hypotheses <- t(hypotheses)
   for(i in 1:nrow(hypotheses)) {
 
-    #n.cores <- parallel::detectCores()
-    #clust <- parallel::makeCluster(n.cores)
-    #parallel::stopCluster(clust)
-
     if(is.null(clust)){
 
       sims <- sapply(1:N,

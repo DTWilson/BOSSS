@@ -1,0 +1,244 @@
+---
+title: "Examples"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Examples}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  eval = FALSE
+)
+```
+
+```{r setup}
+library(BOSSS)
+```
+
+
+## Neil's example
+
+```{r}
+source("C:/Users/meddwilb/OneDrive - University of Leeds/Documents/Research/Projects/BOSSS example/PowCalc_Binary_DGM_5_freq.R")
+source("C:/Users/meddwilb/OneDrive - University of Leeds/Documents/Research/Projects/BOSSS example/PowCalc_Binary_Analysis_5_freq.R")
+source("C:/Users/meddwilb/OneDrive - University of Leeds/Documents/Research/Projects/BOSSS example/PowCalc_Binary_DGM_5a_freq.R")
+source("C:/Users/meddwilb/OneDrive - University of Leeds/Documents/Research/Projects/BOSSS example/PowCalc_Binary_BPPcalculator_5_freq.R")
+source("C:/Users/meddwilb/OneDrive - University of Leeds/Documents/Research/Projects/BOSSS example/PowCalc_Binary_Design_5_freq.R")
+
+# n = Total sample size
+# n_interim = Interim sample size
+# p0_true and p1_true:= the assumed true probabilities of an event in the control (0) and experimental (1) arms
+# alpha = the threshold used at the final analysis to determine whether the result is significant or not. At final analysis, the bounds of the 100*(1 - alpha/2)% credible interval of the log-odds ratio is compared to 0.
+# BPP_numsims:= how many simulations are used to evaluate Bayesian Predictive Power at the interim analysis
+# BPP_threshold:= BPP must be >= this value in order for the trial to continue to final analysis
+# Remaining: the analysis of the trial assumes beta prior distributions on p0 and p1. p0 ~ beta(APr_p0_alpha, APr_p0_beta) and p1 ~ beta(APr_p1_alpha, APr_p1_beta)
+# by default these are both set to be beta(1,1), non-informative.
+
+sim_trial <- function(design = c(400, 200, 0.2, 0.05), hypothesis = c(0.2, 0.1)) {
+  
+  design <- as.numeric(design); hypothesis <- as.numeric(hypothesis)
+  
+  n <- design[1]; n_interim <- design[2]; BPP_threshold <- design[3]; alpha <- design[4]
+  p0_true <- hypothesis[1]; p1_true <- hypothesis[2]
+  
+  BPP_numsims=200; APr_p0_alpha=1; APr_p0_beta=1; APr_p1_alpha=1; APr_p1_beta=1
+  
+  # Generate a dataset
+  chk_DGM_output <- DGM_run(n, n_interim, p0_true, p1_true)
+  #Debugging
+  # print("DGM output DONE")
+  
+  # Analyse
+  chk_Analysis_output <- Analysis_run(compiled_model, interim_data=chk_DGM_output$interim_data, chk_DGM_output$full_data, alpha, BPP_numsims, APr_p0_alpha, APr_p0_beta, APr_p1_alpha, APr_p1_beta)
+  #Debugging
+  # print("Analysis output DONE")
+  BPP_sig <- (chk_Analysis_output$BPP >= BPP_threshold)
+  final_sig <- (chk_Analysis_output$beta1quants[2] <= 0 | chk_Analysis_output$beta1quants[1] >= 0)
+  trial_sig <- (BPP_sig & final_sig)
+  trial_non_sig <- !trial_sig
+  N_trial <- n_interim + BPP_sig*(n-n_interim)
+  
+  # Return the results
+  results <- c(
+    # BPP_sig = BPP_sig,
+    trial_sig = trial_sig,
+    trial_non_sig = trial_non_sig,
+    N_trial = N_trial
+  )
+  
+  # Return the results
+  # results <- c(
+  #   beta1_est_int = chk_Analysis_output$beta1mean_interim,
+  #   beta1_lower_int = chk_Analysis_output$beta1quants_interim[1],
+  #   beta1_upper_int = chk_Analysis_output$beta1quants_interim[2],
+  #   beta0_est_int = chk_Analysis_output$beta0mean_interim,
+  #   BPP = chk_Analysis_output$BPP,
+  #   BPP_sig = BPP_sig,
+  #   beta1_est_final = chk_Analysis_output$beta1mean,
+  #   beta1_lower_final = chk_Analysis_output$beta1quants[1],
+  #   beta1_upper_final = chk_Analysis_output$beta1quants[2],
+  #   beta0_est_final = chk_Analysis_output$beta0mean,
+  #   final_sig = final_sig,
+  #   trial_sig = trial_sig,
+  #   trial_non_sig = trial_non_sig,
+  #   N_trial = N_trial
+  # )
+  
+  return(results)
+}  
+
+# For example,
+sim_trial()
+```
+
+
+```{r}
+design_space <- design_space(name = c("n", "n_interim", "BPP_threshold", "alpha"),
+                             lower = c(700,300,0,0), 
+                             upper = c(1400,650,1,0.2))
+```
+
+
+```{r}
+hypotheses <- hypotheses(par_name = c("p0_true", "p1_true"),
+                         values = matrix(c(0.12, 0.12,
+                                           0.12, 0.06), ncol = 2),
+                         hyp_names = c("null", "alt"))
+```
+
+
+```{r}
+constraints <- constraints(name = c("a", "b"),
+                   out = c("trial_sig", "trial_non_sig"),
+                   hyp = c("null", "alt"),
+                   nom = c(0.2, 0.4),
+                   delta =c(0.95, 0.95),
+                   stoch = c(TRUE, TRUE))
+```
+
+
+```{r}
+objectives <- objectives(name = c("f1", "f2", "f3"),
+                 out = c("trial_sig", "trial_non_sig", "N_trial"),
+                 hyp = c("null", "alt", "null"),
+                 weight = c(100, 100, 1),
+                 stoch = c(TRUE, TRUE, TRUE),
+                 binary = c(TRUE, TRUE, FALSE))
+```
+
+We now put this simulation function and set of data frames together to create an object of class `BOSSS_problem`. 
+
+```{r}
+prob <- BOSSS_problem(sim_trial, design_space, hypotheses, constraints, objectives)
+```
+
+### Initialisation
+
+
+```{r}
+size <- 40
+N <- 50
+
+sol <- BOSSS_solution(size, N, prob)
+
+print(sol)
+plot(sol)
+```
+
+
+### Iteration
+
+```{r}
+for(i in 1:10) {
+  sol <- iterate(sol, prob, N) 
+}
+print(sol)
+plot(sol)
+```
+
+
+### Diagnostics
+
+```{r}
+# Pick a specific design from the Pareto set
+design <- sol$p_set[1,]
+
+plots <- one_d_plots(design, prob, sol)
+
+for(i in 1:length(plots)) {
+  print(plots[[i]])
+}
+```
+
+```{r}
+r <- check_point(design, prob, sol, N=50) 
+```
+
+```{r}
+r <- check_point(design, prob, sol, N=50, r) 
+```
+
+## Frequentist-Bayesian 
+
+Suppose we plan a Bayesian analysis of a trial comparing two therapies, where we expect a multiple membership structure. In particular, each of the $2n$ patients in the trial will receive six treatment sessions, but these sessions can be delivered by any of the $m$ therapists in their arm of the trial. Considering the number of therapists in each arm as fixed at $m = 10$, we want to know how many patients are required for the trial to have sufficient power whilst controlling the type I error rate (both being frequentist concepts).
+
+We start with the simulation. To simulate the data we first construct the matrix $\mathbf{V}$ (`v_m` in the code) which has a row for every patient and a colum for every therapist, with $\mathbf{V}_{ij}$ denoting the proportion of patient $i$'s treatment delivered by therapist $j$, with $i = 1, \ldots , 2n$ and $j = 1, \ldots , 2m$. Denoting within-cluster variance by $\sigma_e^2$ (`var_e`), between-cluster variance by $\sigma_v^2$ (`var_v`), and the ICC by $\rho$ (`rho`), the outcome data can be simulated as
+
+$$
+\mathbf{y} \sim N\left(E[\mathbf{y}], \sigma_e^2 \mathbf{I}_{2n} + \sigma_v^2 \mathbf{V} \mathbf{V}^T  \right).
+$$
+This data is then analysed using Stan via `brm
+
+```{r}
+library(dirmult)
+
+sim_trial <- function(n=100, var_e=0.9, rho=0.1, mu=0.3){
+  
+  v_0 <- cbind(t(rmultinom(n = n, size = 6, prob = rdirichlet(1, rep(0.7,m)))),
+               matrix(rep(0, n*m), nrow = n))
+  v_1 <- cbind(matrix(rep(0, n*m), nrow = n),
+               t(rmultinom(n = n, size = 6, prob = rdirichlet(1, rep(0.7,m)))))
+  
+  v_m <- rbind(v_0, v_1)
+  
+  var_v <- rho*var_e/(1-rho);
+  
+  Sigma <-  var_e * diag(2*n) #+ var_v * (v_m %*% t(v_m)) 
+  
+  X <- matrix(c(rep(1, 2*n), rep(0:1, each = n)), ncol = 2)
+  
+  y <- t(mvtnorm::rmvnorm(1, mean = X %*% c(0, mu), sigma = Sigma))
+  
+  df <- data.frame(y = y,
+                   trt = X[,2])
+  
+  v_m <- as.data.frame(v_m)
+  
+  df <- cbind(df, t(apply(v_m, 1, function(x) rep(names(x), x))))
+  names(df)[3:8] <- paste0("v", 1:6)
+  
+  fit_empty <- brm(y ~ trt, #+ (1| mm(v1, v2, v3, v4, v5, v6)),
+           prior = prior(normal(0, 5), class = b),
+           data = df,
+           chains = 0,
+           silent = 2,
+           file = "fit_empty")
+  
+  fit_empty <- readRDS("fit_empty.rds")
+  
+  fit <- update(fit_empty, 
+                newdata = df,
+                chains = 1)
+  
+  g <- fixef(fit)[2,3] > 0
+  s <- !g
+  
+  return(c(g = g, s = s))
+}
+
+sim_trial()
+```

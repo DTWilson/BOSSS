@@ -10,9 +10,13 @@
 #' @param upper numeric vector of upper limits.
 #'
 #' @return A data.frame defining the design space.
+#'
+#' @examples
+#' design_space(lower = c(10, 3),
+#'              upper = c(500, 50),
+#'              name = c("n", "k"))
+#'
 #' @export
-#'
-#'
 design_space <- function(name = NULL, sim = NULL, lower, upper) {
 
   if(is.null(name)){
@@ -23,7 +27,7 @@ design_space <- function(name = NULL, sim = NULL, lower, upper) {
         call. = FALSE
       )
     }
-    name <- formalArgs(sim)[1:dim]
+    name <- methods::formalArgs(sim)[1:dim]
   }
 
   stopifnot(upper > lower)
@@ -43,9 +47,13 @@ design_space <- function(name = NULL, sim = NULL, lower, upper) {
 #' @param hyp_names character vector of hypothesis names.
 #'
 #' @return A data.frame defining the hypotheses.
+#'
+#' @examples
+#' hypotheses(values = matrix(c(0.3, 0.05, 0.95), ncol = 1),
+#'            hyp_names = c("alt"),
+#'            par_name = c("mu", "var_u", "var_e"))
+#'
 #' @export
-#'
-#'
 hypotheses <- function(par_name = NULL, sim = NULL, values, hyp_names) {
 
   if(is.null(par_name)){
@@ -56,8 +64,8 @@ hypotheses <- function(par_name = NULL, sim = NULL, values, hyp_names) {
         call. = FALSE
       )
     }
-    num_args <- length(formalArgs(sim))
-    par_name <- formalArgs(sim)[(num_args - dim + 1):num_args]
+    num_args <- length(methods::formalArgs(sim))
+    par_name <- methods::formalArgs(sim)[(num_args - dim + 1):num_args]
   }
 
   df <- data.frame(v = values)
@@ -76,21 +84,24 @@ hypotheses <- function(par_name = NULL, sim = NULL, values, hyp_names) {
 #' pertains to.
 #' @param nom numeric vector of nominal upper limits.
 #' @param delta numeric vector of probabilities.
-#' @param stoch boolean vector denoting if the constraint function is stochastic
-#' (TRUE) or deterministic (FALSE).
 #'
 #' @return A data.frame defining the constraints.
+#'
+#' @examples
+#' constraints(name = c("tII"),
+#'             out = c("s"),
+#'             hyp = c("alt"),
+#'             nom = c(0.1),
+#'             delta = c(0.95))
+#'
 #' @export
-#'
-#'
-constraints <- function(name, out, hyp, nom, delta, stoch) {
+constraints <- function(name, out, hyp, nom, delta) {
 
   data.frame(name = name,
              out = out,
              hyp = hyp,
              nom = nom,
-             delta = delta,
-             stoch = stoch)
+             delta = delta)
 }
 
 
@@ -102,21 +113,25 @@ constraints <- function(name, out, hyp, nom, delta, stoch) {
 #' @param hyp character vector denoting which hypothesis each objective
 #' pertains to.
 #' @param weight numeric vector of weights assigned to each objective.
-#' @param stoch boolean vector denoting if the objective function is stochastic
-#' (TRUE) or deterministic (FALSE).
-#' @param binary boolean vector denoting if the output of the objective
+#' @param binary optional boolean vector denoting if the output of the objective
 #' function is binary (TRUE) or continuous (FALSE).
 #'
 #' @return A data.frame defining the objectives.
+#'
+#' @examples objectives(name = c("min_n", "min_k"),
+#'                      out = c("n", "k"),
+#'                      hyp = c("alt", "alt"),
+#'                      weight = c(10, 1))
+#'
 #' @export
-#'
-#'
-objectives <- function(name, out, hyp, weight, stoch, binary) {
+objectives <- function(name, out, hyp, weight, binary = NULL) {
 
-  data.frame(name = name,
+  df <- data.frame(name = name,
              out = out,
              hyp = hyp,
-             weight = weight,
-             stoch = stoch,
-             binary = binary)
+             weight = weight)
+
+  if(!is.null(binary)) df$binary = binary
+
+  df
 }

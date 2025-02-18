@@ -2,3 +2,5 @@
 ^\.Rproj\.user$
 ^LICENSE\.md$
 ^app\.R$
+^\.github$
+^README\.Rmd$

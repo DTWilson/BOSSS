@@ -37,10 +37,10 @@ one_d_plots <- function(design, problem, solution) {
       pl <- ggplot2::ggplot(df, ggplot2::aes(v, m)) +
         ggplot2::geom_ribbon(ggplot2::aes(ymin = m - 1.96*sd, ymax = m + 1.96*sd), alpha = 0.2) +
         ggplot2::geom_line() +
-        ggplot2::ylab(paste("Mean outcome", solution$to_model$out_i[i], ", hypothesis", solution$to_model$hyp_i[i])) +
+        ggplot2::ylab(paste("Mean outcome", solution$to_model$out[i], ", hypothesis", solution$to_model$hyp[i])) +
         ggplot2::xlab(names(design)[j]) +
         ggplot2::geom_point(data = df[nrow(df),]) +
-        geom_vline(xintercept = solution$DoE[,j], alpha = 0.3) +
+        ggplot2::geom_vline(xintercept = solution$DoE[,j], alpha = 0.3) +
         ggplot2::theme_minimal()
 
       plots[[count]] <- pl
@@ -67,6 +67,8 @@ one_d_plots <- function(design, problem, solution) {
 #'
 check_point <- function(design, problem, solution, N, current = NULL) {
 
+  design <- design[1:problem$dimen]
+
   r <- MC_estimates(design, problem$hypotheses, N, problem$simulation)
 
   if(is.null(current)){
@@ -74,10 +76,25 @@ check_point <- function(design, problem, solution, N, current = NULL) {
   }
 
   for(i in 1:nrow(solution$to_model)) {
+
+    # Check if output is binary
+    out_names <- c(problem$objectives$out, problem$constraints$out)
+    bin_list <- c(problem$objectives$binary, problem$constraints$binary)
+    is_bin <- any(bin_list[out_names == solution$to_model$out[i]])
+
     p <- DiceKriging::predict.km(solution$models[[i]],
                                  newdata=design[1:problem$dimen], type="UK",
                                  light.return = TRUE)
-    cat(paste0("Model ", i, " prediction interval: [", round(p$lower95, 3), ", ", round(p$upper95, 3), "]\n"))
+
+    if(is_bin){
+      lower95 <- exp(p$lower95)/(exp(p$lower95) + 1)
+      upper95 <- exp(p$upper95)/(exp(p$upper95) + 1)
+    } else {
+      lower95 <- p$lower95
+      upper95 <- p$upper95
+    }
+
+    cat(paste0("Model ", i, " prediction interval: [", round(lower95, 3), ", ", round(upper95, 3), "]\n"))
 
     out <- solution$to_model$out[i]
     hyp <- solution$to_model$hyp[i]
@@ -91,6 +108,11 @@ check_point <- function(design, problem, solution, N, current = NULL) {
 
     emp_lower95 <- current[i, 1] - 1.96*sqrt(current[i, 2])
     emp_upper95 <- current[i, 1] + 1.96*sqrt(current[i, 2])
+
+    if(is_bin){
+      emp_lower95 <- exp(emp_lower95)/(exp(emp_lower95) + 1)
+      emp_upper95 <- exp(emp_upper95)/(exp(emp_upper95) + 1)
+    }
 
     cat(paste0("Model ", i, " empirical interval: [", round(emp_lower95, 3), ", ", round(emp_upper95, 3), "]\n\n"))
   }

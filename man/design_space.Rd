@@ -4,18 +4,26 @@
 \alias{design_space}
 \title{Create a design space}
 \usage{
-design_space(name, lower, upper)
+design_space(name = NULL, sim = NULL, lower, upper)
 }
 \arguments{
-\item{name}{Character vector of design variable names.}
+\item{name}{optional character vector of design variable names.}
 
-\item{lower}{Numeric vector of lower limits.}
+\item{sim}{optional simulation function.}
 
-\item{upper}{Numeric vector of upper limits.}
+\item{lower}{numeric vector of lower limits.}
+
+\item{upper}{numeric vector of upper limits.}
 }
 \value{
 A data.frame defining the design space.
 }
 \description{
 Create a design space
+}
+\examples{
+design_space(lower = c(10, 3),
+             upper = c(500, 50),
+             name = c("n", "k"))
+
 }

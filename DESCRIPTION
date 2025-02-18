@@ -19,7 +19,8 @@ RoxygenNote: 7.3.0
 Suggests: 
     testthat,
     knitr,
-    rmarkdown
+    rmarkdown,
+    dirmult
 Imports:
     randtoolbox,
     DiceKriging,
@@ -27,5 +28,6 @@ Imports:
     ggplot2,
     RcppDE,
     emoa,
-    parallel
+    parallel,
+    methods
 VignetteBuilder: knitr

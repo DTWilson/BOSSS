@@ -10,9 +10,8 @@
 #'
 #' @return A matrix of estimated means and their variances for each simulation
 #' output over the SA variable range.
-#' @export
 #'
-
+#' @export
 sensitivity <- function(sa_hypothesis, design, problem, solution, num_eval = 20, N = 100) {
 
     # Create the grid to evaluate, varying only the SA parameter

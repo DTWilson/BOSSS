@@ -4,14 +4,17 @@
 \alias{iterate}
 \title{Perform one iteration of Bayesian optimisation}
 \usage{
-iterate(solution, problem, N)
+iterate(solution, problem, N, design = NULL)
 }
 \arguments{
-\item{solution}{Current BOSSS solution.}
+\item{solution}{current BOSSS solution.}
 
 \item{problem}{BOSSS problem.}
 
-\item{N}{Number of simulations to use when computing Monte Carlo estimates.}
+\item{N}{number of simulations to use when computing Monte Carlo estimates.}
+
+\item{design}{optional vector in the design space to be evaluated. If left
+NULL, an optimal design will be sought.}
 }
 \value{
 An updated BOSSS solution object.
