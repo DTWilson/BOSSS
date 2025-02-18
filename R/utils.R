@@ -39,26 +39,30 @@ fit_models <- function(DoE, results, to_model, problem)
 MC_estimates <- function(design, hypotheses, N, sim, clust = NULL)
 {
   # Run the simulation under each hypothesis and store the results
+
   results <- NULL
   hypotheses <- t(hypotheses)
   for(i in 1:nrow(hypotheses)) {
 
     if(is.null(clust)){
+
       sims <- sapply(1:N,
                      eval.parent(substitute(function(...) sim(design, as.data.frame(hypotheses)[i,]) )),
                      simplify = "array")
+
     } else {
       sims <- parallel::parSapply(clust, 1:N,
                                   eval.parent(substitute(function(...) sim(design, as.data.frame(hypotheses)[i,]) )),
                                   simplify = "array")
     }
-
+ 
     # Make sure output is in matrix form where row = output
     if(is.null(nrow(sims))){
       output_names <- names(sims[1])
     } else {
       output_names <- rownames(sims)
     }
+                                        
     sims <- matrix(sims, nrow = length(sims)/N)
     for(j in 1:nrow(sims)) {
       # Results are the mean and variance of each of the simulation outputs
@@ -76,7 +80,9 @@ MC_estimates <- function(design, hypotheses, N, sim, clust = NULL)
       # Use the output variable names to name the result columns
       names(results)[(length(results) -1)] <- paste0(output_names[j], "_m_", rownames(hypotheses)[i])
       names(results)[length(results)] <- paste0(output_names[j], "_v_", rownames(hypotheses)[i])
+
     }
+                                   
   }
   results
 }
@@ -84,7 +90,9 @@ MC_estimates <- function(design, hypotheses, N, sim, clust = NULL)
 det_values <- function(design, hypotheses, det_func) {
   # Evaluate the objective functions under each hypothesis
   results <- NULL
+  cat("transposing hypotheses...Start")
   hypotheses <- t(hypotheses)
+  cat("transposing hypotheses...Done")
   for(i in 1:nrow(hypotheses)) {
     vals <- det_func(design, as.data.frame(hypotheses)[i,])
     # Handle this depending on if there is 1 or more than one output

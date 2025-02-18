@@ -1,5 +1,5 @@
 # Constructor
-new_BOSSS_solution <- function(DoE, results, models, models_reint, p_front, p_set, to_model, clust){
+new_BOSSS_solution <- function(DoE, results, models, models_reint, p_front, p_set, to_model, clust=NULL){
 
   sol <- list(DoE = DoE,
               results = results,
@@ -47,7 +47,9 @@ BOSSS_solution <- function(size, N, problem){
     stop(cat("Simulation threw an error at design ", as.numeric(DoE[1,1:problem$dimen])))
   }
 
+  
   if(nrow(DoE) > 1) {
+
     #dif <- utils::capture.output((Sys.time() - t)*(size-1)/n.cores)
     dif <- utils::capture.output((Sys.time() - t)*(size-1))
     cat("Initialisation will take approximately", substr(dif, 20, nchar(dif)), "\n")
@@ -71,6 +73,7 @@ BOSSS_solution <- function(size, N, problem){
 
     #r_rest <- t(apply(DoE[2:nrow(DoE),1:problem$dimen], 1, MC_estimates, hypotheses=problem$hypotheses, N=N, sim=problem$simulation))
     #r_sim <- rbind(r_1, r_rest)
+
   } else {
     r_sim <- r_1
   }
@@ -78,7 +81,9 @@ BOSSS_solution <- function(size, N, problem){
   if(is.null(problem$det_func)) {
     r <- r_sim
   } else {
+
     r_det <- t(apply(DoE[,1:problem$dimen], 1, det_values, hypotheses=problem$hypotheses, det_func=problem$det_func))
+
     r <- cbind(r_sim, r_det)
   }
 
@@ -130,6 +135,7 @@ BOSSS_solution <- function(size, N, problem){
   obj_vals <- t(t(obj_vals)/problem$objectives$weight)
   p_set <- cbind(p_set, obj_vals)
   names(p_set)[(problem$dimen + 1):ncol(p_set)] <- problem$objectives$name
+
 
   #sol <- new_BOSSS_solution(DoE, results, models, models_reint, p_front, p_set, to_model, clust)
   sol <- new_BOSSS_solution(DoE, results, models, models_reint, p_front, p_set, to_model, clust=NULL)
