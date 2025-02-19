@@ -67,7 +67,7 @@ exp_penalty <- function(design, problem, solution, N){
         ests <- solution$results[[hyp, out]]
         dif <- (ests[, 1] > nom)*(ests[, 1] - nom)^2
 
-        exp_pen <- 1/(1 + dif)
+        exp_pen <- exp_pen*(1/(1 + dif))
       }
     }
   }
