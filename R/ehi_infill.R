@@ -20,6 +20,8 @@ ehi_infill <- function(design, N, problem, solution)
 
 
   p_front <- solution$p_front[, 1:(ncol(solution$p_front) - 1), drop = FALSE]
+  # Note - need a ref point bigger than the marginal worst case of the current
+  # P front, otherwise solutions outwith that box will not be explored
   ref <- apply(p_front, 2, max)
   current <- emoa::dominated_hypervolume(t(p_front), ref)
   pos <- apply(samp_fs, 1, function(obj) emoa::dominated_hypervolume(t(as.matrix(rbind(p_front, obj))), ref) )
@@ -67,7 +69,7 @@ exp_penalty <- function(design, problem, solution, N){
         ests <- solution$results[[hyp, out]]
         dif <- (ests[, 1] > nom)*(ests[, 1] - nom)^2
 
-        exp_pen <- 1/(1 + dif)
+        exp_pen <- exp_pen*(1/(1 + dif))
       }
     }
   }
