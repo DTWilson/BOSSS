@@ -1,5 +1,5 @@
 # Constructor
-new_BOSSS_solution <- function(DoE, results, models, models_reint, p_front, p_set, to_model, clust=NULL){
+new_BOSSS_solution <- function(DoE, results, models, models_reint, p_front, p_set, to_model, problem=problem, clust=NULL){
 
   sol <- list(DoE = DoE,
               results = results,
@@ -8,6 +8,7 @@ new_BOSSS_solution <- function(DoE, results, models, models_reint, p_front, p_se
               p_front = p_front,
               p_set = p_set,
               to_model = to_model,
+              problem = problem,
               clust = clust)
 
   structure(sol,
@@ -47,7 +48,7 @@ BOSSS_solution <- function(size, N, problem){
     stop(cat("Simulation threw an error at design ", as.numeric(DoE[1,1:problem$dimen])))
   }
 
-  
+
   if(nrow(DoE) > 1) {
 
     #dif <- utils::capture.output((Sys.time() - t)*(size-1)/n.cores)
@@ -70,9 +71,6 @@ BOSSS_solution <- function(size, N, problem){
 
       r_sim <- rbind(r_sim, r_next)
     }
-
-    #r_rest <- t(apply(DoE[2:nrow(DoE),1:problem$dimen], 1, MC_estimates, hypotheses=problem$hypotheses, N=N, sim=problem$simulation))
-    #r_sim <- rbind(r_1, r_rest)
 
   } else {
     r_sim <- r_1
@@ -117,29 +115,33 @@ BOSSS_solution <- function(size, N, problem){
                     problem$objectives[problem$objectives$stoch, c("out", "hyp")])
   to_model <- unique(to_model)
 
-  mods <- fit_models(DoE, results, to_model, problem)
-  models <- mods[1:nrow(to_model)]
-  models_reint <- mods[(nrow(to_model)+1):length(mods)]
-  cat("Models fitted\n")
+  sol <- new_BOSSS_solution(DoE, results, models = NULL, models_reint = NULL, p_front = NULL, p_set = NULL, to_model, problem, clust=NULL)
 
-  #sol <- new_BOSSS_solution(DoE, results, models, models_reint, p_front = NULL, p_set = NULL, to_model, clust)
-  sol <- new_BOSSS_solution(DoE, results, models, models_reint, p_front = NULL, p_set = NULL, to_model, clust=NULL)
+  sol <- update_solution(sol, problem)
+  cat("Solution found\n")
 
-  pf_out <- pareto_front(sol, problem)
-  p_front <- pf_out[[1]]
-  cat("Initial solution found\n")
+  return(sol)
+}
 
-  p_set <- cbind(DoE, pf_out[[2]])
-  p_set <- p_set[sapply(p_front[,ncol(p_front)], function(y) which(p_set[,ncol(p_set)] == y)), 1:problem$dimen]
-  obj_vals <- predict_obj(p_set, problem, sol)
+# Given the current set of simulation data, fit all GP models and find the
+# Pareto set.
+update_solution <- function(solution, problem)
+{
+  mods <- fit_models(solution$DoE, solution$results, solution$to_model, problem)
+  solution$models  <- mods[1:nrow(solution$to_model)]
+  solution$models_reint <- mods[(nrow(solution$to_model)+1):length(mods)]
+
+  pf_out <- pareto_front(solution, problem)
+  solution$p_front <- pf_out[[1]]
+
+  p_set <- cbind(solution$DoE, pf_out[[2]])
+  p_set <- p_set[sapply(solution$p_front[,ncol(solution$p_front)], function(y) which(p_set[,ncol(p_set)] == y)), 1:problem$dimen]
+  obj_vals <- predict_obj(p_set, problem, solution)
   obj_vals <- t(t(obj_vals)/problem$objectives$weight)
-  p_set <- cbind(p_set, obj_vals)
-  names(p_set)[(problem$dimen + 1):ncol(p_set)] <- problem$objectives$name
+  solution$p_set <- cbind(p_set, obj_vals)
+  names(solution$p_set)[(problem$dimen + 1):ncol(p_set)] <- problem$objectives$name
 
-
-  #sol <- new_BOSSS_solution(DoE, results, models, models_reint, p_front, p_set, to_model, clust)
-  sol <- new_BOSSS_solution(DoE, results, models, models_reint, p_front, p_set, to_model, clust=NULL)
-  sol
+  return(solution)
 }
 
 
