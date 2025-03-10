@@ -12,6 +12,15 @@
 #' @export
 iterate <- function(solution, problem, N, design = NULL) {
 
+  # Check if problem has changed (e.g. constraints or objectives) since last
+  # solved, and update solution if so
+  if(!(all.equal(problem, solution$problem) == TRUE)){
+    cat("Problem has been changed; updating the solution...")
+    soltution <- update_solution(solution, problem)
+    solution$problem <- problem
+    cat("...done")
+  }
+
   if(is.null(design)) {
     opt <- RcppDE::DEoptim(ehi_infill,
                            lower = problem$design_space$lower,

@@ -1,5 +1,5 @@
 # Constructor
-new_BOSSS_solution <- function(DoE, results, models, models_reint, p_front, p_set, to_model, clust=NULL){
+new_BOSSS_solution <- function(DoE, results, models, models_reint, p_front, p_set, to_model, problem=problem, clust=NULL){
 
   sol <- list(DoE = DoE,
               results = results,
@@ -8,6 +8,7 @@ new_BOSSS_solution <- function(DoE, results, models, models_reint, p_front, p_se
               p_front = p_front,
               p_set = p_set,
               to_model = to_model,
+              problem = problem,
               clust = clust)
 
   structure(sol,
@@ -114,7 +115,7 @@ BOSSS_solution <- function(size, N, problem){
                     problem$objectives[problem$objectives$stoch, c("out", "hyp")])
   to_model <- unique(to_model)
 
-  sol <- new_BOSSS_solution(DoE, results, models = NULL, models_reint = NULL, p_front = NULL, p_set = NULL, to_model, clust=NULL)
+  sol <- new_BOSSS_solution(DoE, results, models = NULL, models_reint = NULL, p_front = NULL, p_set = NULL, to_model, problem, clust=NULL)
 
   sol <- update_solution(sol, problem)
   cat("Solution found\n")
@@ -131,18 +132,16 @@ update_solution <- function(solution, problem)
   solution$models_reint <- mods[(nrow(solution$to_model)+1):length(mods)]
 
   pf_out <- pareto_front(solution, problem)
-  p_front <- pf_out[[1]]
+  solution$p_front <- pf_out[[1]]
 
   p_set <- cbind(solution$DoE, pf_out[[2]])
-  p_set <- p_set[sapply(p_front[,ncol(p_front)], function(y) which(p_set[,ncol(p_set)] == y)), 1:problem$dimen]
+  p_set <- p_set[sapply(solution$p_front[,ncol(solution$p_front)], function(y) which(p_set[,ncol(p_set)] == y)), 1:problem$dimen]
   obj_vals <- predict_obj(p_set, problem, solution)
   obj_vals <- t(t(obj_vals)/problem$objectives$weight)
-  p_set <- cbind(p_set, obj_vals)
-  names(p_set)[(problem$dimen + 1):ncol(p_set)] <- problem$objectives$name
+  solution$p_set <- cbind(p_set, obj_vals)
+  names(solution$p_set)[(problem$dimen + 1):ncol(p_set)] <- problem$objectives$name
 
-  sol <- new_BOSSS_solution(DoE, results, models, models_reint, p_front, p_set, to_model, clust=NULL)
-
-  return(sol)
+  return(solution)
 }
 
 

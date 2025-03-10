@@ -143,7 +143,6 @@ BOSSS_problem <- function(sim_trial, design_space, hypotheses,
 
 # Create an internal version of the simulation function which takes
 # design and hypotheses vectors as arguments
-
 reformat_sim <- function(sim_trial, design_space){
 
   arg_num <- length(formals(sim_trial))
@@ -176,6 +175,8 @@ reformat_sim <- function(sim_trial, design_space){
   int_sim
 }
 
+# Create an internal version of the deterministic function which takes
+# design and hypotheses vectors as arguments
 reformat_det <- function(det_func, design_space){
 
   arg_num <- length(formals(det_func))
@@ -208,6 +209,7 @@ reformat_det <- function(det_func, design_space){
   int_det
 }
 
+# Check if a constraint (or objective?) output is binary
 check_binary <- function(df, test_out, test_out_det){
   for(i in 1:nrow(df)){
     x <- df$out[i]
