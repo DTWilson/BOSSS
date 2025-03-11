@@ -72,8 +72,6 @@ BOSSS_solution <- function(size, N, problem){
       r_sim <- rbind(r_sim, r_next)
     }
 
-  } else {
-    r_sim <- r_1
   }
 
   if(is.null(problem$det_func)) {

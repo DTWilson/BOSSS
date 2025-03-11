@@ -3,10 +3,12 @@
 #' @param design Design to centre plots at.
 #' @param problem BOSSS problem.
 #' @param solution BOSSS solution.
+#' @param type the type of prediction required for binary outcomes. The default
+#' is on the scale of the response variable ("response"); the scale of the linear
+#' predictor ("link") can be used instead.
 #'
 #' @return A list of plots of size (# models) x (# design variables).
 #' @export
-#'
 #'
 diag_plots <- function(design, problem, solution, type = "response") {
 
@@ -38,8 +40,8 @@ diag_plots <- function(design, problem, solution, type = "response") {
                                    newdata=to_eval, type="UK",
                                    light.return = TRUE)
       df <- data.frame(m = p$mean, v = to_eval[,j])
-      df$u95 <- df$m + qnorm(0.975)*p$sd
-      df$l95 <- df$m - qnorm(0.975)*p$sd
+      df$u95 <- df$m + stats::qnorm(0.975)*p$sd
+      df$l95 <- df$m - stats::qnorm(0.975)*p$sd
 
       if(is_bin & type == "response"){
         df$m <- 1/(1 + exp(-df$m))
@@ -132,7 +134,17 @@ diag_check_point <- function(design, problem, solution, N, current = NULL) {
   return(current)
 }
 
-#' Examine model prediction
+#' Examine model predictions
+#'
+#' @param problem BOSSS problem.
+#' @param solution BOSSS solution.
+#' @param type the type of prediction required for binary outcomes. The default
+#' is on the scale of the response variable ("response"); the scale of the linear
+#' predictor ("link") can be used instead.
+#'
+#' @return A list of dataframes, one for each model, giving the empirical
+#' (Monte Carlo) point and interval estimates alongside their predicted point
+#' and interval estimates, flagging when these do not agree.
 #'
 #' @export
 #'
@@ -190,8 +202,8 @@ emp_interval <- function(mod_i, is_bin, problem, solution, type)
   r <- solution$results[solution$to_model[mod_i,"hyp"], solution$to_model[mod_i,"out"]][[1]]
 
   m_lp <- r[,1]
-  upper95_lp <- r[,1] + qnorm(0.975)*r[,2]
-  lower95_lp <- r[,1] - qnorm(0.975)*r[,2]
+  upper95_lp <- r[,1] + stats::qnorm(0.975)*r[,2]
+  lower95_lp <- r[,1] - stats::qnorm(0.975)*r[,2]
 
   if(is_bin & type == "response"){
     m <- 1/(exp(-m_lp) + 1)

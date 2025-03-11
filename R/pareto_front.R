@@ -30,7 +30,6 @@ pareto_front <- function(solution, problem)
   return(list(unique(pf), obj_v[,ncol(obj_v)]))
 }
 
-#' @export
 check_constraint <- function(i, solution, problem)
 {
   dimen <- problem$dimen
