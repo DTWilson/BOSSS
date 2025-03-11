@@ -16,11 +16,7 @@ pareto_front <- function(solution, problem)
   if(!is.null(problem$constraints)){
     constraints <- problem$constraints
     for(i in 1:nrow(problem$constraints)){
-<<<<<<< HEAD
       pen <- check_constraint(i, solution, problem)[,1]
-=======
-      pen <- check_constraint(i, solution, problem)
->>>>>>> e05b8f7cb62f261965d65dab44ca1f2ea325bed8
       exp_pen <- exp_pen*pen
     }
   }
@@ -34,7 +30,6 @@ pareto_front <- function(solution, problem)
   return(list(unique(pf), obj_v[,ncol(obj_v)]))
 }
 
-#' @export
 check_constraint <- function(i, solution, problem)
 {
   dimen <- problem$dimen
@@ -45,11 +40,8 @@ check_constraint <- function(i, solution, problem)
   nom <- problem$constraints[i, "nom"]
   if(problem$constraints$binary[i]) nom <- log(nom/(1-nom))
 
-<<<<<<< HEAD
-=======
   pen_prob <- NA
 
->>>>>>> e05b8f7cb62f261965d65dab44ca1f2ea325bed8
   if(problem$constraints$stoch[i]) {
 
     # Models are in order of to_model
@@ -66,10 +58,8 @@ check_constraint <- function(i, solution, problem)
   } else {
     pred <- solution$results[[hyp, out]][,1]
     pen <- ifelse(pred > nom, 0.0000001, 1)
-<<<<<<< HEAD
+
     pen_prob <- rep(NA, length(pen))
-=======
->>>>>>> e05b8f7cb62f261965d65dab44ca1f2ea325bed8
   }
   return(matrix(c(pen, pen_prob, pred), ncol=3))
 }

@@ -1,3 +1,13 @@
+#' Update problem constraints
+#'
+#' @param problem BOSSS problem
+#' @param number index of the constraint(s) to be updated
+#' @param name name of the constraint(s) to be updated
+#' @param nom new nominal value(s)
+#' @param delta new acceptance threshold(s)
+#'
+#' @return an updated BOSSS problem object.
+#' @export
 update_constraint <- function(problem, number = NULL, name = NULL,
                               nom = NULL, delta = NULL)
 {
