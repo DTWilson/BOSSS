@@ -8,11 +8,16 @@
 #' @export
 #'
 #'
-diag_plots <- function(design, problem, solution) {
+diag_plots <- function(design, problem, solution, type = "response") {
 
   plots <- vector(mode = "list", length = nrow(solution$to_model)*problem$dimen)
   count <- 1
   for(i in 1:nrow(solution$to_model)) {
+
+    # Check if binary
+    out_names <- c(problem$objectives$out, problem$constraints$out)
+    bin_list <- c(problem$objectives$binary, problem$constraints$binary)
+    is_bin <- any(bin_list[out_names == solution$to_model$out[i]])
 
     for(j in 1:problem$dimen) {
       # Create the grid to evaluate, varying only dimension j
@@ -32,10 +37,18 @@ diag_plots <- function(design, problem, solution) {
       p <- DiceKriging::predict.km(solution$models[[i]],
                                    newdata=to_eval, type="UK",
                                    light.return = TRUE)
-      df <- data.frame(m = p$mean, sd = p$sd, v = to_eval[,j])
+      df <- data.frame(m = p$mean, v = to_eval[,j])
+      df$u95 <- df$m + qnorm(0.975)*p$sd
+      df$l95 <- df$m - qnorm(0.975)*p$sd
+
+      if(is_bin & type == "response"){
+        df$m <- 1/(1 + exp(-df$m))
+        df$u95 <- 1/(1 + exp(-df$u95))
+        df$l95 <- 1/(1 + exp(-df$l95))
+      }
 
       pl <- ggplot2::ggplot(df, ggplot2::aes(v, m)) +
-        ggplot2::geom_ribbon(ggplot2::aes(ymin = m - 1.96*sd, ymax = m + 1.96*sd), alpha = 0.2) +
+        ggplot2::geom_ribbon(ggplot2::aes(ymin = l95, ymax = u95), alpha = 0.2) +
         ggplot2::geom_line() +
         ggplot2::ylab(paste("Mean outcome", solution$to_model$out[i], ", hypothesis", solution$to_model$hyp[i])) +
         ggplot2::xlab(names(design)[j]) +
