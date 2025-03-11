@@ -8,7 +8,7 @@
 #' @export
 #'
 #'
-one_d_plots <- function(design, problem, solution) {
+diag_plots <- function(design, problem, solution) {
 
   plots <- vector(mode = "list", length = nrow(solution$to_model)*problem$dimen)
   count <- 1
@@ -65,7 +65,7 @@ one_d_plots <- function(design, problem, solution) {
 #' @export
 #'
 #'
-check_point <- function(design, problem, solution, N, current = NULL) {
+diag_check_point <- function(design, problem, solution, N, current = NULL) {
 
   design <- design[1:problem$dimen]
 
@@ -118,3 +118,79 @@ check_point <- function(design, problem, solution, N, current = NULL) {
   }
   return(current)
 }
+
+#' Examine model prediction
+#'
+#' @export
+#'
+diag_predictions <- function(problem, solution, type = "response")
+{
+  # For each model, return a dataframe comparing the empirical and predicted
+  # values at each design point
+  dfs <- list(nrow(solution$to_model))
+  designs <- solution$DoE[,1:problem$dimen]
+  for(mod_i in 1:nrow(solution$to_model)){
+    # Check if binary
+    out_names <- c(problem$objectives$out, problem$constraints$out)
+    bin_list <- c(problem$objectives$binary, problem$constraints$binary)
+    is_bin <- any(bin_list[out_names == solution$to_model$out[mod_i]])
+
+    df <- cbind(designs, emp_interval(mod_i, is_bin, problem=problem, solution=solution, type=type))
+    names(df)[(ncol(df) - 2):ncol(df)] <- c("MC_mean", "MC_l95", "MC_u95")
+
+    df <- cbind(df, pred_interval(designs, mod_i, is_bin, problem=problem, solution=solution, type=type))
+    names(df)[(ncol(df) - 2):ncol(df)] <- c("p_mean", "p_l95", "p_u95")
+
+    # Flag if intervals don't overlap
+    f <- (df$MC_u95 < df$p_l95) | (df$MC_l95 > df$p_u95)
+    df$no_overlap <- ifelse(f, "*", "")
+
+    df_name <- paste0("Output: ", solution$to_model[mod_i,1], ", hypothesis: ", solution$to_model[mod_i,2])
+    dfs[[mod_i]] <- df
+    names(dfs)[mod_i] <- df_name
+  }
+
+  return(dfs)
+}
+
+pred_interval <- function(designs, mod_i, is_bin, problem, solution, type)
+{
+  p <- DiceKriging::predict.km(solution$models[[mod_i]],
+                               newdata=designs[,1:problem$dimen, drop=F], type="UK",
+                               light.return = TRUE)
+
+  if(is_bin & type == "response"){
+    m <- 1/(exp(-p$mean) + 1)
+    lower95 <- 1/(exp(-p$lower95) + 1)
+    upper95 <- 1/(exp(-p$upper95) + 1)
+  } else {
+    m <- p$mean
+    lower95 <- p$lower95
+    upper95 <- p$upper95
+  }
+
+  return(matrix(c(m, lower95, upper95), ncol = 3))
+}
+
+emp_interval <- function(mod_i, is_bin, problem, solution, type)
+{
+  r <- solution$results[solution$to_model[mod_i,"hyp"], solution$to_model[mod_i,"out"]][[1]]
+
+  m_lp <- r[,1]
+  upper95_lp <- r[,1] + qnorm(0.975)*r[,2]
+  lower95_lp <- r[,1] - qnorm(0.975)*r[,2]
+
+  if(is_bin & type == "response"){
+    m <- 1/(exp(-m_lp) + 1)
+    lower95 <- 1/(exp(-lower95_lp) + 1)
+    upper95 <- 1/(exp(-upper95_lp) + 1)
+  } else {
+    m <- m_lp
+    lower95 <- lower95_lp
+    upper95 <- upper95_lp
+  }
+
+  return(matrix(c(m, lower95, upper95), ncol = 3))
+}
+
+

@@ -139,7 +139,7 @@ update_solution <- function(solution, problem)
   obj_vals <- predict_obj(p_set, problem, solution)
   obj_vals <- t(t(obj_vals)/problem$objectives$weight)
   solution$p_set <- cbind(p_set, obj_vals)
-  names(solution$p_set)[(problem$dimen + 1):ncol(p_set)] <- problem$objectives$name
+  names(solution$p_set)[(problem$dimen + 1):ncol(solution$p_set)] <- problem$objectives$name
 
   return(solution)
 }
