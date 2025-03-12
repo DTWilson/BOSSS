@@ -3,16 +3,23 @@
 #' @param design Design to centre plots at.
 #' @param problem BOSSS problem.
 #' @param solution BOSSS solution.
+#' @param type the type of prediction required for binary outcomes. The default
+#' is on the scale of the response variable ("response"); the scale of the linear
+#' predictor ("link") can be used instead.
 #'
 #' @return A list of plots of size (# models) x (# design variables).
 #' @export
 #'
-#'
-one_d_plots <- function(design, problem, solution) {
+diag_plots <- function(design, problem, solution, type = "response") {
 
   plots <- vector(mode = "list", length = nrow(solution$to_model)*problem$dimen)
   count <- 1
   for(i in 1:nrow(solution$to_model)) {
+
+    # Check if binary
+    out_names <- c(problem$objectives$out, problem$constraints$out)
+    bin_list <- c(problem$objectives$binary, problem$constraints$binary)
+    is_bin <- any(bin_list[out_names == solution$to_model$out[i]])
 
     for(j in 1:problem$dimen) {
       # Create the grid to evaluate, varying only dimension j
@@ -32,10 +39,18 @@ one_d_plots <- function(design, problem, solution) {
       p <- DiceKriging::predict.km(solution$models[[i]],
                                    newdata=to_eval, type="UK",
                                    light.return = TRUE)
-      df <- data.frame(m = p$mean, sd = p$sd, v = to_eval[,j])
+      df <- data.frame(m = p$mean, v = to_eval[,j])
+      df$u95 <- df$m + stats::qnorm(0.975)*p$sd
+      df$l95 <- df$m - stats::qnorm(0.975)*p$sd
+
+      if(is_bin & type == "response"){
+        df$m <- 1/(1 + exp(-df$m))
+        df$u95 <- 1/(1 + exp(-df$u95))
+        df$l95 <- 1/(1 + exp(-df$l95))
+      }
 
       pl <- ggplot2::ggplot(df, ggplot2::aes(v, m)) +
-        ggplot2::geom_ribbon(ggplot2::aes(ymin = m - 1.96*sd, ymax = m + 1.96*sd), alpha = 0.2) +
+        ggplot2::geom_ribbon(ggplot2::aes(ymin = l95, ymax = u95), alpha = 0.2) +
         ggplot2::geom_line() +
         ggplot2::ylab(paste("Mean outcome", solution$to_model$out[i], ", hypothesis", solution$to_model$hyp[i])) +
         ggplot2::xlab(names(design)[j]) +
@@ -65,7 +80,7 @@ one_d_plots <- function(design, problem, solution) {
 #' @export
 #'
 #'
-check_point <- function(design, problem, solution, N, current = NULL) {
+diag_check_point <- function(design, problem, solution, N, current = NULL) {
 
   design <- design[1:problem$dimen]
 
@@ -118,3 +133,89 @@ check_point <- function(design, problem, solution, N, current = NULL) {
   }
   return(current)
 }
+
+#' Examine model predictions
+#'
+#' @param problem BOSSS problem.
+#' @param solution BOSSS solution.
+#' @param type the type of prediction required for binary outcomes. The default
+#' is on the scale of the response variable ("response"); the scale of the linear
+#' predictor ("link") can be used instead.
+#'
+#' @return A list of dataframes, one for each model, giving the empirical
+#' (Monte Carlo) point and interval estimates alongside their predicted point
+#' and interval estimates, flagging when these do not agree.
+#'
+#' @export
+#'
+diag_predictions <- function(problem, solution, type = "response")
+{
+  # For each model, return a dataframe comparing the empirical and predicted
+  # values at each design point
+  dfs <- list(nrow(solution$to_model))
+  designs <- solution$DoE[,1:problem$dimen]
+  for(mod_i in 1:nrow(solution$to_model)){
+    # Check if binary
+    out_names <- c(problem$objectives$out, problem$constraints$out)
+    bin_list <- c(problem$objectives$binary, problem$constraints$binary)
+    is_bin <- any(bin_list[out_names == solution$to_model$out[mod_i]])
+
+    df <- cbind(designs, emp_interval(mod_i, is_bin, problem=problem, solution=solution, type=type))
+    names(df)[(ncol(df) - 2):ncol(df)] <- c("MC_mean", "MC_l95", "MC_u95")
+
+    df <- cbind(df, pred_interval(designs, mod_i, is_bin, problem=problem, solution=solution, type=type))
+    names(df)[(ncol(df) - 2):ncol(df)] <- c("p_mean", "p_l95", "p_u95")
+
+    # Flag if intervals don't overlap
+    f <- (df$MC_u95 < df$p_l95) | (df$MC_l95 > df$p_u95)
+    df$no_overlap <- ifelse(f, "*", "")
+
+    df_name <- paste0("Output: ", solution$to_model[mod_i,1], ", hypothesis: ", solution$to_model[mod_i,2])
+    dfs[[mod_i]] <- df
+    names(dfs)[mod_i] <- df_name
+  }
+
+  return(dfs)
+}
+
+pred_interval <- function(designs, mod_i, is_bin, problem, solution, type)
+{
+  p <- DiceKriging::predict.km(solution$models[[mod_i]],
+                               newdata=designs[,1:problem$dimen, drop=F], type="UK",
+                               light.return = TRUE)
+
+  if(is_bin & type == "response"){
+    m <- 1/(exp(-p$mean) + 1)
+    lower95 <- 1/(exp(-p$lower95) + 1)
+    upper95 <- 1/(exp(-p$upper95) + 1)
+  } else {
+    m <- p$mean
+    lower95 <- p$lower95
+    upper95 <- p$upper95
+  }
+
+  return(matrix(c(m, lower95, upper95), ncol = 3))
+}
+
+emp_interval <- function(mod_i, is_bin, problem, solution, type)
+{
+  r <- solution$results[solution$to_model[mod_i,"hyp"], solution$to_model[mod_i,"out"]][[1]]
+
+  m_lp <- r[,1]
+  upper95_lp <- r[,1] + stats::qnorm(0.975)*r[,2]
+  lower95_lp <- r[,1] - stats::qnorm(0.975)*r[,2]
+
+  if(is_bin & type == "response"){
+    m <- 1/(exp(-m_lp) + 1)
+    lower95 <- 1/(exp(-lower95_lp) + 1)
+    upper95 <- 1/(exp(-upper95_lp) + 1)
+  } else {
+    m <- m_lp
+    lower95 <- lower95_lp
+    upper95 <- upper95_lp
+  }
+
+  return(matrix(c(m, lower95, upper95), ncol = 3))
+}
+
+

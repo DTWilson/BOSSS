@@ -30,7 +30,6 @@ pareto_front <- function(solution, problem)
   return(list(unique(pf), obj_v[,ncol(obj_v)]))
 }
 
-#' @export
 check_constraint <- function(i, solution, problem)
 {
   dimen <- problem$dimen
@@ -59,6 +58,7 @@ check_constraint <- function(i, solution, problem)
   } else {
     pred <- solution$results[[hyp, out]][,1]
     pen <- ifelse(pred > nom, 0.0000001, 1)
+
     pen_prob <- rep(NA, length(pen))
   }
   return(matrix(c(pen, pen_prob, pred), ncol=3))
