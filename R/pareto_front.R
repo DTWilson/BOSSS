@@ -57,7 +57,9 @@ check_constraint <- function(i, solution, problem)
     pen <- ifelse(pen_prob < problem$constraints[i, "delta"], 0.0000001, 1)
   } else {
     pred <- solution$results[[hyp, out]][,1]
-    pen <- ifelse(pred > nom, 0.0000001, 1)
+    # Add a small bit of leeway when evaluating deterministic contraints to help
+    # the optimiser find soltutions right at the border
+    pen <- ifelse(pred > 1.001*nom, 0.0000001, 1)
 
     pen_prob <- rep(NA, length(pen))
   }

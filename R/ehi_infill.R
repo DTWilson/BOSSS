@@ -23,8 +23,8 @@ ehi_infill <- function(design, N, problem, solution)
   # Note - need a ref point bigger than the marginal worst case of the current
   # P front, otherwise solutions outwith that box will not be explored
   ref <- apply(p_front, 2, max)
-  current <- emoa::dominated_hypervolume(t(p_front), ref)
-  pos <- apply(samp_fs, 1, function(obj) emoa::dominated_hypervolume(t(as.matrix(rbind(p_front, obj))), ref) )
+  current <- emoa::dominated_hypervolume(t(p_front), 2*ref)
+  pos <- apply(samp_fs, 1, function(obj) emoa::dominated_hypervolume(t(as.matrix(rbind(p_front, obj))), 2*ref) )
   imp <- (current-mean(pos))*exp_pen
 
   ## Minimising, so keeping negative
@@ -50,8 +50,11 @@ exp_penalty <- function(design, problem, solution, N){
 
         model_index <- which(solution$to_model$out == out & solution$to_model$hyp == hyp)
 
+        des <- as.data.frame(matrix(design, ncol = problem$dim))
+        names(des) <- problem$design_space$name
+
         p <- DiceKriging::predict.km(solution$models[[model_index]],
-                                     newdata=design[,1:problem$dimen, drop=F],
+                                     newdata=des,
                                      type="SK",
                                      light.return=TRUE)
 
@@ -64,12 +67,11 @@ exp_penalty <- function(design, problem, solution, N){
         exp_pen <- exp_pen*stats::pnorm(nom, pred_q_mean, sqrt(pred_q_var))
       } else {
         # If constraint is deterministic, penalise by ~0 if violated
+        val <- problem$det_func(design, problem$hypotheses[,hyp])[out]
 
-        # Results are a hyp x out matrix
-        ests <- solution$results[[hyp, out]]
-        dif <- (ests[, 1] > nom)*(ests[, 1] - nom)^2
+        dif <- (val > nom)*(val - nom)^2
 
-        exp_pen <- exp_pen*(1/(1 + dif))
+        exp_pen <- exp_pen*(1/(1 + 1000000*dif))
       }
     }
   }
