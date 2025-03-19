@@ -4,7 +4,7 @@
 \alias{constraints}
 \title{Create a set of constraints}
 \usage{
-constraints(name, out, hyp, nom, delta)
+constraints(name, out, hyp, nom, delta, binary)
 }
 \arguments{
 \item{name}{character vector of constraint names.}
@@ -18,6 +18,8 @@ pertains to.}
 \item{nom}{numeric vector of nominal upper limits.}
 
 \item{delta}{numeric vector of probabilities.}
+
+\item{binary}{boolean vector denoting if the constraint output is binary or otherwise.}
 }
 \value{
 A data.frame defining the constraints.
@@ -30,6 +32,7 @@ constraints(name = c("tII"),
             out = c("s"),
             hyp = c("alt"),
             nom = c(0.1),
-            delta = c(0.95))
+            delta = c(0.95),
+            binary = c(TRUE))
 
 }

@@ -84,6 +84,7 @@ hypotheses <- function(par_name = NULL, sim = NULL, values, hyp_names) {
 #' pertains to.
 #' @param nom numeric vector of nominal upper limits.
 #' @param delta numeric vector of probabilities.
+#' @param binary boolean vector denoting if the constraint output is binary or otherwise.
 #'
 #' @return A data.frame defining the constraints.
 #'
@@ -92,16 +93,18 @@ hypotheses <- function(par_name = NULL, sim = NULL, values, hyp_names) {
 #'             out = c("s"),
 #'             hyp = c("alt"),
 #'             nom = c(0.1),
-#'             delta = c(0.95))
+#'             delta = c(0.95),
+#'             binary = c(TRUE))
 #'
 #' @export
-constraints <- function(name, out, hyp, nom, delta) {
+constraints <- function(name, out, hyp, nom, delta, binary) {
 
   data.frame(name = name,
              out = out,
              hyp = hyp,
              nom = nom,
-             delta = delta)
+             delta = delta,
+             binary = binary)
 }
 
 

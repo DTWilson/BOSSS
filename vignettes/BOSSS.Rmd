@@ -11,7 +11,7 @@ vignette: >
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>",
-  eval = FALSE
+  eval = TRUE
 )
 ```
 
@@ -35,178 +35,87 @@ Every application of BOSSS follows the same set of steps:
 
 ### Problem
 
-The first ingredient of a BOSSS problem is the simulation function. The arguments of this function must first specify the _design variables_  which we want to vary in our problem, followed by the _model parameters_. In this example we have 4 design variables representing the total sample size, the fraction of the sample size used in the first stage, the $\alpha$ level used in the interim analysis, and the $\alpha$ level used in the final analysis. The model parameters are the probability of the interim outcome in the control and experimental arms, and the probability of the final outcome in the control and experimental arms, and a parameter describing the dependence between short and long term outcomes.
+The first ingredient of a BOSSS problem is the simulation function. The arguments of this function must first specify the _design variables_  which we want to vary in our problem, followed by the _model parameters_. In this example we have two design variables representing the number of clusters in each arm, and the number of participants in each arm. The model parameters are the mean difference in outcome between the control and experimental arms (`beta_1`), the within-cluster standard deviation (`sig_w`), and the between-cluster standard deviation (`sig_b`). Note that all of these inputs require some defaults to be provided.
 
-The other element of interface the simulation function must conform to is in its return value, which should be a named vector of the quantities who's mean values we want to estimate using the Monte Carlo method. Here, we have three such quantities: a boolean indicator of an overall positive decision (`g`), a boolean indicator of a negative decision (`s`), and the final sample size (`n`). 
+The other element of interface the simulation function must conform to is in its return value, which should be a named vector of the quantities who's mean values we want to estimate using the Monte Carlo method. Here, we have one such quantity: a boolean indicator of a negative decision, `s`.
 
 ```{r}
-#n is the total sample size
-#ninterim is the number of patients at the interim analysis (proportion)
-#ainterim is alpha at interim analysis (threshold p-value at interim analysis)
-#afinal is alpha at final analaysis (threshold p-value for 2nd and final analysis)
-#this means overall alpha for the trial is ainterim*afinal
-#
-#pcontshort is the probability of 1 day PoSH in the control arm
-#pexpshort is the probability of 1 day PoSH in the experimental arm
-#pcontlong is the probability of 6 month PoSH in the control arm
-#pexplong is the probability of 6 month PoSH in the experimental arm
-#p01_relative is s.t. p01_relative*pexplong = probability of having 
-# a long term outcome after no short term outcome
+sim_cRCT <- function(k = 10, n = 200, beta_1 = 0.3, sig_w = 0.975, sig_b = 0.224){
+  k <- floor(k); n <- floor(n)
+  u_c <- rnorm(k, sd = sig_b)
+  cluster_size <-  rep(n%/%k, k) + c(rep(1, n%%k), rep(0, k - n%%k))
+  y_c <- rep(u_c, times = cluster_size) + rnorm(n, 0, sig_w)
 
-#sim_trial <- function(design = c(300, 0.5, 0.4, 0.1),
-#                      hypothesis = c(0.25, 0.125, 0.1, 0.03, 0))
-sim_trial <- function(n = 300, ninterim = 0.5, ainterim = 0.4, afinal = 0.1,
-                      pcontshort = 0.25, pexpshort = 0.125,
-                      pcontlong = 0.1, pexplong = 0.03, p01_relative = 0)
-{
-  ninterim <- floor(ninterim*n)
-  
-  patients<-c(1:n) #create patients
-  
-  treat<- rep(c(1,2), ceiling(n/2))[1:n]
-  
-  n_cont <- sum(treat == 1)
-  
-  short<-rep(0,n) #short term outcome
-  long<-rep(0,n) #long term outcome
-  
-  data<-data.frame(patients,treat,short,long) #combine into dataset
-  
-  #generate result 1/0 for short term outcome. If short term outcome=0 then long term outcome=0
-  #If short term outcome=1 then long term outcome has probability pcontlong/pcontshort
-  #repeat for treatment=2
-  # for(i in 1:n){
-  #   if(treat[i]==1){
-  #     data$short[i]<-rbinom(1,1,pcontshort)
-  #     if(data$short[i]==0){
-  #       data$long[i]<-0
-  #     }
-  #     if(data$short[i]==1){
-  #       data$long[i]<-rbinom(1,1,pcontlong/pcontshort)
-  #     }
-  #   }
-  #   else{
-  #     data$short[i]<-rbinom(1,1,pexpshort)
-  #     if(data$short[i]==0){
-  #       data$long[i]<-0
-  #     }
-  #     if(data$short[i]==1){
-  #       data$long[i]<-rbinom(1,1,pexplong/pexpshort)
-  #     }
-  #   }
-  # }
-  
-  # An alternative and more general parametersation of the above model
-  # to allow different values of probability of a long outcome after
-  # no short outcome (previously hard coded as 0)
+  u_i <- rnorm(k, sd = sig_b)
+  y_i <- beta_1 + rep(u_i, times = cluster_size) + rnorm(n, 0, sig_w)
 
-  # probability vector p00, p01, p10, p11 in (short, long) form
-  # Control arm:
-  p01 <- p01_relative*pcontlong
-  p11 <- pcontlong - p01
-  p10 <- pcontshort - p11
-  # Simulate outcomes in multinomial format
-  cont_count <- rmultinom(1, n_cont, c((1 - p01 - p10 - p11), p01, p10, p11))
-  # Translate these to short and long outcomes
-  cont_out <- matrix(c(rep(c(0,0), cont_count[1]),
-                       rep(c(0,1), cont_count[2]),
-                       rep(c(1,0), cont_count[3]),
-                       rep(c(1,1), cont_count[4])), ncol = 2, byrow = TRUE)
-  # shuffle the list randomly
-  cont_out <- cont_out[sample(1:nrow(cont_out)),]
-  
-  # Experimental arm:
-    # Control arm:
-  p01 <- p01_relative*pexplong
-  p11 <- pexplong - p01
-  p10 <- pexpshort - p11
-  exp_count <- rmultinom(1, n - n_cont, c((1 - p01 - p10 - p11), p01, p10, p11))
-  exp_out <- matrix(c(rep(c(0,0), exp_count[1]),
-                       rep(c(0,1), exp_count[2]),
-                       rep(c(1,0), exp_count[3]),
-                       rep(c(1,1), exp_count[4])), ncol = 2, byrow = TRUE)
-  exp_out <- exp_out[sample(1:nrow(exp_out)),]
-  
-  data[data$treat == 1, c("short", "long")] <- cont_out
-  data[data$treat == 2, c("short", "long")] <- exp_out
-  
-  #perform chi squared test on short term outcome for 1st ninterim patients
-  data2<-data[1:ninterim,]
-  tbl<-table(data2$short,data2$treat)
-  test<- suppressWarnings(chisq.test(tbl)$p.value) #get p-value
-  
-  #if p<ainterim, perform chi squared test on long term outcome for all patients
-  if(test<ainterim){
-    tbl2<-table(data$long,data$treat)
-    test2<- suppressWarnings(chisq.test(tbl2)$p.value)
-  }
-  
-  #if p>ainterim, trial unsuccessful at interim and final analysis
-  #if p<ainterim, trial successful at interim:
-  #if p2>afinal, trial unsuccessful at final analysis
-  #if p2<afinal, trial successful at final analysis
-  if(test>=ainterim){
-    return(c(g = FALSE, s = TRUE, n = ninterim))
-  }
-  if(test<ainterim){
-    if(mean(data2[data2$treat == 1,"short"]) < mean(data2[data2$treat == 2,"short"])){
-      return(c(g = FALSE, s = TRUE, n = ninterim))
-    } else {
-      if(test2>afinal){
-        return(c(g = FALSE, s = TRUE, n = n))
-      }
-      if(test2<afinal){
-        return(c(g = TRUE, s = FALSE, n = n))
-      }
-    }
-  }
+  s <- t.test(y_i, y_c, alternative = "greater")$p.value > 0.05
+
+  return(c(s = s))
 }
 
 # For example,
-sim_trial()
+sim_cRCT()
+```
+In our problem we are not just interested in the expected value of `s`; we also want to minimise the number of clusters and the number of participants, and to put an upper limit on the number of participants per cluster. Since these are fixed quantities given any design, we evaluate them in a seperate deterministic function. This should conform to the same principles as the simulation function, with the same inputs, but allowing for different named outputs. Here, the outputs are just `k`, `n`, and `m = n/k`:
+
+```{r}
+det_cRCT <- function(k = 10, n = 200, beta_1 = 0.3, sig_w = 0.975, sig_b = 0.224){
+  return(c(k = k, n = n, m = n/k))
+}
 ```
 
 Next, we need to note the ranges of the design variables which we plan to search over. We use the `design_space()` function for this, specifying the lower and upper limits of the design variables in the order they appear as simulation function arguments:
 
 ```{r}
-design_space <- design_space(lower = c(300,0.05,0,0), 
-                             upper = c(700,0.5,1,1),
-                             sim = sim_trial)
+design_space <- design_space(lower = c(10, 100), 
+                             upper = c(100, 500),
+                             sim = sim_cRCT)
+
+design_space
 ```
 
-We also need to specify the hypotheses which we're planning to simulate under, using the `hypotheses()` function, again specifying in the order that parameters appear as simulation function argument. We will need two hypotheses, corresponding to a null and an alternative:
+Note that the function automatically retrieves the names of the design variables based on the order they take in the simulation function.
+
+We also need to specify the hypotheses which we're planning to simulate under, using the `hypotheses()` function, again specifying in the order that parameters appear as simulation function argument. We only need one hypothesis here, the alternative, since we will be estimating the type II error rate.
 
 ```{r}
-hypotheses <- hypotheses(values = matrix(c(0.25, 0.25, 0.1, 0.1, 0, 
-                                           0.25, 0.125, 0.1, 0.03, 0), ncol = 2),
-                         hyp_names = c("null", "alt"),
-                         sim = sim_trial)
+hypotheses <- hypotheses(values = matrix(c(0.3, sqrt(0.95), sqrt(0.05)), ncol = 1),
+                         hyp_names = c("alt"),
+                         sim = sim_cRCT)
+
+hypotheses
 ```
 
-Constraints should be specified using the `constraints` function. Each constraint should be named, and should be defined with respect to a specific simulation output and a specific hypothesis. It should have a nominal maximum value, and a probability `delta` used to judge if it is satisfied. Here, our fist constraint is that the mean of the first simulation output (i.e. the probability of a positive result) under the first hypothesis (the null) should be less than 0.2 with a probability of at least 0.95.
+Constraints should be specified using the `constraints` function. Each constraint should be named, and should be defined with respect to a specific simulation output and a specific hypothesis. It should have a nominal maximum value, and a probability `delta` used to judge if it is satisfied. Here, our fist constraint is that the mean of the simulation output (i.e. the probability of a negative result) under the `alt` hypothesis should be less than or equal to 0.2 with a probability of at least 0.95. The second constraint is that the cluster size `m` under the `alt` hypothesis must be less than or equal to 10 - note that we provide a value for `delta`, but this isn't used since the constraint is deterministic. Finally, we note whether the constraint output is binary or otherwise.
 
 ```{r}
-constraints <- constraints(name = c("a", "b"),
-                   out = c("g", "s"),
-                   hyp = c("null", "alt"),
-                   nom = c(0.1, 0.2),
-                   delta =c(0.95, 0.95))
+constraints <- constraints(name = c("con_tII", "con_m"),
+                   out = c("s", "m"),
+                   hyp = c("alt", "alt"),
+                   nom = c(0.2, 10),
+                   delta = c(0.95, 1),
+                   binary = c(TRUE, FALSE))
+
+constraints
 ```
 
-The final ingredient of the problem is the set of objectives we want to minimise. Similar to constraints, objectives are tied to a specific simulation output and hypothesis. We also specify weights for each objective which help guide the internal optimisation process, and note whether or not the output for each objective is binary or continuous. For example, here we want to minimise both the type I and type II error rates and the expected sample size, with the former carrying a weight of 100 times of the latter.
+The final ingredient of the problem is the set of objectives we want to minimise. Similar to constraints, objectives are tied to a specific output and hypothesis. We also specify weights for each objective which help guide the internal optimisation process, and note whether or not the output for each objective is binary or continuous. For example, here we want to minimise both the number of patients `n` and the number of clusters `k`, with the latter carrying a weight of 100 times that of the former.
 
 ```{r}
-objectives <- objectives(name = c("TI", "TII", "EN"),
-                 out = c("g", "s", "n"),
-                 hyp = c("null", "alt", "null"),
-                 weight = c(100, 100, 1),
-                 binary = c(TRUE, TRUE, FALSE))
+objectives <- objectives(name = c("n", "k"),
+                 out = c("n", "k"),
+                 hyp = c("alt", "alt"),
+                 weight = c(1, 10),
+                 binary = c(FALSE, FALSE))
+
+objectives
 ```
 
 We now put this simulation function and set of data frames together to create an object of class `BOSSS_problem`. 
 
 ```{r}
-prob <- BOSSS_problem(sim_trial, design_space, hypotheses, objectives, constraints)
+prob <- BOSSS_problem(sim_cRCT, design_space, hypotheses, objectives, constraints, det_func = det_cRCT)
 ```
 
 ### Initialisation
@@ -214,7 +123,7 @@ prob <- BOSSS_problem(sim_trial, design_space, hypotheses, objectives, constrain
 Having set up the problem, we now need to create an initial solution to it. This involves setting up a space-filling set of designs spanning the design space (where `size` is the number of designs), computing the Monte Carlo estimates of all the expectations we are interested in at each of these designs (using `N` samples for each evaluation), fitting GP models to these estimates, and then using those models to estimate the Pareto set and front:
 
 ```{r}
-size <- 40
+size <- 20
 N <- 500
 
 sol <- BOSSS_solution(size, N, prob)
@@ -246,211 +155,49 @@ To check the GP models are giving sensible predictions, we can choose a specific
 # Pick a specific design from the Pareto set
 design <- sol$p_set[nrow(sol$p_set),]
 
-one_d_plots(design, prob, sol)
+diag_plots(design, prob, sol)
 ```
 
-When we've chosen our design we might want to check its properties by computing more MC estimates, which we can also compare against the model predictions via the `check_point()` function.
+
+We can also get the predicted values and 95% credible intervals for each point we have evaluated, contrasting these with the empirical MC estimate and interval. This will return a data frame for each of the models, named according to the output-hypothesis combination which defines it. We highlight with a `*` any points where the two intervals do not overlap.
 
 ```{r}
-r <- check_point(design, prob, sol, N=10^3) 
+diag_predictions(prob, sol)
+```
+
+If things aren't looking too good, it may indicate that we need more points in our initial evaluations, or more simulations at each of those points. We can do that via `extend_initial()`. For example, suppose we want to add an extra 500 simulations to our initial points:
+
+```{r}
+sol <- extend_initial(prob, sol, extra_N = 500)
+
+# Look at the first threee designs; the empirical and predicted estimates will have changed
+diag_predictions(prob, sol)[[1]][1:3,]
+```
+
+Or, we could add another 10 points:
+
+```{r}
+sol <- extend_initial(prob, sol, extra_points = 10)
+
+# Look at the added designs, which go to the top of the table
+diag_predictions(prob, sol)[[1]][1:10,]
+```
+
+
+Once we are happy with our solution and have chosen a specific design from the Pareto set, we might want to double check that point by running a large number of simulations at it.
+
+```{r}
+design <- sol$p_set[nrow(sol$p_set),]
+
+r <- diag_check_point(design, prob, sol, N=10^4) 
 ```
 
 If we decide we want to run more simulations at the same point, we can pass the previous results in so they are built upon.
 
 ```{r}
-r <- check_point(design, prob, sol, N=10^3, r) 
+r <- diag_check_point(design, prob, sol, N=10^4, r) 
 ```
 
-## Simplified adaptive
-
-Using the same simulation as in the preceding section, we can change the problem slightly by now only constraining the type I error rate (and not treating its minimisation as an objective), and only minimising the power (not constraining it) and expected sample size:
-
-```{r}
-design_space <- design_space(lower = c(300,0.05,0,0), 
-                             upper = c(700,0.5,1,1),
-                             sim = sim_trial)
-
-hypotheses <- hypotheses(values = matrix(c(0.25, 0.25, 0.1, 0.1, 0, 
-                                                 0.25, 0.125, 0.1, 0.03, 0), ncol = 2),
-                         hyp_names = c("null", "alt"),
-                         sim = sim_trial)
-
-constraints <- constraints(name = c("a", "b"),
-                   out = c("g"),
-                   hyp = c("null"),
-                   nom = c(0.1),
-                   delta =c(0.95))
-
-objectives <- objectives(name = c("f1", "f2"),
-                 out = c("s", "n"),
-                 hyp = c("alt", "null"),
-                 weight = c(100, 1),
-                 binary = c(TRUE, FALSE))
-
-prob <- BOSSS_problem(sim_trial, design_space, hypotheses, objectives, constraints)
-
-size <- 40
-N <- 500
-
-sol <- BOSSS_solution(size, N, prob)
-
-print(sol)
-plot(sol)
-```
-
-```{r}
-for(i in 1:10) {
-  sol <- iterate(sol, prob, N) 
-}
-print(sol)
-plot(sol)
-```
-
-
-## Bayesian-frequentist hybrid multilevel model
-
-Consider the design of a cluster randomised trial with $m$ clusters per arm, $n$ patients per cluster and a binary outcome for each patient. The trial will be analysed using a mixed effects model fitted using the `glmer` function from the `lme4` package, using a Wald test of the null hypothesis of no difference between arms at the 0.025 (one-sided) level.
-
-A design is defined by the choice of $m$ and $n$. We want to find designs which minimise the cost of sampling (a weighted combination of the number of clusters and the number of patients), and the overall probability of failure when marginalising over a joint prior distribution on the model parameters. A hypothesis, then, is not a set of point parameter values but a set of prior hyperparameter values.
-
-In contrast to the NIFTy example, we now have some objectives (the number of clusters and number of patients) which are deterministic. To acknowledge this we specify two functions: the simulation function is as before, returning a single Monte Carlo sample of the stochastic outputs. The deterministic function takes the same arguments (i.e. a design and a hypothesis), and returns the deterministic outputs (as with the simulation function, this should take the form of a named vector).
-
-```{r}
-library(lme4)
-
-sim_bayes <- function(m = 20, n = 10,
-                      theta_0 = 0.2, eff_n_0 = 15,
-                      theta_1 = 0.3, eff_n_1 = 15,
-                      het_n_mean = 100, het_n_sd = 10) {
-  
-  library(lme4)
-  
-  # m = Number of clusters in each arm
-  # n = Number of patients per cluster
-  m <- round(m); n <- round(n)
-  
-  # thetas, eff_ns = Overall probability of outcome and effective prior 
-  # sample size in each arm
-  
-  # het_n is the effective sample size used in the beta prior
-  # of cluster rates - it encapsulates our degree of certainty
-  # about the between-cluster variance.
-  
-  het_n <- rgamma(1, shape = (het_n_mean/het_n_sd)^2, rate = het_n_mean/het_n_sd^2) + 2
-  
-  a_0 <- theta_0*eff_n_0; b_0 <- eff_n_0 - a_0
-  a_1 <- theta_1*eff_n_1; b_1 <- eff_n_1 - a_1
-  
-  # Simulate overall rate in control arm
-  r_0 <- rbeta(1, a_0, b_0)
-  # Simulate cluster rates in control arm
-  c_r_0 <- rbeta(m, r_0*het_n, het_n - r_0*het_n)
-  # Simulate patient outcomes in control arm
-  p_0 <- rbinom(m*n, 1, rep(c_r_0, each = n))
-  
-    # Simulate overall rate in exp arm
-  r_1 <- rbeta(1, a_1, b_1)
-  # Simulate cluster rates in exp arm
-  c_r_1 <- rbeta(m, r_1*het_n, het_n - r_1*het_n)
-  # Simulate patient outcomes in exp  arm
-  p_1 <- rbinom(m*n, 1, rep(c_r_1, each = n))
-  
-  # Create data frame
-  df <- data.frame(trt = rep(c(0, 1), each = n*m),
-                   c_id = rep(1:(2*m), each = n),
-                   y = c(p_0, p_1))
-  
-  fit <- suppressMessages(glmer(y ~ trt + (1 | c_id), family = binomial, data = df))
-  
-  est <- fixef(fit)[[2]]
-  se <- sqrt(diag(vcov(fit)))[[2]]
-  
-  s <- est/se < qnorm(0.975)
-  return(c(s = s))
-}
-
-sim_bayes()
-
-det_bayes <- function(m = 20, n = 10,
-                      theta_0 = 0.2, eff_n_0 = 50,
-                      theta_1 = 0.4, eff_n_1 = 50,
-                      het_n_mean = 100, het_n_sd = 10) {
-  
-  m <- round(m); n <- round(n)
-  
-  return(c(c = 2*m*n + 10*m))
-}
-
-det_bayes()
-```
-
-
-
-```{r}
-design_space <- design_space(lower = c(5, 5), 
-                             upper = c(50, 50),
-                             sim = sim_bayes)
-
-hypotheses <- hypotheses(values = matrix(c(0.2, 30, 0.4, 30, 100, 10), ncol = 1),
-                         hyp_names = c("alt"),
-                         sim = sim_bayes)
-
-objectives <- objectives(name = c("pow", "cost"),
-                 out = c("s", "c"),
-                 hyp = c("alt", "alt"),
-                 weight = c(100, 1),
-                 binary = c(TRUE, FALSE))
-
-problem <- BOSSS_problem(sim_bayes, design_space, hypotheses, objectives, det_func = det_bayes)
-
-size <- 50
-N <- 50
-
-solution <- BOSSS_solution(size, N, problem)
-
-print(solution)
-plot(solution)
-```
-
-```{r}
-design <- solution$p_set[nrow(solution$p_set),]
-one_d_plots(design, problem, solution)
-```
-
-
-```{r}
-for(i in 1:10) {
-  solution <- iterate(solution, problem, N) 
-}
-print(solution)
-plot(solution)
-```
-
-## Instrumental variable
-
-```{r}
-library(AER)
-
-sim_trial <- function(n=200, mu=0.3) {
-  
-  z <- rep(c(0,1), n)
-  u <- rnorm(2*n)
-  
-  lp_x <- 4*z - 2 + u
-  x <- rbinom(2*n, 1, exp(lp_x)/(exp(lp_x) + 1))
-  
-  y <- mu*x + u
-  
-  s <- summary(ivreg(y ~ x | z))$coefficients[2,4] > 0.05
-  
-  # Analytic sample size calc from Freeman 2013
-  (qnorm(0.025) + qnorm(0.2))^2*var(y - x*cov(y, z)/cov(x, z))/(var(x)*mu^2*cor(x, z)^2)
-  
-  return(c(s=s))
-}
-
-mean(replicate(10^4, sim_trial(n=734/2)))
-```
 
 
 

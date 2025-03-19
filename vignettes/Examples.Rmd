@@ -19,7 +19,7 @@ knitr::opts_chunk$set(
 library(BOSSS)
 ```
 
-## Adaptive design
+## NIFTy
 
 ```{r}
 #n is the total sample size
@@ -190,6 +190,156 @@ for(i in 1:10) {
 print(sol)
 plot(sol)
 ```
+
+
+## PRESSURE2
+
+```{r}
+sim_P2 <- function(n = 500, na = 30000, af = 1, 
+                   q12 = 0.05, q23 = 0.05, q34 = 0.03,
+                   b12 = 0.67, b23 = 0.67, b34 = 0.67){
+  
+  fu <- na*af/n
+  
+  # Assessment times
+  as_times <- floor(seq(af, fu, af))
+  
+  # Simulate numbers starting in each state
+  starts <- rep(1:3, times = rmultinom(1, n, c(0.15, 0.7, 0.15)))
+  trt <- rbinom(n, 1, 0.5)
+  
+  # Simulate transitions into each remaining state
+  enter2 <- (starts == 1)*rexp(n, q12*exp(log(b12)*trt))
+  enter3 <- (starts != 3)*(enter2 + rexp(n, q23*exp(log(b23)*trt)))
+  enter4 <- (starts != 3)*enter3 + rexp(n, q34*exp(log(b34)*trt))
+  
+  # Matrix of transition times into each state for each patient
+  enter_m <- matrix(c(enter2, enter3, enter4), ncol = 3)
+  
+  # Add time of "transitioning" to the end of the follow-up period
+  enter_m <- cbind(enter_m, pmax(enter_m[,3], fu))
+  # Cap all times at length of follow-up
+  enter_m <- pmin(enter_m, fu)
+  
+  # Ceiling all times, assuming assessment is at the start of the day and so
+  # any transitions after x.0 will be seen at (x+1).0
+  enter_m <- ceiling(enter_m)
+  
+  # Translate into number of days spent in each state
+  times_m <- cbind(enter_m[,1], 
+                   enter_m[,2] - enter_m[,1], 
+                   enter_m[,3] - enter_m[,2],
+                   enter_m[,4] - enter_m[,3])
+
+  y <- t(apply(times_m, 1, function(x) rep(1:4, times = x)))
+  
+  # Reshape to long
+  y <- melt(y)
+  colnames(y) <- c("id", "time", "state")
+  y$trt <- trt[y$id]
+  
+  # Keep observations on assessment times and order by patient
+  y <- y[y$time %in% as_times,]
+  y <- y[order(y$id),]
+  
+  Q <- rbind ( c(0, 0.1, 0, 0), 
+               c(0, 0, 0.1, 0), 
+               c(0, 0, 0, 0.1), 
+               c(0, 0, 0, 0) )
+
+  # If msm returns an error we take this as a non-significant result
+  suppressWarnings(fit <- try({
+    msm(state ~ time, subject=id, data = y, qmatrix = Q,
+             covariates = ~ trt)
+  }, silent = TRUE))
+  
+  if (class(fit) == "try-error") {
+    sig <- 0
+  } else {
+    # If not converged, will not return CIs
+    r1.67 <- hazard.msm(fit, cl = 1 - 0.0167)$trt
+    if(ncol(r1.67) != 3){
+      sig <- 0
+    } else {
+      sig1.67 <- sum(!(r1.67[,2] < 1 & r1.67[,3] > 1)) >= 1
+      
+      r2.5 <- hazard.msm(fit, cl = 1 - 0.025)$trt
+      sig2.5 <- sum(!(r2.5[,2] < 1 & r2.5[,3] > 1)) >= 2
+      
+      r5 <- hazard.msm(fit, cl = 1 - 0.05)$trt
+      sig5 <- sum(!(r5[,2] < 1 & r5[,3] > 1)) >= 3
+      
+      sig <- any(c(sig1.67, sig2.5, sig5))
+    }
+  }
+  
+  return(c(s = !sig))
+}
+
+det_P2 <- function(n = 500, na = 30000, af = 1, 
+                   q12 = 0.05, q23 = 0.05, q34 = 0.03,
+                   b12 = 0.67, b23 = 0.67, b34 = 0.67){
+  
+  fu <- na*af/n
+  
+  return(c(n = n, a = na, f = fu))
+}
+
+sim_P2()
+```
+
+```{r}
+design_space <- design_space(lower = c(100, 700, 1), 
+                             upper = c(2000, 120000, 14),
+                             sim = sim_P2)
+
+hypotheses <- hypotheses(values = matrix(c(0.05, 0.05, 0.03, 0.67, 0.67, 0.67), ncol = 1),
+                         hyp_names = c("alt"),
+                         sim = sim_P2)
+
+constraints <- constraints(name = c("a", "b"),
+                   out = c("s", "f"),
+                   hyp = c("alt", "alt"),
+                   nom = c(0.2, 200),
+                   delta =c(0.95, 1),
+                   binary = c(TRUE, FALSE))
+
+objectives <- objectives(name = c("n", "a"),
+                 out = c("n", "a"),
+                 hyp = c("alt"),
+                 weight = c(10, 1),
+                 binary = c(FALSE, FALSE))
+
+prob <- BOSSS_problem(sim_P2, design_space, hypotheses, objectives, constraints, det_func = det_P2)
+```
+
+
+```{r}
+size <- 30
+N <- 100
+
+sol <- BOSSS_solution(size, N, prob)
+
+print(sol) 
+plot(sol)
+```
+
+```{r}
+N <- 50
+for(i in 1:5) {
+  sol <- iterate(sol, prob, N) 
+}
+print(sol)
+plot(sol)
+```
+
+```{r}
+# Pick a specific design from the Pareto set
+design <- sol$p_set[nrow(sol$p_set),]
+
+one_d_plots(design, prob, sol)
+```
+
 
 ## Bayesian-frequentist hybrid multilevel model
 
