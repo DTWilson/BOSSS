@@ -113,7 +113,8 @@ diag_check_point <- function(design, problem, solution, N, current = NULL) {
 
     out <- solution$to_model$out[i]
     hyp <- solution$to_model$hyp[i]
-    index <- which(names(r) == paste0(out,"_m_",hyp))
+    name_to_find <- paste0(out, "_m_", hyp)
+    index <- which(sapply(names(r), function(x) grepl(name_to_find, x)))
     emp_mean <- r[index]
     emp_var <- r[index + 1]
 

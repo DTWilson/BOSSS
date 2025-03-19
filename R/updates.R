@@ -40,6 +40,15 @@ update_constraint <- function(problem, number = NULL, name = NULL,
   return(problem)
 }
 
+#' Extend the initial set of design evaluations
+#'
+#' @param problem BOSSS problem.
+#' @param solution current BOSSS solution.
+#' @param extra_N  number of extra simulations to run at exisiting designs.
+#' @param extra_points number of new design points to add.
+#'
+#' @return an updated BOSSS solution object
+#' @export
 extend_initial <- function(problem, solution, extra_N = 0, extra_points = 0)
 {
   if(extra_N == 0 & extra_points == 0){
