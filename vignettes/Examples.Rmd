@@ -19,8 +19,318 @@ knitr::opts_chunk$set(
 library(BOSSS)
 ```
 
+## Adaptive design
 
-## Neil's example
+```{r}
+#n is the total sample size
+#ninterim is the number of patients at the interim analysis (proportion)
+#ainterim is alpha at interim analysis (threshold p-value at interim analysis)
+#afinal is alpha at final analaysis (threshold p-value for 2nd and final analysis)
+#this means overall alpha for the trial is ainterim*afinal
+#
+#pcontshort is the probability of 1 day PoSH in the control arm
+#pexpshort is the probability of 1 day PoSH in the experimental arm
+#pcontlong is the probability of 6 month PoSH in the control arm
+#pexplong is the probability of 6 month PoSH in the experimental arm
+#p01_relative is s.t. p01_relative*pexplong = probability of having 
+# a long term outcome after no short term outcome
+
+#sim_trial <- function(design = c(300, 0.5, 0.4, 0.1),
+#                      hypothesis = c(0.25, 0.125, 0.1, 0.03, 0))
+sim_trial <- function(n = 300, ninterim = 0.5, ainterim = 0.4, afinal = 0.1,
+                      pcontshort = 0.25, pexpshort = 0.125,
+                      pcontlong = 0.1, pexplong = 0.03, p01_relative = 0)
+{
+  ninterim <- floor(ninterim*n)
+  
+  patients<-c(1:n) #create patients
+  
+  treat<- rep(c(1,2), ceiling(n/2))[1:n]
+  
+  n_cont <- sum(treat == 1)
+  
+  short<-rep(0,n) #short term outcome
+  long<-rep(0,n) #long term outcome
+  
+  data<-data.frame(patients,treat,short,long) #combine into dataset
+  
+  #generate result 1/0 for short term outcome. If short term outcome=0 then long term outcome=0
+  #If short term outcome=1 then long term outcome has probability pcontlong/pcontshort
+  #repeat for treatment=2
+  # for(i in 1:n){
+  #   if(treat[i]==1){
+  #     data$short[i]<-rbinom(1,1,pcontshort)
+  #     if(data$short[i]==0){
+  #       data$long[i]<-0
+  #     }
+  #     if(data$short[i]==1){
+  #       data$long[i]<-rbinom(1,1,pcontlong/pcontshort)
+  #     }
+  #   }
+  #   else{
+  #     data$short[i]<-rbinom(1,1,pexpshort)
+  #     if(data$short[i]==0){
+  #       data$long[i]<-0
+  #     }
+  #     if(data$short[i]==1){
+  #       data$long[i]<-rbinom(1,1,pexplong/pexpshort)
+  #     }
+  #   }
+  # }
+  
+  # An alternative and more general parametersation of the above model
+  # to allow different values of probability of a long outcome after
+  # no short outcome (previously hard coded as 0)
+
+  # probability vector p00, p01, p10, p11 in (short, long) form
+  # Control arm:
+  p01 <- p01_relative*pcontlong
+  p11 <- pcontlong - p01
+  p10 <- pcontshort - p11
+  # Simulate outcomes in multinomial format
+  cont_count <- rmultinom(1, n_cont, c((1 - p01 - p10 - p11), p01, p10, p11))
+  # Translate these to short and long outcomes
+  cont_out <- matrix(c(rep(c(0,0), cont_count[1]),
+                       rep(c(0,1), cont_count[2]),
+                       rep(c(1,0), cont_count[3]),
+                       rep(c(1,1), cont_count[4])), ncol = 2, byrow = TRUE)
+  # shuffle the list randomly
+  cont_out <- cont_out[sample(1:nrow(cont_out)),]
+  
+  # Experimental arm:
+    # Control arm:
+  p01 <- p01_relative*pexplong
+  p11 <- pexplong - p01
+  p10 <- pexpshort - p11
+  exp_count <- rmultinom(1, n - n_cont, c((1 - p01 - p10 - p11), p01, p10, p11))
+  exp_out <- matrix(c(rep(c(0,0), exp_count[1]),
+                       rep(c(0,1), exp_count[2]),
+                       rep(c(1,0), exp_count[3]),
+                       rep(c(1,1), exp_count[4])), ncol = 2, byrow = TRUE)
+  exp_out <- exp_out[sample(1:nrow(exp_out)),]
+  
+  data[data$treat == 1, c("short", "long")] <- cont_out
+  data[data$treat == 2, c("short", "long")] <- exp_out
+  
+  #perform chi squared test on short term outcome for 1st ninterim patients
+  data2<-data[1:ninterim,]
+  tbl<-table(data2$short,data2$treat)
+  test<- suppressWarnings(chisq.test(tbl)$p.value) #get p-value
+  
+  #if p<ainterim, perform chi squared test on long term outcome for all patients
+  if(test<ainterim){
+    tbl2<-table(data$long,data$treat)
+    test2<- suppressWarnings(chisq.test(tbl2)$p.value)
+  }
+  
+  #if p>ainterim, trial unsuccessful at interim and final analysis
+  #if p<ainterim, trial successful at interim:
+  #if p2>afinal, trial unsuccessful at final analysis
+  #if p2<afinal, trial successful at final analysis
+  if(test>=ainterim){
+    return(c(g = FALSE, s = TRUE, n = ninterim))
+  }
+  if(test<ainterim){
+    if(mean(data2[data2$treat == 1,"short"]) < mean(data2[data2$treat == 2,"short"])){
+      return(c(g = FALSE, s = TRUE, n = ninterim))
+    } else {
+      if(test2>afinal){
+        return(c(g = FALSE, s = TRUE, n = n))
+      }
+      if(test2<afinal){
+        return(c(g = TRUE, s = FALSE, n = n))
+      }
+    }
+  }
+}
+
+# For example,
+sim_trial()
+```
+
+
+```{r}
+# Problem specification
+design_space <- design_space(lower = c(300,0.05,0,0), 
+                             upper = c(700,0.5,1,1),
+                             sim = sim_trial)
+
+hypotheses <- hypotheses(values = matrix(c(0.25, 0.25, 0.1, 0.1, 0, 
+                                           0.25, 0.125, 0.1, 0.03, 0), ncol = 2),
+                         hyp_names = c("null", "alt"),
+                         sim = sim_trial)
+
+constraints <- constraints(name = c("a", "b"),
+                   out = c("g", "s"),
+                   hyp = c("null", "alt"),
+                   nom = c(0.1, 0.2),
+                   delta =c(0.95, 0.95))
+
+objectives <- objectives(name = c("TI", "TII", "EN"),
+                 out = c("g", "s", "n"),
+                 hyp = c("null", "alt", "null"),
+                 weight = c(100, 100, 1),
+                 binary = c(TRUE, TRUE, FALSE))
+
+prob <- BOSSS_problem(sim_trial, design_space, hypotheses, objectives, constraints)
+
+# Initialisation
+size <- 40
+N <- 500
+sol <- BOSSS_solution(size, N, prob)
+
+print(sol) 
+plot(sol)
+
+# Iterations
+N <- 500
+for(i in 1:10) {
+  sol <- iterate(sol, prob, N) 
+}
+print(sol)
+plot(sol)
+```
+
+## Bayesian-frequentist hybrid multilevel model
+
+Consider the design of a cluster randomised trial with $m$ clusters per arm, $n$ patients per cluster and a binary outcome for each patient. The trial will be analysed using a mixed effects model fitted using the `glmer` function from the `lme4` package, using a Wald test of the null hypothesis of no difference between arms at the 0.025 (one-sided) level.
+
+A design is defined by the choice of $m$ and $n$. We want to find designs which minimise the cost of sampling (a weighted combination of the number of clusters and the number of patients), and the overall probability of failure when marginalising over a joint prior distribution on the model parameters. A hypothesis, then, is not a set of point parameter values but a set of prior hyperparameter values.
+
+```{r}
+library(lme4)
+
+sim_bayes <- function(m = 20, n = 10,
+                      theta_0 = 0.2, eff_n_0 = 15,
+                      theta_1 = 0.3, eff_n_1 = 15,
+                      het_n_mean = 100, het_n_sd = 10) {
+  
+  library(lme4)
+  
+  # m = Number of clusters in each arm
+  # n = Number of patients per cluster
+  m <- round(m); n <- round(n)
+  
+  # thetas, eff_ns = Overall probability of outcome and effective prior 
+  # sample size in each arm
+  
+  # het_n is the effective sample size used in the beta prior
+  # of cluster rates - it encapsulates our degree of certainty
+  # about the between-cluster variance.
+  
+  het_n <- rgamma(1, shape = (het_n_mean/het_n_sd)^2, rate = het_n_mean/het_n_sd^2) + 2
+  
+  a_0 <- theta_0*eff_n_0; b_0 <- eff_n_0 - a_0
+  a_1 <- theta_1*eff_n_1; b_1 <- eff_n_1 - a_1
+  
+  # Simulate overall rate in control arm
+  r_0 <- rbeta(1, a_0, b_0)
+  # Simulate cluster rates in control arm
+  c_r_0 <- rbeta(m, r_0*het_n, het_n - r_0*het_n)
+  # Simulate patient outcomes in control arm
+  p_0 <- rbinom(m*n, 1, rep(c_r_0, each = n))
+  
+    # Simulate overall rate in exp arm
+  r_1 <- rbeta(1, a_1, b_1)
+  # Simulate cluster rates in exp arm
+  c_r_1 <- rbeta(m, r_1*het_n, het_n - r_1*het_n)
+  # Simulate patient outcomes in exp  arm
+  p_1 <- rbinom(m*n, 1, rep(c_r_1, each = n))
+  
+  # Create data frame
+  df <- data.frame(trt = rep(c(0, 1), each = n*m),
+                   c_id = rep(1:(2*m), each = n),
+                   y = c(p_0, p_1))
+  
+  fit <- suppressMessages(glmer(y ~ trt + (1 | c_id), family = binomial, data = df))
+  
+  est <- fixef(fit)[[2]]
+  se <- sqrt(diag(vcov(fit)))[[2]]
+  
+  s <- est/se < qnorm(0.975)
+  return(c(s = s))
+}
+
+sim_bayes()
+
+det_bayes <- function(m = 20, n = 10,
+                      theta_0 = 0.2, eff_n_0 = 50,
+                      theta_1 = 0.4, eff_n_1 = 50,
+                      het_n_mean = 100, het_n_sd = 10) {
+  
+  m <- round(m); n <- round(n)
+  
+  return(c(c = 2*m*n + 10*m))
+}
+
+det_bayes()
+```
+
+
+
+```{r}
+design_space <- design_space(lower = c(5, 5), 
+                             upper = c(50, 50),
+                             sim = sim_bayes)
+
+hypotheses <- hypotheses(values = matrix(c(0.2, 30, 0.4, 30, 100, 10), ncol = 1),
+                         hyp_names = c("alt"),
+                         sim = sim_bayes)
+
+objectives <- objectives(name = c("pow", "cost"),
+                 out = c("s", "c"),
+                 hyp = c("alt", "alt"),
+                 weight = c(100, 1),
+                 binary = c(TRUE, FALSE))
+
+problem <- BOSSS_problem(sim_bayes, design_space, hypotheses, objectives, det_func = det_bayes)
+
+size <- 50
+N <- 50
+
+solution <- BOSSS_solution(size, N, problem)
+
+print(solution)
+plot(solution)
+```
+
+
+```{r}
+for(i in 1:10) {
+  solution <- iterate(solution, problem, N) 
+}
+print(solution)
+plot(solution)
+```
+
+## Instrumental variable
+
+```{r}
+library(AER)
+
+sim_trial <- function(n=200, mu=0.3) {
+  
+  z <- rep(c(0,1), n)
+  u <- rnorm(2*n)
+  
+  lp_x <- 4*z - 2 + u
+  x <- rbinom(2*n, 1, exp(lp_x)/(exp(lp_x) + 1))
+  
+  y <- mu*x + u
+  
+  s <- summary(ivreg(y ~ x | z))$coefficients[2,4] > 0.05
+  
+  # Analytic sample size calc from Freeman 2013
+  (qnorm(0.025) + qnorm(0.2))^2*var(y - x*cov(y, z)/cov(x, z))/(var(x)*mu^2*cor(x, z)^2)
+  
+  return(c(s=s))
+}
+
+mean(replicate(10^4, sim_trial(n=734/2)))
+```
+
+
+## Neil's example (not run)
 
 ```{r}
 source("C:/Users/meddwilb/OneDrive - University of Leeds/Documents/Research/Projects/BOSSS example/PowCalc_Binary_DGM_5_freq.R")
@@ -130,59 +440,9 @@ objectives <- objectives(name = c("f1", "f2", "f3"),
                  binary = c(TRUE, TRUE, FALSE))
 ```
 
-We now put this simulation function and set of data frames together to create an object of class `BOSSS_problem`. 
-
-```{r}
-prob <- BOSSS_problem(sim_trial, design_space, hypotheses, constraints, objectives)
-```
-
-### Initialisation
 
 
-```{r}
-size <- 40
-N <- 50
-
-sol <- BOSSS_solution(size, N, prob)
-
-print(sol)
-plot(sol)
-```
-
-
-### Iteration
-
-```{r}
-for(i in 1:10) {
-  sol <- iterate(sol, prob, N) 
-}
-print(sol)
-plot(sol)
-```
-
-
-### Diagnostics
-
-```{r}
-# Pick a specific design from the Pareto set
-design <- sol$p_set[1,]
-
-plots <- one_d_plots(design, prob, sol)
-
-for(i in 1:length(plots)) {
-  print(plots[[i]])
-}
-```
-
-```{r}
-r <- check_point(design, prob, sol, N=50) 
-```
-
-```{r}
-r <- check_point(design, prob, sol, N=50, r) 
-```
-
-## Frequentist-Bayesian 
+## Frequentist-Bayesian (not run)
 
 Suppose we plan a Bayesian analysis of a trial comparing two therapies, where we expect a multiple membership structure. In particular, each of the $2n$ patients in the trial will receive six treatment sessions, but these sessions can be delivered by any of the $m$ therapists in their arm of the trial. Considering the number of therapists in each arm as fixed at $m = 10$, we want to know how many patients are required for the trial to have sufficient power whilst controlling the type I error rate (both being frequentist concepts).
 
