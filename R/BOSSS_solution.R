@@ -1,5 +1,5 @@
 # Constructor
-new_BOSSS_solution <- function(DoE, results, models, models_reint, p_front, p_set, to_model, problem=problem, clust=NULL){
+new_BOSSS_solution <- function(DoE, results, models, models_reint, p_front, p_set, to_model, size, problem=problem, clust=NULL){
 
   sol <- list(DoE = DoE,
               results = results,
@@ -8,6 +8,7 @@ new_BOSSS_solution <- function(DoE, results, models, models_reint, p_front, p_se
               p_front = p_front,
               p_set = p_set,
               to_model = to_model,
+              size = size,
               problem = problem,
               clust = clust)
 
@@ -57,7 +58,7 @@ BOSSS_solution <- function(size, N, problem){
 
     #r_rest <- t(parallel::parApply(clust, DoE[2:nrow(DoE),1:problem$dimen], 1, MC_estimates, hypotheses=problem$hypotheses, N=N, sim=problem$simulation))
     # Use a loop so we can easily identify which (if any) design variables casue
-    # the simulation to throw an error
+    # the simulation to throw an errorsol$re
 
     for(i in 2:nrow(DoE)){
       r_next <- try({
@@ -86,7 +87,6 @@ BOSSS_solution <- function(size, N, problem){
   # Put results into a (# hyps) x (# outputs) matrix
   n_hyp <- ncol(problem$hypotheses)
   out_dimen <- ncol(r)/(2*n_hyp)
-  out_names <- rep(rep(names(problem$simulation()), each=2), n_hyp)
   results <- vector(mode = "list", length = n_hyp*out_dimen)
   for(i in 1:n_hyp){
     for(j in 1:out_dimen){
@@ -113,7 +113,7 @@ BOSSS_solution <- function(size, N, problem){
                     problem$objectives[problem$objectives$stoch, c("out", "hyp")])
   to_model <- unique(to_model)
 
-  sol <- new_BOSSS_solution(DoE, results, models = NULL, models_reint = NULL, p_front = NULL, p_set = NULL, to_model, problem, clust=NULL)
+  sol <- new_BOSSS_solution(DoE, results, models = NULL, models_reint = NULL, p_front = NULL, p_set = NULL, to_model, size, problem, clust=NULL)
 
   sol <- update_solution(sol, problem)
   cat("Solution found\n")

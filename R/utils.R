@@ -80,7 +80,9 @@ MC_estimates <- function(design, hypotheses, N, sim, clust = NULL)
       # Use the output variable names to name the result columns
       names(results)[(length(results) -1)] <- paste0(output_names[j], "_m_", rownames(hypotheses)[i])
       names(results)[length(results)] <- paste0(output_names[j], "_v_", rownames(hypotheses)[i])
-
+      if(all(sims[j,] %in% 0:1)){
+        names(results)[(length(results) -1)] <- paste0(names(results)[(length(results) -1)], "_bin")
+      }
     }
 
   }
