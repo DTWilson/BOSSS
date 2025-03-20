@@ -596,7 +596,7 @@ objectives <- objectives(name = c("f1", "f2", "f3"),
 
 Suppose we plan a Bayesian analysis of a trial comparing two therapies, where we expect a multiple membership structure. In particular, each of the $2n$ patients in the trial will receive six treatment sessions, but these sessions can be delivered by any of the $m$ therapists in their arm of the trial. Considering the number of therapists in each arm as fixed at $m = 10$, we want to know how many patients are required for the trial to have sufficient power whilst controlling the type I error rate (both being frequentist concepts).
 
-We start with the simulation. To simulate the data we first construct the matrix $\mathbf{V}$ (`v_m` in the code) which has a row for every patient and a colum for every therapist, with $\mathbf{V}_{ij}$ denoting the proportion of patient $i$'s treatment delivered by therapist $j$, with $i = 1, \ldots , 2n$ and $j = 1, \ldots , 2m$. Denoting within-cluster variance by $\sigma_e^2$ (`var_e`), between-cluster variance by $\sigma_v^2$ (`var_v`), and the ICC by $\rho$ (`rho`), the outcome data can be simulated as
+We start with the simulation. To simulate the data we first construct the matrix $\mathbf{V}$ (`v_m` in the code) which has a row for every patient and a column for every therapist, with $\mathbf{V}_{ij}$ denoting the proportion of patient $i$'s treatment delivered by therapist $j$, with $i = 1, \ldots , 2n$ and $j = 1, \ldots , 2m$. Denoting within-cluster variance by $\sigma_e^2$ (`var_e`), between-cluster variance by $\sigma_v^2$ (`var_v`), and the ICC by $\rho$ (`rho`), the outcome data can be simulated as
 
 $$
 \mathbf{y} \sim N\left(E[\mathbf{y}], \sigma_e^2 \mathbf{I}_{2n} + \sigma_v^2 \mathbf{V} \mathbf{V}^T  \right).
