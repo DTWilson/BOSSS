@@ -244,8 +244,8 @@ sim_P2 <- function(n = 500, na = 30000, af = 1,
                    q12 = 0.05, q23 = 0.05, q34 = 0.03,
                    b12 = 0.67, b23 = 0.67, b34 = 0.67){
   
-  # n: number of patients in each arm
-  # na: total number of assessments in each arm
+  # n: total number of patients
+  # na: total number of assessments
   # af: assemment frequency
   # q12, q23, q34: transition probabilities
   # b12, b23, b34: treatment effects
@@ -264,7 +264,7 @@ sim_P2 <- function(n = 500, na = 30000, af = 1,
   # Simulate transitions into each remaining state
   enter2 <- (starts == 1)*rexp(n, q12*exp(log(b12)*trt))
   enter3 <- (starts != 3)*(enter2 + rexp(n, q23*exp(log(b23)*trt)))
-  enter4 <- (starts != 3)*enter3 + rexp(n, q34*exp(log(b34)*trt))
+  enter4 <- (starts != 3)*(enter3 + rexp(n, q34*exp(log(b34)*trt)))
   
   # Matrix of transition times into each state for each patient
   enter_m <- matrix(c(enter2, enter3, enter4), ncol = 3)
