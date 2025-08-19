@@ -21,7 +21,8 @@ Suggests:
     knitr,
     rmarkdown,
     dirmult,
-    here
+    here,
+    reshape2
 Imports:
     randtoolbox,
     DiceKriging,
