@@ -20,7 +20,8 @@ Suggests:
     testthat,
     knitr,
     rmarkdown,
-    dirmult
+    dirmult,
+    here
 Imports:
     randtoolbox,
     DiceKriging,
