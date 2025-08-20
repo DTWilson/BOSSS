@@ -130,10 +130,11 @@ BOSSS_problem <- function(sim_trial, design_space, hypotheses,
     test_out_det <- det_func()
   }
 
-  if(!("binary" %in% names(objectives))) objectives <- check_binary(objectives, test_out, test_out_det)
-  if(!is.null(constraints)) {
-    if(!("binary" %in% names(constraints))) constraints <- check_binary(constraints, test_out, test_out_det)
-  }
+  # To remove or replace:
+  #if(!("binary" %in% names(objectives))) objectives <- check_binary(objectives, test_out, test_out_det)
+  #if(!is.null(constraints)) {
+  #  if(!("binary" %in% names(constraints))) constraints <- check_binary(constraints, test_out, test_out_det)
+  #}
 
   prob <- new_BOSSS_problem(internal_sim_trial, design_space, hypotheses,
                                         objectives, constraints, internal_det_func)

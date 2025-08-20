@@ -10,6 +10,8 @@
 #' @return A list of plots of size (# models) x (# design variables).
 #' @export
 #'
+#' @importFrom rlang .data
+#'
 diag_plots <- function(design, problem, solution, type = "response") {
 
   plots <- vector(mode = "list", length = nrow(solution$to_model)*problem$dimen)
@@ -49,8 +51,8 @@ diag_plots <- function(design, problem, solution, type = "response") {
         df$l95 <- 1/(1 + exp(-df$l95))
       }
 
-      pl <- ggplot2::ggplot(df, ggplot2::aes(v, m)) +
-        ggplot2::geom_ribbon(ggplot2::aes(ymin = l95, ymax = u95), alpha = 0.2) +
+      pl <- ggplot2::ggplot(df, ggplot2::aes(.data$v, .data$m)) +
+        ggplot2::geom_ribbon(ggplot2::aes(ymin = .data$l95, ymax = .data$u95), alpha = 0.2) +
         ggplot2::geom_line() +
         ggplot2::ylab(paste("Mean outcome", solution$to_model$out[i], ", hypothesis", solution$to_model$hyp[i])) +
         ggplot2::xlab(names(design)[j]) +
