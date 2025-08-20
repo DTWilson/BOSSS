@@ -101,7 +101,8 @@ constraints <- constraints(name = c("tII"),
                    out = c("s"),
                    hyp = c("alt"),
                    nom = c(0.1),
-                   delta = c(0.95))
+                   delta = c(0.95),
+                   binary = c(TRUE))
 ```
 
 Each constraint must be tied to a hypothesis and an output. In this
@@ -118,7 +119,8 @@ Finally, we formalise the **objectives** we want to minimise:
 objectives <- objectives(name = c("f1", "f2"),
                  out = c("n", "k"),
                  hyp = c("alt", "alt"),
-                 weight = c(10, 1))
+                 weight = c(10, 1),
+                 binary = c(FALSE, FALSE))
 ```
 
 As with constraints, objectives are defined with respect to an output
@@ -147,9 +149,8 @@ N <- 500
 
 solution <- BOSSS_solution(size, N, problem)
 #> Checking simulation speed...
-#> Initialisation will take approximately 0.1271686 secs 
-#> Models fitted
-#> Initial solution found
+#> Initialisation will take approximately 1.28845 secs 
+#> Solution found
 print(solution)
 #>          n       k      f1      f2
 #> 9  346.875 41.1875 346.875 41.1875
@@ -167,9 +168,13 @@ for(i in 1:10){
 
 print(solution)
 #>           n        k       f1       f2
-#> 22 367.1897 37.66545 367.1897 37.66545
-#> 26 377.4575 35.39215 377.4575 35.39215
-#> 30 383.0935 34.26130 383.0935 34.26130
+#> 9  346.8750 41.18750 346.8750 41.18750
+#> 22 463.4133 27.21806 463.4133 27.21806
+#> 23 461.5007 28.53186 461.5007 28.53186
+#> 25 489.3151 26.83252 489.3151 26.83252
+#> 26 372.0352 32.67984 372.0352 32.67984
+#> 27 482.8497 27.05244 482.8497 27.05244
+#> 30 333.6548 45.37297 333.6548 45.37297
 ```
 
 We can also visualise our solution by plotting the Pareto front (that
@@ -191,7 +196,7 @@ Process surrogate model as a diagnostic.
 ``` r
 design <- solution$p_set[1,]
 
-r <- check_point(design, problem, solution, N=10^5) 
-#> Model 1 prediction interval: [0.082, 0.099]
-#> Model 1 empirical interval: [0.086, 0.089]
+r <- diag_check_point(design, problem, solution, N=10^5)
+#> Model 1 prediction interval: [0.07, 0.096]
+#> Model 1 empirical interval: [0.084, 0.088]
 ```

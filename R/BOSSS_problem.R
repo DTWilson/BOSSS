@@ -208,16 +208,3 @@ reformat_det <- function(det_func, design_space){
 
   int_det
 }
-
-# Check if a constraint (or objective?) output is binary
-check_binary <- function(df, test_out, test_out_det){
-  for(i in 1:nrow(df)){
-    x <- df$out[i]
-    if(x %in% names(test_out)){
-      df$binary[i] <- is.logical(test_out[names(test_out) == x])
-    } else {
-      df$binary[i] <- is.logical(test_out_det[names(test_out_det) == x])
-    }
-  }
-  df
-}

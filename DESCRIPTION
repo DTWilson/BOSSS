@@ -20,7 +20,9 @@ Suggests:
     testthat,
     knitr,
     rmarkdown,
-    dirmult
+    dirmult,
+    here,
+    reshape2
 Imports:
     randtoolbox,
     DiceKriging,

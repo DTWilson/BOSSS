@@ -104,9 +104,6 @@ BOSSS_solution <- function(size, N, problem){
     colnames(results) <- c(names(problem$simulation()), names(problem$det_func()))
   }
 
-  # Set the reference point
-  #ref <- ref_point(results, problem)
-
   # Find the hypothesis x output combinations which need to be modelled
   # (i.e. those forming stochastic constraints or objectives)
   to_model <- rbind(problem$constraints[problem$constraints$stoch, c("out", "hyp")],
@@ -204,15 +201,4 @@ plot.BOSSS_solution <- function(x, y, ...) {
     )
   }
   p
-}
-
-ref_point <- function(results, problem) {
-  ref <- NULL
-  for(i in 1:nrow(problem$objectives)){
-    f <- results[[problem$objectives[i, "hyp"], problem$objectives[i, "out"]]][,1]
-    if(problem$objectives[i, "binary"]) f <- exp(f)/(exp(f) + 1)
-    f <- f*problem$objectives$weight[i]
-    ref <- c(ref, max(f))
-  }
-  ref
 }

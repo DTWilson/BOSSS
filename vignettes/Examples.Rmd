@@ -15,11 +15,21 @@ knitr::opts_chunk$set(
 )
 ```
 
-```{r setup}
+```{r setup, eval=TRUE}
 library(BOSSS)
+library(here)
+library(reshape2)
 ```
 
+In this vignette we provide a few example applications of BOSSS.
+
 ## NIFTy
+
+The NIFTy trial was open to people having total thyroid surgery and aimed to find out whether using near-infrared fluorescence imaging could reduce the number of people whose parathyroid glands become damaged during thyroid surgery. It was an adaptive design with an interim analysis based on a (binary) short-term outcome, and a final analysis based on a (again, binary) long-term outcome.
+
+The design problem here is to choose the sample size and the decision rule for both the inerim and final analysis. Both analyses used a $\chi^2$ test, so the decision rule could be expressed as the nominal $\alpha$ used at each stage.
+
+This is the simulation function, exactly as provided by the trial statistician except for small adjustments to the arguments and return values to conform to the BOSSS standards.
 
 ```{r}
 #n is the total sample size
@@ -35,8 +45,6 @@ library(BOSSS)
 #p01_relative is s.t. p01_relative*pexplong = probability of having 
 # a long term outcome after no short term outcome
 
-#sim_trial <- function(design = c(300, 0.5, 0.4, 0.1),
-#                      hypothesis = c(0.25, 0.125, 0.1, 0.03, 0))
 sim_trial <- function(n = 300, ninterim = 0.5, ainterim = 0.4, afinal = 0.1,
                       pcontshort = 0.25, pexpshort = 0.125,
                       pcontlong = 0.1, pexplong = 0.03, p01_relative = 0)
@@ -147,7 +155,7 @@ sim_trial <- function(n = 300, ninterim = 0.5, ainterim = 0.4, afinal = 0.1,
 # For example,
 sim_trial()
 ```
-
+We can construct the BOSSS problem object as follows:
 
 ```{r}
 # Problem specification
@@ -160,11 +168,12 @@ hypotheses <- hypotheses(values = matrix(c(0.25, 0.25, 0.1, 0.1, 0,
                          hyp_names = c("null", "alt"),
                          sim = sim_trial)
 
-constraints <- constraints(name = c("a", "b"),
+constraints <- constraints(name = c("TI_con", "TII_con"),
                    out = c("g", "s"),
                    hyp = c("null", "alt"),
                    nom = c(0.1, 0.2),
-                   delta =c(0.95, 0.95))
+                   delta =c(0.95, 0.95),
+                   binary = c(TRUE, TRUE))
 
 objectives <- objectives(name = c("TI", "TII", "EN"),
                  out = c("g", "s", "n"),
@@ -173,39 +182,83 @@ objectives <- objectives(name = c("TI", "TII", "EN"),
                  binary = c(TRUE, TRUE, FALSE))
 
 prob <- BOSSS_problem(sim_trial, design_space, hypotheses, objectives, constraints)
+```
 
+This implies we are going to search over a space of sample sizes and decision criteria, looking for trial designs which simultaneously minimise the type I error rate (`"TI"`), type II error rate (`"TII"`) and expected sample size (`"EN"`), subject to the type I error rate being (probably) less than 0.1 (`"TI_con"`) and the type II error rate being (probably) less than 0.2 (`"TIIcon"`).
+
+Now we initialise to get an initial estimate of the Pareto front:
+
+```{r}
 # Initialisation
 size <- 40
 N <- 500
 sol <- BOSSS_solution(size, N, prob)
+```
 
+```{r, include = FALSE, eval=TRUE}
+# Save problems and initial solution
+p <- here("vignettes", "example_files", "NIFTy_prob.rds")
+#saveRDS(prob, p)
+prob <- readRDS(p)
+
+p <- here("vignettes", "example_files", "NIFTy_sol_init.rds")
+#saveRDS(sol, p)
+sol <- readRDS(p)
+```
+
+```{r, eval = TRUE}
 print(sol) 
 plot(sol)
+```
 
+Finally, we iterate a few times to improve that initial approximation:
+
+```{r}
 # Iterations
 N <- 500
-for(i in 1:10) {
+for(i in 1:20) {
   sol <- iterate(sol, prob, N) 
 }
+```
+
+```{r, include = FALSE, eval=TRUE}
+# Save problems and initial solution
+p <- here("vignettes", "example_files", "NIFTy_sol_final.rds")
+#saveRDS(sol, p)
+sol <- readRDS(p)
+```
+
+```{r, eval=TRUE}
 print(sol)
 plot(sol)
 ```
 
+## PRESSURE 2
 
-## PRESSURE2
+PRESSURE 2 was a trial comparing different mattresses in terms of their ability to prevent the development of pressure ulcers, with longitudinal data collected on each patient. Smith et al. (2021) suggested one way to analyse this data is through a multi-state model, and showed how simulation could be used to estimate the power of such an analysis. Herw we will extend this approach to searching for an optimal design.
+
+The simulation and deterministic functions are:
 
 ```{r}
-sim_P2 <- function(n = 500, na = 30000, af = 1, 
+sim_P2 <- function(n = 500, fu = 60, af = 1, 
                    q12 = 0.05, q23 = 0.05, q34 = 0.03,
                    b12 = 0.67, b23 = 0.67, b34 = 0.67){
   
-  fu <- na*af/n
+  # n: total number of patients
+  # fu: follow-up length (days)
+  # af: assemment frequency (days)
+  # q12, q23, q34: transition probabilities
+  # b12, b23, b34: treatment effects
+  
+  # Calculate length of follow up
+  na <- n*floor(fu/af)
   
   # Assessment times
   as_times <- floor(seq(af, fu, af))
   
   # Simulate numbers starting in each state
   starts <- rep(1:3, times = rmultinom(1, n, c(0.15, 0.7, 0.15)))
+  # Randomly allocate treatment
   trt <- rbinom(n, 1, 0.5)
   
   # Simulate transitions into each remaining state
@@ -221,8 +274,8 @@ sim_P2 <- function(n = 500, na = 30000, af = 1,
   # Cap all times at length of follow-up
   enter_m <- pmin(enter_m, fu)
   
-  # Ceiling all times, assuming assessment is at the start of the day and so
-  # any transitions after x.0 will be seen at (x+1).0
+  # Ceiling all times, assuming assessment is at the start of the day 
+  # and so any transitions after x.0 will be seen at (x+1).0
   enter_m <- ceiling(enter_m)
   
   # Translate into number of days spent in each state
@@ -261,26 +314,25 @@ sim_P2 <- function(n = 500, na = 30000, af = 1,
     if(ncol(r1.67) != 3){
       sig <- 0
     } else {
-      sig1.67 <- sum(!(r1.67[,2] < 1 & r1.67[,3] > 1)) >= 1
+      sig1.67 <- sum(!(r1.67[,2] < 1 & r1.67[,3] > 1)) >= 3
       
       r2.5 <- hazard.msm(fit, cl = 1 - 0.025)$trt
       sig2.5 <- sum(!(r2.5[,2] < 1 & r2.5[,3] > 1)) >= 2
       
       r5 <- hazard.msm(fit, cl = 1 - 0.05)$trt
-      sig5 <- sum(!(r5[,2] < 1 & r5[,3] > 1)) >= 3
+      sig5 <- sum(!(r5[,2] < 1 & r5[,3] > 1)) >= 1
       
       sig <- any(c(sig1.67, sig2.5, sig5))
     }
   }
-  
   return(c(s = !sig))
 }
 
-det_P2 <- function(n = 500, na = 30000, af = 1, 
+det_P2 <- function(n = 500, fu = 60, af = 1, 
                    q12 = 0.05, q23 = 0.05, q34 = 0.03,
                    b12 = 0.67, b23 = 0.67, b34 = 0.67){
   
-  fu <- na*af/n
+  na <- n*floor(fu/af)
   
   return(c(n = n, a = na, f = fu))
 }
@@ -288,27 +340,29 @@ det_P2 <- function(n = 500, na = 30000, af = 1,
 sim_P2()
 ```
 
+We now construct a problem to encode that we want to search over the total number of patients, total number of assessments and the assessment frequency. We are looking for designs which minimise the numbers of pattens and assessments, whilst constraining the type II error rate to be (probably) less than 0.2 and the follow-up length to be less than 200.
+
 ```{r}
-design_space <- design_space(lower = c(100, 700, 1), 
-                             upper = c(2000, 120000, 14),
+design_space <- design_space(lower = c(50, 10, 1), 
+                             upper = c(500, 60, 10),
                              sim = sim_P2)
 
 hypotheses <- hypotheses(values = matrix(c(0.05, 0.05, 0.03, 0.67, 0.67, 0.67), ncol = 1),
                          hyp_names = c("alt"),
                          sim = sim_P2)
 
-constraints <- constraints(name = c("a", "b"),
-                   out = c("s", "f"),
-                   hyp = c("alt", "alt"),
-                   nom = c(0.2, 200),
-                   delta =c(0.95, 1),
-                   binary = c(TRUE, FALSE))
+constraints <- constraints(name = c("a"),
+                   out = c("s"),
+                   hyp = c("alt"),
+                   nom = c(0.2),
+                   delta =c(0.95),
+                   binary = c(TRUE))
 
-objectives <- objectives(name = c("n", "a"),
-                 out = c("n", "a"),
-                 hyp = c("alt"),
-                 weight = c(10, 1),
-                 binary = c(FALSE, FALSE))
+objectives <- objectives(name = c("n", "a", "f"),
+                 out = c("n", "a", "f"),
+                 hyp = c("alt", "alt", "alt"),
+                 weight = c(10, 1, 10),
+                 binary = c(FALSE, FALSE, FALSE))
 
 prob <- BOSSS_problem(sim_P2, design_space, hypotheses, objectives, constraints, det_func = det_P2)
 ```
@@ -316,30 +370,58 @@ prob <- BOSSS_problem(sim_P2, design_space, hypotheses, objectives, constraints,
 
 ```{r}
 size <- 30
-N <- 100
+N <- 500
 
 sol <- BOSSS_solution(size, N, prob)
+```
 
+
+```{r, include = FALSE, eval=TRUE}
+# Save problems and initial solution
+p <- here("vignettes", "example_files", "P2_prob.rds")
+#saveRDS(prob, p)
+prob <- readRDS(p)
+
+p <- here("vignettes", "example_files", "P2_sol_init.rds")
+#saveRDS(sol, p)
+sol <- readRDS(p)
+```
+
+```{r, eval=TRUE}
 print(sol) 
 plot(sol)
 ```
 
 ```{r}
-N <- 50
-for(i in 1:5) {
+N <- 500
+for(i in 1:20) {
   sol <- iterate(sol, prob, N) 
 }
+```
+
+```{r, include = FALSE, eval=TRUE}
+# Save problems and initial solution
+p <- here("vignettes", "example_files", "P2_sol_final.rds")
+#saveRDS(sol, p)
+sol <- readRDS(p)
+```
+
+```{r, eval = TRUE}
 print(sol)
 plot(sol)
 ```
 
-```{r}
-# Pick a specific design from the Pareto set
-design <- sol$p_set[nrow(sol$p_set),]
+## References
 
-one_d_plots(design, prob, sol)
+- Croft J, Ainsworth G, Corrigan N, et al. NIFTy: near-infrared fluorescence (NIRF) imaging to prevent postsurgical hypoparathyroidism (PoSH) after thyroid surgery—a phase II/III pragmatic, multicentre randomised controlled trial protocol in patients undergoing a total or completion thyroidectomy. _BMJ Open_, 15:e092422 (2025). https://doi.org/10.1136/bmjopen-2024-092422
+
+- Nixon, Jane et al. Pressure Relieving Support Surfaces for Pressure Ulcer Prevention (PRESSURE 2): Clinical and Health Economic Results of a Randomised Controlled Trial. _eClinicalMedicine_, Volume 14, 42 - 52 (2019)
+
+- Smith IL, Nixon JE, Sharples L. Power and sample size for multistate model analysis of longitudinal discrete outcomes in disease prevention trials. _Statistics in Medicine_, 40: 1960–1971 (2021). https://doi.org/10.1002/sim.8882
+
+```{r, eval=TRUE}
+knitr::knit_exit()
 ```
-
 
 ## Bayesian-frequentist hybrid multilevel model
 
@@ -596,7 +678,7 @@ objectives <- objectives(name = c("f1", "f2", "f3"),
 
 Suppose we plan a Bayesian analysis of a trial comparing two therapies, where we expect a multiple membership structure. In particular, each of the $2n$ patients in the trial will receive six treatment sessions, but these sessions can be delivered by any of the $m$ therapists in their arm of the trial. Considering the number of therapists in each arm as fixed at $m = 10$, we want to know how many patients are required for the trial to have sufficient power whilst controlling the type I error rate (both being frequentist concepts).
 
-We start with the simulation. To simulate the data we first construct the matrix $\mathbf{V}$ (`v_m` in the code) which has a row for every patient and a colum for every therapist, with $\mathbf{V}_{ij}$ denoting the proportion of patient $i$'s treatment delivered by therapist $j$, with $i = 1, \ldots , 2n$ and $j = 1, \ldots , 2m$. Denoting within-cluster variance by $\sigma_e^2$ (`var_e`), between-cluster variance by $\sigma_v^2$ (`var_v`), and the ICC by $\rho$ (`rho`), the outcome data can be simulated as
+We start with the simulation. To simulate the data we first construct the matrix $\mathbf{V}$ (`v_m` in the code) which has a row for every patient and a column for every therapist, with $\mathbf{V}_{ij}$ denoting the proportion of patient $i$'s treatment delivered by therapist $j$, with $i = 1, \ldots , 2n$ and $j = 1, \ldots , 2m$. Denoting within-cluster variance by $\sigma_e^2$ (`var_e`), between-cluster variance by $\sigma_v^2$ (`var_v`), and the ICC by $\rho$ (`rho`), the outcome data can be simulated as
 
 $$
 \mathbf{y} \sim N\left(E[\mathbf{y}], \sigma_e^2 \mathbf{I}_{2n} + \sigma_v^2 \mathbf{V} \mathbf{V}^T  \right).
