@@ -31,5 +31,6 @@ Imports:
     RcppDE,
     emoa,
     parallel,
-    methods
+    methods,
+    rlang
 VignetteBuilder: knitr

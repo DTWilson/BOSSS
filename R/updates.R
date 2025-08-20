@@ -126,12 +126,14 @@ extend_initial <- function(problem, solution, extra_N = 0, extra_points = 0)
 
     r_extra <- NULL
 
+    # Evaluate every new point
     for(i in 1:nrow(extra_DoE)){
       r_extra <- rbind(r_extra, MC_estimates(extra_DoE[i,1:problem$dimen], hypotheses=problem$hypotheses, N=new_N, sim=problem$simulation))
     }
 
     if(is.null(problem$det_func)) {
-      r_extra <- r_sim
+      # Do nothing
+      #r_extra <- r_sim
     } else {
       r_det <- t(apply(extra_DoE[,1:problem$dimen], 1, det_values, hypotheses=problem$hypotheses, det_func=problem$det_func))
       r_extra <- cbind(r_extra, r_det)

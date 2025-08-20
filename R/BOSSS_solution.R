@@ -44,7 +44,7 @@ BOSSS_solution <- function(size, N, problem){
     MC_estimates(DoE[1,1:problem$dimen], hypotheses=problem$hypotheses, N=N, sim=problem$simulation)
   }, silent = TRUE)
 
-  if (class(r_sim) == "try-error") {
+  if (inherits(r_sim, "try-error")) {
     r_sim
     stop(cat("Simulation threw an error at design ", as.numeric(DoE[1,1:problem$dimen])))
   }
@@ -65,7 +65,7 @@ BOSSS_solution <- function(size, N, problem){
         MC_estimates(DoE[i,1:problem$dimen], hypotheses=problem$hypotheses, N=N, sim=problem$simulation)
       }, silent = TRUE)
 
-      if (class(r_next) == "try-error") {
+      if (inherits(r_next, "try-error")) {
         r_next
         stop(cat("Simulation threw an error at design ", as.numeric(DoE[i,1:problem$dimen])))
       }
@@ -151,7 +151,59 @@ update_solution <- function(solution, problem)
 #'
 #'
 print.BOSSS_solution <- function(x, ...) {
-  x$p_set
+  # First, print the Pareto set - i.e. the design variable values
+  cat("Design variables for the Pareto set: \n\n")
+  print(as.matrix(x$p_set[,1:x$problem$dimen]))
+  sol_nums <- as.numeric(rownames(x$p_set))
+
+  # Next, the corresponding objective values
+  objectives <- x$problem$objectives
+  obj_df <- NULL
+  labs <- NULL
+  for(i in 1:nrow(objectives)){
+    out <- objectives[i, "out"]
+    hyp <- objectives[i, "hyp"]
+    lab <- paste0(out, ", ", hyp, " (mean)")
+    labs <- c(labs, lab)
+
+    r <- x$results[[hyp, out]]
+    obj_df <- cbind(obj_df, r[sol_nums, 1])
+    colnames(obj_df) <- labs
+    if(objectives[i, "stoch"]) {
+      lab <- paste0(out, ", ", hyp, " (var)")
+      labs <- c(labs, lab)
+      obj_df <- cbind(obj_df, r[sol_nums, 2])
+      colnames(obj_df) <- labs
+    }
+  }
+  rownames(obj_df) <- sol_nums
+  cat("\nCorresponding objective function values... \n\n")
+  print(obj_df)
+
+  # Finally, the constraint values
+  constraints <- x$problem$constraints
+  con_df <- NULL
+  labs <- NULL
+  for(i in 1:nrow(constraints)){
+    out <- constraints[i, "out"]
+    hyp <- constraints[i, "hyp"]
+    lab <- paste0(out, ", ", hyp, " (mean)")
+    labs <- c(labs, lab)
+
+    r <- x$results[[hyp, out]]
+    con_df <- cbind(con_df, r[sol_nums, 1])
+    colnames(con_df) <- labs
+    if(constraints[i, "stoch"]) {
+      lab <- paste0(out, ", ", hyp, " (var)")
+      labs <- c(labs, lab)
+      con_df <- cbind(con_df, r[sol_nums, 2])
+      colnames(con_df) <- labs
+    }
+  }
+  rownames(con_df) <- sol_nums
+
+  cat("\n...and constraint function values:\n\n")
+  print(con_df)
 }
 
 
@@ -164,12 +216,13 @@ print.BOSSS_solution <- function(x, ...) {
 #' @return A ggplot object two- and three-dimension Pareto fronts.
 #' @export
 #'
+#' @importFrom rlang .data
 #'
 plot.BOSSS_solution <- function(x, y, ...) {
 
   n_obj <- (ncol(x$p_front) - 1)
   df <- data.frame(x$p_set)
-  obj_names <- names(df)[(ncol(df) - n_obj + 1):ncol(df)]
+  obj_names <- x$problem$objectives$name
   names(df)[(ncol(df) - n_obj + 1):ncol(df)] <- letters[1:n_obj]
   df$label <- rownames(df)
 
@@ -180,9 +233,9 @@ plot.BOSSS_solution <- function(x, y, ...) {
     )
   }
   if(n_obj == 3){
-    p <- ggplot2::ggplot(df, ggplot2::aes(x=a, y=b, )) +
-      ggplot2::geom_point(ggplot2::aes(colour=c)) +
-      ggplot2::geom_text(ggplot2::aes(label = label), hjust=-0.5, vjust=-0.5) +
+    p <- ggplot2::ggplot(df, ggplot2::aes(x=.data$a, y=.data$b)) +
+      ggplot2::geom_point(ggplot2::aes(colour=.data$c)) +
+      ggplot2::geom_text(ggplot2::aes(label = .data$label), hjust=-0.5, vjust=-0.5) +
       ggplot2::xlab(obj_names[1]) + ggplot2::ylab(obj_names[2]) +
       #viridis::scale_color_viridis(name=obj_names[3]) +
       ggplot2::scale_colour_gradient(name = obj_names[3],
@@ -190,7 +243,7 @@ plot.BOSSS_solution <- function(x, y, ...) {
       ggplot2::theme_minimal()
 
   } else if(n_obj == 2) {
-    p <- ggplot2::ggplot(df, ggplot2::aes(x=a, y=b)) + ggplot2::geom_point() +
+    p <- ggplot2::ggplot(df, ggplot2::aes(x=.data$a, y=.data$b)) + ggplot2::geom_point() +
       ggplot2::xlab(obj_names[1]) + ggplot2::ylab(obj_names[2]) +
       ggplot2::theme_minimal()
 
