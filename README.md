@@ -1,7 +1,7 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# BOSSS
+# BOSSS <img src="man/figures/logo.png" align="right" height="139" alt="" />
 
 <!-- badges: start -->
 
@@ -149,12 +149,26 @@ N <- 500
 
 solution <- BOSSS_solution(size, N, problem)
 #> Checking simulation speed...
-#> Initialisation will take approximately 1.28845 secs 
+#> Initialisation will take approximately 1.365187 secs 
 #> Solution found
 print(solution)
-#>          n       k      f1      f2
-#> 9  346.875 41.1875 346.875 41.1875
-#> 13 408.125 35.3125 408.125 35.3125
+#> Design variables for the Pareto set: 
+#> 
+#>          n       k
+#> 9  346.875 41.1875
+#> 13 408.125 35.3125
+#> 
+#> Corresponding objective function values... 
+#> 
+#>    n, alt (mean) k, alt (mean)
+#> 9        346.875       41.1875
+#> 13       408.125       35.3125
+#> 
+#> ...and constraint function values:
+#> 
+#>    s, alt (mean) s, alt (var)
+#> 9      -2.493162   0.02834157
+#> 13     -2.895870   0.04027675
 ```
 
 To improve the solution we can **iterate** as many times as we like,
@@ -167,14 +181,32 @@ for(i in 1:10){
 }
 
 print(solution)
-#>           n        k       f1       f2
-#> 9  346.8750 41.18750 346.8750 41.18750
-#> 22 463.4133 27.21806 463.4133 27.21806
-#> 23 461.5007 28.53186 461.5007 28.53186
-#> 25 489.3151 26.83252 489.3151 26.83252
-#> 26 372.0352 32.67984 372.0352 32.67984
-#> 27 482.8497 27.05244 482.8497 27.05244
-#> 30 333.6548 45.37297 333.6548 45.37297
+#> Design variables for the Pareto set: 
+#> 
+#>           n        k
+#> 9  346.8750 41.18750
+#> 22 453.4098 29.56320
+#> 23 499.9935 26.08903
+#> 28 331.7451 43.80545
+#> 29 387.7225 33.26920
+#> 
+#> Corresponding objective function values... 
+#> 
+#>    n, alt (mean) k, alt (mean)
+#> 9       346.8750      41.18750
+#> 22      453.4098      29.56320
+#> 23      499.9935      26.08903
+#> 28      331.7451      43.80545
+#> 29      387.7225      33.26920
+#> 
+#> ...and constraint function values:
+#> 
+#>    s, alt (mean) s, alt (var)
+#> 9      -2.493162   0.02834157
+#> 22     -2.644208   0.03226089
+#> 23     -2.465155   0.02767846
+#> 28     -2.309640   0.02432073
+#> 29     -2.261940   0.02339297
 ```
 
 We can also visualise our solution by plotting the Pareto front (that
@@ -197,6 +229,6 @@ Process surrogate model as a diagnostic.
 design <- solution$p_set[1,]
 
 r <- diag_check_point(design, problem, solution, N=10^5)
-#> Model 1 prediction interval: [0.07, 0.096]
-#> Model 1 empirical interval: [0.084, 0.088]
+#> Model 1 prediction interval: [0.074, 0.095]
+#> Model 1 empirical interval: [0.084, 0.087]
 ```
