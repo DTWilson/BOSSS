@@ -29,7 +29,7 @@ Every application of BOSSS follows the same set of steps:
 3. Perform a number of iterations, each one updating and (hopefully) improving the `BOSSS_solution` object;
 4. Select a final design and run some diagnostics to check it is valid.
 
-## Adaptive design
+We will work through these steps here for an example problem: designing a cluster randomised trial. For more illustrations, see the "Examples" article.
 
 ### Problem
 

@@ -32,9 +32,19 @@ devtools::install_github("DTWilson/BOSSS")
 
 ## Example
 
-Suppose we want to design a cluster randomised RCT which will compare the means of our two groups via a t test. Specifically, we want to find the smallest trial which have a power of 90%, where power must be estimated numerically using simulation. To solve this problem using BOSSS we start by writing two functions:
+Suppose we want to design a cluster randomised RCT which will compare the mean outcomes of two groups. We need to choose the per-arm sample size $n$ and the per-arm number of clusters $k$, aiming to minimise both of these quantities whilst ensuring the trial has 90% power to detect the target difference.
 
-```{r}
+Suppose that there is no analytic power function for this problem, and that we need to use simulation to estimate power instead. This can make the search process very slow and unwieldy. BOSSS helps by using Bayesian optimisation to carefully choose a design to evaluate at each iteration, aiming for those that will give the most improvement over the best designs found so far.
+
+Key features:
+
+- Trial design spaces can have several dimensions.
+- Multiple objectives are handled in a non-scalarising way.
+- Design optimisation problems can be constrained by deterministic or stochastic funstion.
+
+The output of applying BOSSS to this problem is a set solutions which satisfy the power constraint and offer a range of trade-offs between the different objectives we are minimising (here, $n$ and $k$). For example, consider the following `BOSSS_solution` object which resulted from applying the BOSSS algorithm:
+
+```{r, include = FALSE, eval = FALSE}
 library(BOSSS)
 
 sim_trial <- function(n=200, k=10, mu=0.3, var_u=0.05, var_e=0.95){
@@ -54,98 +64,56 @@ sim_trial <- function(n=200, k=10, mu=0.3, var_u=0.05, var_e=0.95){
 det_func <- function(n=200, k=10, mu=0.3, var_u=0.05, var_e=0.95){
   return(c(n=n, k=k))
 }
-```
 
-The first function is a simulation, returning a binary output indicating if the t test failed to return a significant result. The second function is deterministic, returning the per-arm sample size and per-arm number of clusters. There are some conventions which these functions must adhere to:
-
-i The argument lists of the two functions must be identical;
-ii Arguments should start with all design variables, followed by all model parameters;
-iii Design variables must be continuous;
-iv Outputs must be a named vectors;
-v The simulation function is mandatory, but the determinsitc function is optional.
-
-In this example, the design variables are the total per-arm sample size `n` and the number of clusters in each arm, `k`. We put ranges on these to define our **design space**:
-
-```{r}
 design_space <- design_space(lower = c(10, 3),
                              upper = c(500, 50),
                              sim = sim_trial)
-```
 
-We have decided to search over a space of trial designs with a total per-arm sample size between 10 and 500, and a per-arm number of clusters from 3 to 50. Note that we are extracting the names of our design variables from the simulation function. Alternatively, we can specify them manually using the `names` argument.
-
-The model parameters are the mean difference `mu`, the between-cluster variance `var_u`, and the within-cluster variance `var_e`. We choose which parameter values we will be simulating under and call these sets **hypotheses**:
-
-```{r}
 hypotheses <- hypotheses(values = matrix(c(0.3, 0.05, 0.95), ncol = 1),
                          hyp_names = c("alt"),
                          sim = sim_trial)
-```
 
-To estimate power we will simulate under a single alternative hypothesis. We want to impose a nominal level on this; in particular, we want the type II error rate to be less than 0.1.  We specify this as a **constraint**:
-
-```{r}
 constraints <- constraints(name = c("tII"),
                    out = c("s"),
                    hyp = c("alt"),
                    nom = c(0.1),
                    delta = c(0.95),
                    binary = c(TRUE))
-```
 
-Each constraint must be tied to a hypothesis and an output. In this case, the output is `s`, which was defined in the simulation function as a binary event indicating if the trial failed to return a statistically significant result. The `delta` part of a constraint is the tolerance we allow for it; in this case, we consider the constraint satisfied if there is at least 0.95 chance that the type II error rate is less than 0.1.
-
-Finally, we formalise the **objectives** we want to minimise:
-
-```{r}
-objectives <- objectives(name = c("f1", "f2"),
+objectives <- objectives(name = c("n", "k"),
                  out = c("n", "k"),
                  hyp = c("alt", "alt"),
                  weight = c(10, 1),
                  binary = c(FALSE, FALSE))
-```
 
-As with constraints, objectives are defined with respect to an output and a hypothesis. In this case, we wish to minimise both the total sample size and the number of clusters, both of which are outputs of the deterministic function. Although BOSSS uses a non-scalarising approach to solving multi-objective problems, we nevertheless require a relative weighting for use in the internal optimisation process. Here, we specify that minimising the number of clusters is around 10 times as valuable as minimising the number of participant. 
-
-Together, these are the ingredients of a **problem** object:
-
-```{r}
 problem <- BOSSS_problem(sim_trial, design_space, hypotheses, objectives, constraints, det_func = det_func)
-```
 
-With our problem specified, we generate a **solution** by evaluating a first set of 20 possible designs, evenly spread over our design space, using `N` simulations each time. Printing the result will show us the estimated Pareto set (that is, the set of non-dominated designs):
-
-```{r}
 size <- 20
 N <- 500
 
 solution <- BOSSS_solution(size, N, problem)
-print(solution)
-```
 
-
-To improve the solution we can **iterate** as many times as we like, where each iteration will try to select the design which will give us the biggest improvement and evaluate it.
-
-```{r}
-for(i in 1:10){
+for(i in 1:20){
   solution <- iterate(solution, problem, N)
 }
-
-print(solution)
 ```
 
+```{r, include = FALSE}
+library(here)
+p <- here("vignettes", "example_files", "README_sol.rds")
+#saveRDS(solution, p)
+solution <- readRDS(p)
+```
 
-We can also visualise our solution by plotting the Pareto front (that is, the objective values of the solutions in the Pareto set):
+```{r}
+print(solution)
+```
+We have eight designs to choose from. For example, the final design in the set involves 419 patients and 32 clusters in each arm. The estimated power for that design is $1 - 1/(1 + \exp(2.38)) = 0.92$.
+
+We can visualise the trade-offs between the two objectives by plotting the solution:
 
 ```{r}
 plot(solution)
 ```
 
-After we have finished iterating, we can then select a specific design from the estimated Pareto set. We may wish to double check the operating characteristics of the design using a large number of simulations. We can do this via BOSSS, which will print both the empirical 95% confidence interval and the corresponding interval given by the Gaussian Process surrogate model as a diagnostic.
-
-```{r}
-design <- solution$p_set[1,]
-
-r <- diag_check_point(design, problem, solution, N=10^5)
-```
-
+For a detailed walkthrough of how to specify and solve a problems with `BOSSS`, see the "Getting started" tab. Other applications are collected in the "Examples" article. 
