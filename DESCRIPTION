@@ -34,3 +34,4 @@ Imports:
     methods,
     rlang
 VignetteBuilder: knitr
+URL: https://dtwilson.github.io/BOSSS/
