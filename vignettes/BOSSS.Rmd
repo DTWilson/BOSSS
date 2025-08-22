@@ -33,21 +33,21 @@ We will work through these steps here for an example problem: designing a cluste
 
 ### Problem
 
-The first ingredient of a BOSSS problem is the simulation function. The arguments of this function must first specify the _design variables_  which we want to vary in our problem, followed by the _model parameters_. In this example we have two design variables representing the number of clusters in each arm, and the number of participants in each arm. The model parameters are the mean difference in outcome between the control and experimental arms (`beta_1`), the within-cluster standard deviation (`sig_w`), and the between-cluster standard deviation (`sig_b`). Note that all of these inputs require some defaults to be provided.
+The first ingredient of a BOSSS problem is the simulation function. The arguments of this function must first specify the _design variables_  which we want to vary in our problem, followed by the _model parameters_. In this example we have two design variables representing the number of clusters in each arm, and the number of participants in each arm. The model parameters are the mean difference in outcome between the control and experimental arms (`beta_1`), the within-cluster variance (`var_e`), and the between-cluster variance (`var_u`). Note that all of these inputs require some defaults to be provided.
 
 The other element of interface the simulation function must conform to is in its return value, which should be a named vector of the quantities who's mean values we want to estimate using the Monte Carlo method. Here, we have one such quantity: a boolean indicator of a negative decision, `s`.
 
 ```{r}
-sim_cRCT <- function(k = 10, n = 200, beta_1 = 0.3, sig_w = 0.975, sig_b = 0.224){
-  k <- floor(k); n <- floor(n)
-  u_c <- rnorm(k, sd = sig_b)
-  cluster_size <-  rep(n%/%k, k) + c(rep(1, n%%k), rep(0, k - n%%k))
-  y_c <- rep(u_c, times = cluster_size) + rnorm(n, 0, sig_w)
+sim_cRCT <- function(m = 10, n = 20, 
+                     beta_1 = 0.3, var_e = 0.95, var_u = 0.05){
+  
+  m <- floor(m); n <- floor(n)
+  
+  x <- rep(c(0,1), each = m) 
+  y <- rnorm(2*m, 0, sqrt(var_u + var_e/n))
+  y <- y + x*beta_1
 
-  u_i <- rnorm(k, sd = sig_b)
-  y_i <- beta_1 + rep(u_i, times = cluster_size) + rnorm(n, 0, sig_w)
-
-  s <- t.test(y_i, y_c, alternative = "greater")$p.value > 0.05
+  s <- t.test(y[x==1], y[x==0], alternative = "greater")$p.value > 0.025
 
   return(c(s = s))
 }
@@ -55,19 +55,21 @@ sim_cRCT <- function(k = 10, n = 200, beta_1 = 0.3, sig_w = 0.975, sig_b = 0.224
 # For example,
 sim_cRCT()
 ```
-In our problem we are not just interested in the expected value of `s`; we also want to minimise the number of clusters and the number of participants, and to put an upper limit on the number of participants per cluster. Since these are fixed quantities given any design, we evaluate them in a separate deterministic function. This should conform to the same principles as the simulation function, with the same inputs, but allowing for different named outputs. Here, the outputs are just `k`, `n`, and `m = n/k`:
+In our problem we are not just interested in the expected value of `s`; we also want to minimise the number of clusters and the number of participants, and to put an upper limit on the number of participants per cluster. Since these are fixed quantities given any design, we evaluate them in a separate deterministic function. This should conform to the same principles as the simulation function, with the same inputs, but allowing for different named outputs. Here, the outputs are just `m`, and `N = n*m`:
 
 ```{r}
-det_cRCT <- function(k = 10, n = 200, beta_1 = 0.3, sig_w = 0.975, sig_b = 0.224){
-  return(c(k = k, n = n, m = n/k))
-}
+det_cRCT <- function(m = 10, n = 5, 
+                     beta_1 = 0.3, var_e = 0.95, var_u = 0.05)
+{
+  return(c(m = m, N = n*m))
+}  
 ```
 
 Next, we need to note the ranges of the design variables which we plan to search over. We use the `design_space()` function for this, specifying the lower and upper limits of the design variables in the order they appear as simulation function arguments:
 
 ```{r}
-design_space <- design_space(lower = c(10, 100), 
-                             upper = c(100, 500),
+design_space <- design_space(lower = c(5, 5), 
+                             upper = c(50, 40),
                              sim = sim_cRCT)
 
 design_space
@@ -78,31 +80,31 @@ Note that the function automatically retrieves the names of the design variables
 We also need to specify the hypotheses which we're planning to simulate under, using the `hypotheses()` function, again specifying in the order that parameters appear as simulation function argument. We only need one hypothesis here, the alternative, since we will be estimating the type II error rate.
 
 ```{r}
-hypotheses <- hypotheses(values = matrix(c(0.3, sqrt(0.95), sqrt(0.05)), ncol = 1),
+hypotheses <- hypotheses(values = matrix(c(0.3, 0.95, 0.05), ncol = 1),
                          hyp_names = c("alt"),
                          sim = sim_cRCT)
 
 hypotheses
 ```
 
-Constraints should be specified using the `constraints` function. Each constraint should be named, and should be defined with respect to a specific output and a specific hypothesis. It should have a nominal maximum value, and a probability `delta` used to judge if it is satisfied. Here, our fist constraint is that the mean of the simulation output (i.e. the probability of a negative result) under the `alt` hypothesis should be less than or equal to 0.2 with a probability of at least 0.95. The second constraint is that the cluster size `m` under the `alt` hypothesis must be less than or equal to 10 - note that we provide a value for `delta`, but this isn't used since the constraint is deterministic. Finally, we note whether the constraint output is binary or otherwise.
+Constraints should be specified using the `constraints` function. Each constraint should be named, and should be defined with respect to a specific output and a specific hypothesis. It should have a nominal maximum value, and a probability `delta` used to judge if it is satisfied. Here, our constraint is that the mean of the simulation output (i.e. the probability of a negative result) under the `alt` hypothesis should be less than or equal to 0.2 with a probability of at least 0.95. Finally, we note whether the constraint output is binary or otherwise.
 
 ```{r}
-constraints <- constraints(name = c("con_tII", "con_m"),
-                   out = c("s", "m"),
-                   hyp = c("alt", "alt"),
-                   nom = c(0.2, 10),
-                   delta = c(0.95, 1),
-                   binary = c(TRUE, FALSE))
+constraints <- constraints(name = c("con_tII"),
+                   out = c("s"),
+                   hyp = c("alt"),
+                   nom = c(0.2),
+                   delta = c(0.95),
+                   binary = c(TRUE))
 
 constraints
 ```
 
-The final ingredient of the problem is the set of objectives we want to minimise. Similar to constraints, objectives are tied to a specific output and hypothesis. We also specify weights for each objective which help guide the internal optimisation process, and note whether or not the output for each objective is binary or continuous. For example, here we want to minimise both the number of patients `n` and the number of clusters `k`, with the latter carrying a weight of 100 times that of the former.
+The final ingredient of the problem is the set of objectives we want to minimise. Similar to constraints, objectives are tied to a specific output and hypothesis. We also specify weights for each objective which help guide the internal optimisation process, and note whether or not the output for each objective is binary or continuous. For example, here we want to minimise both the number of patients `N` and the number of clusters `m`, with the latter carrying a weight of 100 times that of the former.
 
 ```{r}
-objectives <- objectives(name = c("n", "k"),
-                 out = c("n", "k"),
+objectives <- objectives(name = c("N", "m"),
+                 out = c("N", "m"),
                  hyp = c("alt", "alt"),
                  weight = c(1, 10),
                  binary = c(FALSE, FALSE))
@@ -121,8 +123,10 @@ prob <- BOSSS_problem(sim_cRCT, design_space, hypotheses, objectives, constraint
 Having set up the problem, we now need to create an initial solution to it. This involves setting up a space-filling set of designs spanning the design space (where `size` is the number of designs), computing the Monte Carlo estimates of all the expectations we are interested in at each of these designs (using `N` samples for each evaluation), fitting Gaussian Process models to these estimates, and then using those models to estimate the Pareto set and front:
 
 ```{r}
+set.seed(9823579)
+
 size <- 20
-N <- 500
+N <- 10^3
 
 sol <- BOSSS_solution(size, N, prob)
 
@@ -137,12 +141,44 @@ The `print()` function will give a table of the Pareto set with associated objec
 We can now start improving this solution by calling the `iterate()` function. Each call uses the fitted Gaussian Process models to decide on the next design to be evaluated, computes the Monte Carlo estimates at that point, and then updates the estimated Pareto set and front. 
 
 ```{r}
-N <- 500
-for(i in 1:10) {
+N <- 10^3
+for(i in 1:20) {
   sol <- iterate(sol, prob, N) 
 }
 print(sol)
 plot(sol)
+```
+
+We can compare the initial and final approximations to the Pareto front to the actual front since, for this simple example, we can calculate power analytically:
+
+```{r}
+df <- expand.grid(m = 5:50,
+                  n = 5:40)
+df$N <- df$m*df$n
+
+df$clust_var <- 0.05 + 0.95/df$n
+
+df$pow <- power.t.test(df$m, delta = 0.3, sd = sqrt(df$clust_var),
+                       alternative = "one.sided", sig.level = 0.025)$power
+
+df <- df[df$pow >= 0.8, c("m", "N")]
+df <-  data.frame(paretoFilter(as.matrix(df)))
+df$t <- "True"
+
+df <- rbind(df, data.frame(m = c(16, 21, 33,
+                                 25, 32, 18, 22, 19, 28, 17, 36, 15, 20, 39),
+                           N = c(16*31, 21*18, 33*9,
+                                 25*12, 32*8, 18*24, 22*15, 19*20, 28*10, 17*26, 36*7, 15*31, 20*18, 39*6),
+                           t = c(rep("Initial", 3), rep("Final", 11))))
+
+ggplot(df, aes(N, m, colour = t)) + geom_point() +
+  xlab("Total sample size per arm, N") +
+  ylab("Number of clusters per arm, m") +
+  scale_colour_manual(name = "", values = c("#EF476F", "#FFD166", "#06D6A0")) +
+  geom_step() +
+  theme_minimal()
+
+ggsave(here("man", "figures", "cRCT_fronts.pdf"), height=9, width=14, units="cm")
 ```
 
 ### Diagnostics
@@ -151,7 +187,7 @@ To check the GP models are giving sensible predictions, we can choose a specific
 
 ```{r}
 # Pick a specific design from the Pareto set
-design <- sol$p_set[nrow(sol$p_set),]
+design <- sol$p_set[1,]
 
 diag_plots(design, prob, sol)
 ```
@@ -187,7 +223,7 @@ Once we are happy with our solution and have chosen a specific design from the P
 ```{r}
 design <- sol$p_set[nrow(sol$p_set),]
 
-r <- diag_check_point(design, prob, sol, N=10^4) 
+r <- diag_check_point(design, prob, sol, N=10^6) 
 ```
 
 If we decide we want to run more simulations at the same point, we can pass the previous results in so they are built upon.
