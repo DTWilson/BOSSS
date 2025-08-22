@@ -18,6 +18,7 @@ knitr::opts_chunk$set(
 ```{r setup}
 library(BOSSS)
 library(ggplot2)
+library(mco)
 ```
 
 <!-- Note - a Twitter thread on power analysis had a couple of people mentioning the R package simr for power through simulation when using mixed models. So might be worth including that in one of our examples, to save people having to write their own simulation code? -->
@@ -171,14 +172,23 @@ df <- rbind(df, data.frame(m = c(16, 21, 33,
                                  25*12, 32*8, 18*24, 22*15, 19*20, 28*10, 17*26, 36*7, 15*31, 20*18, 39*6),
                            t = c(rep("Initial", 3), rep("Final", 11))))
 
+# Add ends of steps
+df2  <- rbind(data.frame(m=c(43, 43),
+                          N=c(297, 234),
+                          t=c("Initial", "Final")),
+              df,
+              data.frame(m=c(16, 15),
+                         N=c(546, 546),
+                         t=c("Initial", "Final")))
+
 ggplot(df, aes(N, m, colour = t)) + geom_point() +
   xlab("Total sample size per arm, N") +
   ylab("Number of clusters per arm, m") +
   scale_colour_manual(name = "", values = c("#EF476F", "#FFD166", "#06D6A0")) +
-  geom_step() +
+  geom_step(data=df2) +
   theme_minimal()
 
-ggsave(here("man", "figures", "cRCT_fronts.pdf"), height=9, width=14, units="cm")
+#ggsave(here("man", "figures", "cRCT_fronts.pdf"), height=9, width=14, units="cm")
 ```
 
 ### Diagnostics
