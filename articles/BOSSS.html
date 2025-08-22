@@ -78,9 +78,9 @@ improving the <code>BOSSS_solution</code> object;</li>
 <li>Select a final design and run some diagnostics to check it is
 valid.</li>
 </ol>
-<div class="section level2">
-<h2 id="adaptive-design">Adaptive design<a class="anchor" aria-label="anchor" href="#adaptive-design"></a>
-</h2>
+<p>We will work through these steps here for an example problem:
+designing a cluster randomised trial. For more illustrations, see the
+“Examples” article.</p>
 <div class="section level3">
 <h3 id="problem">Problem<a class="anchor" aria-label="anchor" href="#problem"></a>
 </h3>
@@ -228,7 +228,7 @@ and then using those models to estimate the Pareto set and front:</p>
 <span></span>
 <span><span class="va">sol</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/BOSSS_solution.html">BOSSS_solution</a></span><span class="op">(</span><span class="va">size</span>, <span class="va">N</span>, <span class="va">prob</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Checking simulation speed...</span></span>
-<span><span class="co">#&gt; Initialisation will take approximately 2.757147 secs </span></span>
+<span><span class="co">#&gt; Initialisation will take approximately 2.720101 secs </span></span>
 <span><span class="co">#&gt; Solution found</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">sol</span><span class="op">)</span> </span>
@@ -446,7 +446,6 @@ can pass the previous results in so they are built upon.</p>
 <code class="sourceCode R"><span><span class="va">r</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/diag_check_point.html">diag_check_point</a></span><span class="op">(</span><span class="va">design</span>, <span class="va">prob</span>, <span class="va">sol</span>, N<span class="op">=</span><span class="fl">10</span><span class="op">^</span><span class="fl">4</span>, <span class="va">r</span><span class="op">)</span> </span>
 <span><span class="co">#&gt; Model 1 prediction interval: [0.177, 0.202]</span></span>
 <span><span class="co">#&gt; Model 1 empirical interval: [0.18, 0.191]</span></span></code></pre></div>
-</div>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>

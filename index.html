@@ -72,131 +72,58 @@
 <div class="section level2">
 <h2 id="example">Example<a class="anchor" aria-label="anchor" href="#example"></a>
 </h2>
-<p>Suppose we want to design a cluster randomised RCT which will compare the means of our two groups via a t test. Specifically, we want to find the smallest trial which have a power of 90%, where power must be estimated numerically using simulation. To solve this problem using BOSSS we start by writing two functions:</p>
+<p>Suppose we want to design a cluster randomised RCT which will compare the mean outcomes of two groups. We need to choose the per-arm sample size <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>n</mi><annotation encoding="application/x-tex">n</annotation></semantics></math> and the per-arm number of clusters <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>k</mi><annotation encoding="application/x-tex">k</annotation></semantics></math>, aiming to minimise both of these quantities whilst ensuring the trial has 90% power to detect the target difference.</p>
+<p>Suppose that there is no analytic power function for this problem, and that we need to use simulation to estimate power instead. This can make the search process very slow and unwieldy. BOSSS helps by using Bayesian optimisation to carefully choose a design to evaluate at each iteration, aiming for those that will give the most improvement over the best designs found so far.</p>
+<p>Key features:</p>
+<ul>
+<li>Trial design spaces can have several dimensions.</li>
+<li>Multiple objectives are handled in a non-scalarising way.</li>
+<li>Design optimisation problems can be constrained by deterministic or stochastic funstion.</li>
+</ul>
+<p>The output of applying BOSSS to this problem is a set solutions which satisfy the power constraint and offer a range of trade-offs between the different objectives we are minimising (here, <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>n</mi><annotation encoding="application/x-tex">n</annotation></semantics></math> and <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>k</mi><annotation encoding="application/x-tex">k</annotation></semantics></math>). For example, consider the following <code>BOSSS_solution</code> object which resulted from applying the BOSSS algorithm:</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://dtwilson.github.io/BOSSS/">BOSSS</a></span><span class="op">)</span></span>
-<span></span>
-<span><span class="va">sim_trial</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">n</span><span class="op">=</span><span class="fl">200</span>, <span class="va">k</span><span class="op">=</span><span class="fl">10</span>, <span class="va">mu</span><span class="op">=</span><span class="fl">0.3</span>, <span class="va">var_u</span><span class="op">=</span><span class="fl">0.05</span>, <span class="va">var_e</span><span class="op">=</span><span class="fl">0.95</span><span class="op">)</span><span class="op">{</span></span>
-<span></span>
-<span>  <span class="co"># Number of patients in each cluster</span></span>
-<span>  <span class="va">m</span> <span class="op">&lt;-</span> <span class="va">n</span><span class="op">/</span><span class="va">k</span></span>
-<span>  </span>
-<span>  <span class="co"># SD of cluster means</span></span>
-<span>  <span class="va">s_c</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">sqrt</a></span><span class="op">(</span><span class="va">var_u</span> <span class="op">+</span> <span class="va">var_e</span><span class="op">/</span><span class="va">m</span><span class="op">)</span></span>
-<span>  </span>
-<span>  <span class="co"># Simulate cluster means</span></span>
-<span>  <span class="va">x0</span> <span class="op">&lt;-</span> <span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="va">k</span>, <span class="fl">0</span>, <span class="va">s_c</span><span class="op">)</span>; <span class="va">x1</span> <span class="op">&lt;-</span> <span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="va">k</span>, <span class="va">mu</span>, <span class="va">s_c</span><span class="op">)</span></span>
-<span>  </span>
-<span>  <span class="kw"><a href="https://rdrr.io/r/base/function.html" class="external-link">return</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>s <span class="op">=</span> <span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/t.test.html" class="external-link">t.test</a></span><span class="op">(</span><span class="va">x0</span>, <span class="va">x1</span><span class="op">)</span><span class="op">$</span><span class="va">p.value</span> <span class="op">&gt;=</span> <span class="fl">0.05</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="op">}</span></span>
-<span></span>
-<span><span class="va">det_func</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">n</span><span class="op">=</span><span class="fl">200</span>, <span class="va">k</span><span class="op">=</span><span class="fl">10</span>, <span class="va">mu</span><span class="op">=</span><span class="fl">0.3</span>, <span class="va">var_u</span><span class="op">=</span><span class="fl">0.05</span>, <span class="va">var_e</span><span class="op">=</span><span class="fl">0.95</span><span class="op">)</span><span class="op">{</span></span>
-<span>  <span class="kw"><a href="https://rdrr.io/r/base/function.html" class="external-link">return</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>n<span class="op">=</span><span class="va">n</span>, k<span class="op">=</span><span class="va">k</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="op">}</span></span></code></pre></div>
-<p>The first function is a simulation, returning a binary output indicating if the t test failed to return a significant result. The second function is deterministic, returning the per-arm sample size and per-arm number of clusters. There are some conventions which these functions must adhere to:</p>
-<p>i The argument lists of the two functions must be identical; ii Arguments should start with all design variables, followed by all model parameters; iii Design variables must be continuous; iv Outputs must be a named vectors; v The simulation function is mandatory, but the determinsitc function is optional.</p>
-<p>In this example, the design variables are the total per-arm sample size <code>n</code> and the number of clusters in each arm, <code>k</code>. We put ranges on these to define our <strong>design space</strong>:</p>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">design_space</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/design_space.html">design_space</a></span><span class="op">(</span>lower <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">10</span>, <span class="fl">3</span><span class="op">)</span>,</span>
-<span>                             upper <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">500</span>, <span class="fl">50</span><span class="op">)</span>,</span>
-<span>                             sim <span class="op">=</span> <span class="va">sim_trial</span><span class="op">)</span></span></code></pre></div>
-<p>We have decided to search over a space of trial designs with a total per-arm sample size between 10 and 500, and a per-arm number of clusters from 3 to 50. Note that we are extracting the names of our design variables from the simulation function. Alternatively, we can specify them manually using the <code>names</code> argument.</p>
-<p>The model parameters are the mean difference <code>mu</code>, the between-cluster variance <code>var_u</code>, and the within-cluster variance <code>var_e</code>. We choose which parameter values we will be simulating under and call these sets <strong>hypotheses</strong>:</p>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">hypotheses</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/hypotheses.html">hypotheses</a></span><span class="op">(</span>values <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.3</span>, <span class="fl">0.05</span>, <span class="fl">0.95</span><span class="op">)</span>, ncol <span class="op">=</span> <span class="fl">1</span><span class="op">)</span>,</span>
-<span>                         hyp_names <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"alt"</span><span class="op">)</span>,</span>
-<span>                         sim <span class="op">=</span> <span class="va">sim_trial</span><span class="op">)</span></span></code></pre></div>
-<p>To estimate power we will simulate under a single alternative hypothesis. We want to impose a nominal level on this; in particular, we want the type II error rate to be less than 0.1. We specify this as a <strong>constraint</strong>:</p>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">constraints</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/constraints.html">constraints</a></span><span class="op">(</span>name <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"tII"</span><span class="op">)</span>,</span>
-<span>                   out <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"s"</span><span class="op">)</span>,</span>
-<span>                   hyp <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"alt"</span><span class="op">)</span>,</span>
-<span>                   nom <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.1</span><span class="op">)</span>,</span>
-<span>                   delta <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.95</span><span class="op">)</span>,</span>
-<span>                   binary <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<p>Each constraint must be tied to a hypothesis and an output. In this case, the output is <code>s</code>, which was defined in the simulation function as a binary event indicating if the trial failed to return a statistically significant result. The <code>delta</code> part of a constraint is the tolerance we allow for it; in this case, we consider the constraint satisfied if there is at least 0.95 chance that the type II error rate is less than 0.1.</p>
-<p>Finally, we formalise the <strong>objectives</strong> we want to minimise:</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">objectives</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/objectives.html">objectives</a></span><span class="op">(</span>name <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"f1"</span>, <span class="st">"f2"</span><span class="op">)</span>,</span>
-<span>                 out <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"n"</span>, <span class="st">"k"</span><span class="op">)</span>,</span>
-<span>                 hyp <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"alt"</span>, <span class="st">"alt"</span><span class="op">)</span>,</span>
-<span>                 weight <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">10</span>, <span class="fl">1</span><span class="op">)</span>,</span>
-<span>                 binary <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="cn">FALSE</span>, <span class="cn">FALSE</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<p>As with constraints, objectives are defined with respect to an output and a hypothesis. In this case, we wish to minimise both the total sample size and the number of clusters, both of which are outputs of the deterministic function. Although BOSSS uses a non-scalarising approach to solving multi-objective problems, we nevertheless require a relative weighting for use in the internal optimisation process. Here, we specify that minimising the number of clusters is around 10 times as valuable as minimising the number of participant.</p>
-<p>Together, these are the ingredients of a <strong>problem</strong> object:</p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">problem</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/BOSSS_problem.html">BOSSS_problem</a></span><span class="op">(</span><span class="va">sim_trial</span>, <span class="va">design_space</span>, <span class="va">hypotheses</span>, <span class="va">objectives</span>, <span class="va">constraints</span>, det_func <span class="op">=</span> <span class="va">det_func</span><span class="op">)</span></span></code></pre></div>
-<p>With our problem specified, we generate a <strong>solution</strong> by evaluating a first set of 20 possible designs, evenly spread over our design space, using <code>N</code> simulations each time. Printing the result will show us the estimated Pareto set (that is, the set of non-dominated designs):</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">size</span> <span class="op">&lt;-</span> <span class="fl">20</span></span>
-<span><span class="va">N</span> <span class="op">&lt;-</span> <span class="fl">500</span></span>
-<span></span>
-<span><span class="va">solution</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/BOSSS_solution.html">BOSSS_solution</a></span><span class="op">(</span><span class="va">size</span>, <span class="va">N</span>, <span class="va">problem</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Checking simulation speed...</span></span>
-<span><span class="co">#&gt; Initialisation will take approximately 1.365187 secs </span></span>
-<span><span class="co">#&gt; Solution found</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">solution</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Design variables for the Pareto set: </span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;          n       k</span></span>
-<span><span class="co">#&gt; 9  346.875 41.1875</span></span>
-<span><span class="co">#&gt; 13 408.125 35.3125</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Corresponding objective function values... </span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;    n, alt (mean) k, alt (mean)</span></span>
-<span><span class="co">#&gt; 9        346.875       41.1875</span></span>
-<span><span class="co">#&gt; 13       408.125       35.3125</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ...and constraint function values:</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;    s, alt (mean) s, alt (var)</span></span>
-<span><span class="co">#&gt; 9      -2.493162   0.02834157</span></span>
-<span><span class="co">#&gt; 13     -2.895870   0.04027675</span></span></code></pre></div>
-<p>To improve the solution we can <strong>iterate</strong> as many times as we like, where each iteration will try to select the design which will give us the biggest improvement and evaluate it.</p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw">for</span><span class="op">(</span><span class="va">i</span> <span class="kw">in</span> <span class="fl">1</span><span class="op">:</span><span class="fl">10</span><span class="op">)</span><span class="op">{</span></span>
-<span>  <span class="va">solution</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/iterate.html">iterate</a></span><span class="op">(</span><span class="va">solution</span>, <span class="va">problem</span>, <span class="va">N</span><span class="op">)</span></span>
-<span><span class="op">}</span></span>
-<span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">solution</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">solution</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Design variables for the Pareto set: </span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;           n        k</span></span>
 <span><span class="co">#&gt; 9  346.8750 41.18750</span></span>
-<span><span class="co">#&gt; 22 453.4098 29.56320</span></span>
-<span><span class="co">#&gt; 23 499.9935 26.08903</span></span>
-<span><span class="co">#&gt; 28 331.7451 43.80545</span></span>
-<span><span class="co">#&gt; 29 387.7225 33.26920</span></span>
+<span><span class="co">#&gt; 13 408.1250 35.31250</span></span>
+<span><span class="co">#&gt; 27 451.1951 28.36097</span></span>
+<span><span class="co">#&gt; 28 334.7609 43.72750</span></span>
+<span><span class="co">#&gt; 33 372.0348 37.45546</span></span>
+<span><span class="co">#&gt; 36 499.9937 23.92778</span></span>
+<span><span class="co">#&gt; 37 448.5287 29.46920</span></span>
+<span><span class="co">#&gt; 38 418.5645 32.35209</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Corresponding objective function values... </span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;    n, alt (mean) k, alt (mean)</span></span>
 <span><span class="co">#&gt; 9       346.8750      41.18750</span></span>
-<span><span class="co">#&gt; 22      453.4098      29.56320</span></span>
-<span><span class="co">#&gt; 23      499.9935      26.08903</span></span>
-<span><span class="co">#&gt; 28      331.7451      43.80545</span></span>
-<span><span class="co">#&gt; 29      387.7225      33.26920</span></span>
+<span><span class="co">#&gt; 13      408.1250      35.31250</span></span>
+<span><span class="co">#&gt; 27      451.1951      28.36097</span></span>
+<span><span class="co">#&gt; 28      334.7609      43.72750</span></span>
+<span><span class="co">#&gt; 33      372.0348      37.45546</span></span>
+<span><span class="co">#&gt; 36      499.9937      23.92778</span></span>
+<span><span class="co">#&gt; 37      448.5287      29.46920</span></span>
+<span><span class="co">#&gt; 38      418.5645      32.35209</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ...and constraint function values:</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;    s, alt (mean) s, alt (var)</span></span>
-<span><span class="co">#&gt; 9      -2.493162   0.02834157</span></span>
-<span><span class="co">#&gt; 22     -2.644208   0.03226089</span></span>
-<span><span class="co">#&gt; 23     -2.465155   0.02767846</span></span>
-<span><span class="co">#&gt; 28     -2.309640   0.02432073</span></span>
-<span><span class="co">#&gt; 29     -2.261940   0.02339297</span></span></code></pre></div>
-<p>We can also visualise our solution by plotting the Pareto front (that is, the objective values of the solutions in the Pareto set):</p>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<span><span class="co">#&gt; 9      -2.521850   0.02904061</span></span>
+<span><span class="co">#&gt; 13     -2.359280   0.02533537</span></span>
+<span><span class="co">#&gt; 27     -2.261940   0.02339297</span></span>
+<span><span class="co">#&gt; 28     -2.087561   0.02036212</span></span>
+<span><span class="co">#&gt; 33     -2.334207   0.02481645</span></span>
+<span><span class="co">#&gt; 36     -2.193677   0.02214155</span></span>
+<span><span class="co">#&gt; 37     -2.261940   0.02339297</span></span>
+<span><span class="co">#&gt; 38     -2.384886   0.02587913</span></span></code></pre></div>
+<p>We have eight designs to choose from. For example, the final design in the set involves 419 patients and 32 clusters in each arm. The estimated power for that design is <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>1</mn><mo>−</mo><mn>1</mn><mi>/</mi><mrow><mo stretchy="true" form="prefix">(</mo><mn>1</mn><mo>+</mo><mo>exp</mo><mrow><mo stretchy="true" form="prefix">(</mo><mn>2.38</mn><mo stretchy="true" form="postfix">)</mo></mrow><mo stretchy="true" form="postfix">)</mo></mrow><mo>=</mo><mn>0.92</mn></mrow><annotation encoding="application/x-tex">1 - 1/(1 + \exp(2.38)) = 0.92</annotation></semantics></math>.</p>
+<p>We can visualise the trade-offs between the two objectives by plotting the solution:</p>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">solution</span><span class="op">)</span></span></code></pre></div>
-<p><img src="reference/figures/README-unnamed-chunk-10-1.png" width="100%"></p>
-<p>After we have finished iterating, we can then select a specific design from the estimated Pareto set. We may wish to double check the operating characteristics of the design using a large number of simulations. We can do this via BOSSS, which will print both the empirical 95% confidence interval and the corresponding interval given by the Gaussian Process surrogate model as a diagnostic.</p>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">design</span> <span class="op">&lt;-</span> <span class="va">solution</span><span class="op">$</span><span class="va">p_set</span><span class="op">[</span><span class="fl">1</span>,<span class="op">]</span></span>
-<span></span>
-<span><span class="va">r</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/diag_check_point.html">diag_check_point</a></span><span class="op">(</span><span class="va">design</span>, <span class="va">problem</span>, <span class="va">solution</span>, N<span class="op">=</span><span class="fl">10</span><span class="op">^</span><span class="fl">5</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Model 1 prediction interval: [0.074, 0.095]</span></span>
-<span><span class="co">#&gt; Model 1 empirical interval: [0.084, 0.087]</span></span></code></pre></div>
+<p><img src="reference/figures/README-unnamed-chunk-5-1.png" width="100%"></p>
+<p>For a detailed walkthrough of how to specify and solve a problems with <code>BOSSS</code>, see the “Getting started” tab. Other applications are collected in the “Examples” article.</p>
 </div>
 </div>
   </main><aside class="col-md-3"><div class="license">
