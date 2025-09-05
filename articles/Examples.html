@@ -644,6 +644,114 @@ be (probably) less than 0.2 and the follow-up length to be less than
 <p><img src="Examples_files/figure-html/unnamed-chunk-17-1.png" width="700"></p>
 </div>
 <div class="section level2">
+<h2 id="recruitment">Recruitment<a class="anchor" aria-label="anchor" href="#recruitment"></a>
+</h2>
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://dtwilson.github.io/BOSSS/">BOSSS</a></span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">sim_rec</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">m</span><span class="op">=</span><span class="fl">20</span>, <span class="va">t</span><span class="op">=</span><span class="fl">3</span>, </span>
+<span>                    <span class="va">a</span><span class="op">=</span><span class="fl">7</span>, <span class="va">b</span><span class="op">=</span><span class="fl">2</span>, <span class="va">c</span><span class="op">=</span><span class="fl">2</span>, <span class="va">d</span><span class="op">=</span><span class="fl">0.8</span>, </span>
+<span>                    <span class="va">f</span><span class="op">=</span><span class="fl">10</span>, <span class="va">g</span><span class="op">=</span><span class="fl">1</span>, </span>
+<span>                    <span class="va">j</span><span class="op">=</span><span class="fl">0.3</span>, <span class="va">k</span><span class="op">=</span><span class="fl">0.3</span>, <span class="va">x</span><span class="op">=</span><span class="fl">1</span>, <span class="va">y</span><span class="op">=</span><span class="fl">0.2</span><span class="op">)</span> </span>
+<span><span class="op">{</span></span>
+<span>  <span class="co"># m - total number of sites to be set up</span></span>
+<span>  <span class="co"># t - time (in years) for recruitment</span></span>
+<span>  <span class="co"># a, b - hyperparameters for rec mean (gamma)</span></span>
+<span>  <span class="co"># c, d - hyperparameters for rec sd (gamma)</span></span>
+<span>  <span class="co"># f, g - hyperparameters for eta (gamma)</span></span>
+<span>  <span class="co"># j, k - hyperparameters for delta (normal)</span></span>
+<span>  <span class="co"># x, y - hyperparameters for sigma (gamma)</span></span>
+<span></span>
+<span>  <span class="co"># Sample parameters from their priors</span></span>
+<span>  <span class="co"># Recruitment rate</span></span>
+<span>  <span class="va">alpha</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/GammaDist.html" class="external-link">rgamma</a></span><span class="op">(</span><span class="fl">1</span>, <span class="op">(</span><span class="va">a</span><span class="op">/</span><span class="va">b</span><span class="op">)</span><span class="op">^</span><span class="fl">2</span>, scale <span class="op">=</span> <span class="va">b</span><span class="op">^</span><span class="fl">2</span><span class="op">/</span><span class="va">a</span><span class="op">)</span></span>
+<span>  <span class="va">beta</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/GammaDist.html" class="external-link">rgamma</a></span><span class="op">(</span><span class="fl">1</span>, <span class="op">(</span><span class="va">c</span><span class="op">/</span><span class="va">d</span><span class="op">)</span><span class="op">^</span><span class="fl">2</span>, scale <span class="op">=</span> <span class="va">d</span><span class="op">^</span><span class="fl">2</span><span class="op">/</span><span class="va">c</span><span class="op">)</span></span>
+<span>  <span class="co"># Setup rate</span></span>
+<span>  <span class="va">eta</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/GammaDist.html" class="external-link">rgamma</a></span><span class="op">(</span><span class="fl">1</span>, <span class="op">(</span><span class="va">f</span><span class="op">/</span><span class="va">g</span><span class="op">)</span><span class="op">^</span><span class="fl">2</span>, scale <span class="op">=</span> <span class="va">g</span><span class="op">^</span><span class="fl">2</span><span class="op">/</span><span class="va">f</span><span class="op">)</span></span>
+<span>  <span class="co"># Treatment effect</span></span>
+<span>  <span class="va">delta</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">1</span>, <span class="va">j</span>, <span class="va">k</span><span class="op">)</span></span>
+<span>  <span class="co"># Outcome sd</span></span>
+<span>  <span class="va">sigma</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/GammaDist.html" class="external-link">rgamma</a></span><span class="op">(</span><span class="fl">1</span>, <span class="op">(</span><span class="va">x</span><span class="op">/</span><span class="va">y</span><span class="op">)</span><span class="op">^</span><span class="fl">2</span>, scale <span class="op">=</span> <span class="va">y</span><span class="op">^</span><span class="fl">2</span><span class="op">/</span><span class="va">x</span><span class="op">)</span></span>
+<span>  </span>
+<span>  <span class="co"># True per year recruitment rates for each site</span></span>
+<span>  <span class="va">lambdas</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/GammaDist.html" class="external-link">rgamma</a></span><span class="op">(</span><span class="va">m</span>, <span class="va">alpha</span>, scale<span class="op">=</span><span class="va">beta</span><span class="op">)</span></span>
+<span>  </span>
+<span>  <span class="co"># Setup times</span></span>
+<span>  <span class="va">setup_ts</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/cumsum.html" class="external-link">cumsum</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Exponential.html" class="external-link">rexp</a></span><span class="op">(</span><span class="va">m</span>, <span class="va">eta</span><span class="op">)</span><span class="op">)</span></span>
+<span>  </span>
+<span>  <span class="co"># For each site, simulate number recruited by end</span></span>
+<span>  <span class="va">rec_times</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">pmax</a></span><span class="op">(</span><span class="va">t</span> <span class="op">-</span> <span class="va">setup_ts</span>, <span class="fl">0</span><span class="op">)</span></span>
+<span>  <span class="va">ns</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/Poisson.html" class="external-link">rpois</a></span><span class="op">(</span><span class="va">m</span>, <span class="va">lambdas</span><span class="op">*</span><span class="va">rec_times</span><span class="op">)</span></span>
+<span>  </span>
+<span>  <span class="co"># Total recruited at final</span></span>
+<span>  <span class="va">end_n</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">ns</span><span class="op">)</span></span>
+<span>  </span>
+<span>  <span class="co"># Cap at target recruitment</span></span>
+<span>  <span class="va">end_n</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">min</a></span><span class="op">(</span><span class="va">end_n</span>, <span class="fl">352</span><span class="op">)</span></span>
+<span>  </span>
+<span>  <span class="co"># Power at analysis</span></span>
+<span>  <span class="va">pow</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/power.t.test.html" class="external-link">power.t.test</a></span><span class="op">(</span>n <span class="op">=</span> <span class="va">end_n</span><span class="op">/</span><span class="fl">2</span>, delta <span class="op">=</span> <span class="va">delta</span>, sd <span class="op">=</span> <span class="va">sigma</span><span class="op">)</span><span class="op">$</span><span class="va">power</span></span>
+<span>  <span class="va">pow</span></span>
+<span>  </span>
+<span>  <span class="kw"><a href="https://rdrr.io/r/base/function.html" class="external-link">return</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>pr_tII <span class="op">=</span> <span class="fl">1</span> <span class="op">-</span> <span class="va">pow</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="op">}</span></span>
+<span></span>
+<span><span class="va">det_rec</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">m</span><span class="op">=</span><span class="fl">20</span>, <span class="va">t</span><span class="op">=</span><span class="fl">3</span>, </span>
+<span>                    <span class="va">a</span><span class="op">=</span><span class="fl">7</span>, <span class="va">b</span><span class="op">=</span><span class="fl">2</span>, <span class="va">c</span><span class="op">=</span><span class="fl">2</span>, <span class="va">d</span><span class="op">=</span><span class="fl">0.8</span>, </span>
+<span>                    <span class="va">f</span><span class="op">=</span><span class="fl">10</span>, <span class="va">g</span><span class="op">=</span><span class="fl">1</span>, </span>
+<span>                    <span class="va">j</span><span class="op">=</span><span class="fl">0.3</span>, <span class="va">k</span><span class="op">=</span><span class="fl">0.3</span>, <span class="va">x</span><span class="op">=</span><span class="fl">1</span>, <span class="va">y</span><span class="op">=</span><span class="fl">0.2</span><span class="op">)</span></span>
+<span><span class="op">{</span></span>
+<span>  <span class="kw"><a href="https://rdrr.io/r/base/function.html" class="external-link">return</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>m <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">floor</a></span><span class="op">(</span><span class="va">m</span><span class="op">)</span>, t <span class="op">=</span> <span class="va">t</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="op">}</span></span>
+<span></span>
+<span></span>
+<span><span class="co"># For example,</span></span>
+<span><span class="fu">sim_rec</span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
+<p>Now we set up the problem using the <code>BOSSS</code> helper
+functions. We are going to look at designs with between 3 and 40 sites,
+running from between 6 months and 5 years.</p>
+<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Problem specification</span></span>
+<span><span class="va">design_space</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/design_space.html">design_space</a></span><span class="op">(</span>lower <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">3</span>,<span class="fl">0.5</span><span class="op">)</span>, </span>
+<span>                             upper <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">40</span>,<span class="fl">5</span><span class="op">)</span>,</span>
+<span>                             sim <span class="op">=</span> <span class="va">sim_rec</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">hypotheses</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/hypotheses.html">hypotheses</a></span><span class="op">(</span>values <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">7</span>, <span class="fl">2</span>, <span class="fl">2</span>, <span class="fl">0.8</span>, </span>
+<span>                                           <span class="fl">10</span>, <span class="fl">1</span>, <span class="fl">0.3</span>, <span class="fl">0.3</span>, <span class="fl">1</span>, <span class="fl">0.2</span><span class="op">)</span>, ncol <span class="op">=</span> <span class="fl">1</span><span class="op">)</span>,</span>
+<span>                         hyp_names <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"alt"</span><span class="op">)</span>,</span>
+<span>                         sim <span class="op">=</span> <span class="va">sim_rec</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">constraints</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/constraints.html">constraints</a></span><span class="op">(</span>name <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"TII_ass"</span><span class="op">)</span>,</span>
+<span>                   out <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"pr_tII"</span><span class="op">)</span>,</span>
+<span>                   hyp <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"alt"</span><span class="op">)</span>,</span>
+<span>                   nom <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.4</span><span class="op">)</span>,</span>
+<span>                   delta <span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.95</span><span class="op">)</span>,</span>
+<span>                   binary <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">objectives</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/objectives.html">objectives</a></span><span class="op">(</span>name <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Sites"</span>, <span class="st">"Time"</span><span class="op">)</span>,</span>
+<span>                 out <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"m"</span>, <span class="st">"t"</span><span class="op">)</span>,</span>
+<span>                 hyp <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span> <span class="st">"alt"</span>, <span class="st">"alt"</span><span class="op">)</span>,</span>
+<span>                 weight <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">10</span><span class="op">)</span>,</span>
+<span>                 binary <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="cn">FALSE</span>, <span class="cn">FALSE</span><span class="op">)</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">prob</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/BOSSS_problem.html">BOSSS_problem</a></span><span class="op">(</span><span class="va">sim_rec</span>, <span class="va">design_space</span>, <span class="va">hypotheses</span>, <span class="va">objectives</span>, <span class="va">constraints</span>, det_func <span class="op">=</span> <span class="va">det_rec</span><span class="op">)</span></span></code></pre></div>
+<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">size</span> <span class="op">&lt;-</span> <span class="fl">20</span></span>
+<span><span class="va">N</span> <span class="op">&lt;-</span> <span class="fl">500</span></span>
+<span></span>
+<span><span class="va">sol</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/BOSSS_solution.html">BOSSS_solution</a></span><span class="op">(</span><span class="va">size</span>, <span class="va">N</span>, <span class="va">prob</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">sol</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">sol</span><span class="op">)</span></span></code></pre></div>
+<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="kw">for</span><span class="op">(</span><span class="va">i</span> <span class="kw">in</span> <span class="fl">1</span><span class="op">:</span><span class="fl">30</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="va">sol</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/iterate.html">iterate</a></span><span class="op">(</span><span class="va">sol</span>, <span class="va">prob</span>, <span class="va">N</span><span class="op">)</span> </span>
+<span><span class="op">}</span></span>
+<span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">sol</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">sol</span><span class="op">)</span></span></code></pre></div>
+</div>
+<div class="section level2">
 <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>
 </h2>
 <ul>
@@ -661,7 +769,7 @@ multistate model analysis of longitudinal discrete outcomes in disease
 prevention trials. <em>Statistics in Medicine</em>, 40: 1960–1971
 (2021). <a href="https://doi.org/10.1002/sim.8882" class="external-link uri">https://doi.org/10.1002/sim.8882</a></p></li>
 </ul>
-<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">knitr</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/knitr/man/knit_exit.html" class="external-link">knit_exit</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
