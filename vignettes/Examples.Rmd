@@ -411,6 +411,120 @@ print(sol)
 plot(sol)
 ```
 
+## Recruitment
+
+
+```{r}
+library(BOSSS)
+
+sim_rec <- function(m=20, t=3, 
+                    a=7, b=2, c=2, d=0.8, 
+                    f=10, g=1, 
+                    j=0.3, k=0.3, x=1, y=0.2) 
+{
+  # m - total number of sites to be set up
+  # t - time (in years) for recruitment
+  # a, b - hyperparameters for rec mean (gamma)
+  # c, d - hyperparameters for rec sd (gamma)
+  # f, g - hyperparameters for eta (gamma)
+  # j, k - hyperparameters for delta (normal)
+  # x, y - hyperparameters for sigma (gamma)
+
+  # Sample parameters from their priors
+  # Recruitment rate
+  alpha <- rgamma(1, (a/b)^2, scale = b^2/a)
+  beta <- rgamma(1, (c/d)^2, scale = d^2/c)
+  # Setup rate
+  eta <- rgamma(1, (f/g)^2, scale = g^2/f)
+  # Treatment effect
+  delta <- rnorm(1, j, k)
+  # Outcome sd
+  sigma <- rgamma(1, (x/y)^2, scale = y^2/x)
+  
+  # True per year recruitment rates for each site
+  lambdas <- rgamma(m, alpha, scale=beta)
+  
+  # Setup times
+  setup_ts <- cumsum(rexp(m, eta))
+  
+  # For each site, simulate number recruited by end
+  rec_times <- pmax(t - setup_ts, 0)
+  ns <- rpois(m, lambdas*rec_times)
+  
+  # Total recruited at final
+  end_n <- sum(ns)
+  
+  # Cap at target recruitment
+  end_n <- min(end_n, 352)
+  
+  # Power at analysis
+  pow <- power.t.test(n = end_n/2, delta = delta, sd = sigma)$power
+  pow
+  
+  return(c(pr_tII = 1 - pow))
+}
+
+det_rec <- function(m=20, t=3, 
+                    a=7, b=2, c=2, d=0.8, 
+                    f=10, g=1, 
+                    j=0.3, k=0.3, x=1, y=0.2)
+{
+  return(c(m = floor(m), t = t))
+}
+
+
+# For example,
+sim_rec()
+```
+
+Now we set up the problem using the `BOSSS` helper functions. We are going to look at designs with between 3 and 40 sites, running from between 6 months and 5 years.
+
+```{r}
+# Problem specification
+design_space <- design_space(lower = c(3,0.5), 
+                             upper = c(40,5),
+                             sim = sim_rec)
+
+hypotheses <- hypotheses(values = matrix(c(7, 2, 2, 0.8, 
+                                           10, 1, 0.3, 0.3, 1, 0.2), ncol = 1),
+                         hyp_names = c("alt"),
+                         sim = sim_rec)
+
+constraints <- constraints(name = c("TII_ass"),
+                   out = c("pr_tII"),
+                   hyp = c("alt"),
+                   nom = c(0.4),
+                   delta =c(0.95),
+                   binary = c(FALSE))
+
+objectives <- objectives(name = c("Sites", "Time"),
+                 out = c("m", "t"),
+                 hyp = c( "alt", "alt"),
+                 weight = c(1, 10),
+                 binary = c(FALSE, FALSE))
+
+prob <- BOSSS_problem(sim_rec, design_space, hypotheses, objectives, constraints, det_func = det_rec)
+```
+
+```{r}
+size <- 20
+N <- 500
+
+sol <- BOSSS_solution(size, N, prob)
+
+print(sol)
+plot(sol)
+```
+
+```{r}
+for(i in 1:30) {
+  sol <- iterate(sol, prob, N) 
+}
+
+print(sol)
+plot(sol)
+```
+
 ## References
 
 - Croft J, Ainsworth G, Corrigan N, et al. NIFTy: near-infrared fluorescence (NIRF) imaging to prevent postsurgical hypoparathyroidism (PoSH) after thyroid surgery—a phase II/III pragmatic, multicentre randomised controlled trial protocol in patients undergoing a total or completion thyroidectomy. _BMJ Open_, 15:e092422 (2025). https://doi.org/10.1136/bmjopen-2024-092422
