@@ -646,6 +646,28 @@ be (probably) less than 0.2 and the follow-up length to be less than
 <div class="section level2">
 <h2 id="recruitment">Recruitment<a class="anchor" aria-label="anchor" href="#recruitment"></a>
 </h2>
+<p>Consider a standard two-arm parallel group trial with a continuous
+endpoint and a t-test of the group means as the planned analysis.
+Suppose that we are concerned about how well this trial will recruit,
+and would like to estimate what the overall probability of a significant
+result will be when we allow for the uncertainty in attained sample
+size. We can approach this by using a hierarchical Poisson-Gamma model
+of multi-site recruitment, with site setup times following a Poisson
+process. To account for the uncertainty around the true parameter values
+in that recruitment model we take a Bayesian view and give priors for
+each parameter. This view then also extends to our outcome model, and we
+place priors on the mean difference and the outcome standard deviation
+too.</p>
+<p>The design problem here is to choose both the number of recruiting
+sites and the length of the recruitment period. The model parameters are
+the hyperparameters of our prior distributions. We want to set a
+constraint on the unconditional probability of a type II error under the
+hypothesis of interest, and want to minimise the number of sites and the
+recruitment period subject to that constraint. We want a simulation
+function which returns the conditional power (conditioning on the
+attained sample size and the parameters of the outcome model) for any
+given design and hypothesis, and a deterministic function to return the
+two objective functions.</p>
 <div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://dtwilson.github.io/BOSSS/">BOSSS</a></span><span class="op">)</span></span>
 <span></span>
