@@ -19,11 +19,17 @@ knitr::opts_chunk$set(
   [![R-CMD-check](https://github.com/DTWilson/BOSSS/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/DTWilson/BOSSS/actions/workflows/R-CMD-check.yaml)
 <!-- badges: end -->
 
-The goal of BOSSS is to help people use Bayesain optimisation to solve sample size determination problems when simulation is required to calculate operating characteristics.
+The goal of BOSSS is to help people use Bayesian optimisation to solve sample size determination problems when simulation is required to calculate operating characteristics.
 
 ## Installation
 
-You can install the development version of BOSSS from [GitHub](https://github.com/) with:
+Install the released version of tout from CRAN:
+
+``` r
+install.packages("BOSSS")
+```
+
+Or you can install the development version of BOSSS from [GitHub](https://github.com/) with:
 
 ``` r
 # install.packages("devtools")
@@ -32,7 +38,7 @@ devtools::install_github("DTWilson/BOSSS")
 
 ## Example
 
-Suppose we want to design a cluster randomised RCT which will compare the mean outcomes of two groups. We need to choose the per-arm sample size $n$ and the per-arm number of clusters $k$, aiming to minimise both of these quantities whilst ensuring the trial has 90% power to detect the target difference.
+Suppose we want to design a cluster-randomised controlled trial (cRCT) which will compare the mean outcomes of two groups. We need to choose per-arm number of clusters, $m$, and the number of participants in each cluster, $n$. We would like to choose a design that jointly minimises the total numbers of both clusters and participants whilst ensuring the trial has 80% power to detect the target difference.
 
 Suppose that there is no analytic power function for this problem, and that we need to use simulation to estimate power instead. This can make the search process very slow and unwieldy. BOSSS helps by using Bayesian optimisation to carefully choose a design to evaluate at each iteration, aiming for those that will give the most improvement over the best designs found so far.
 
@@ -47,49 +53,53 @@ The output of applying BOSSS to this problem is a set solutions which satisfy th
 ```{r, include = FALSE, eval = FALSE}
 library(BOSSS)
 
-sim_trial <- function(n=200, k=10, mu=0.3, var_u=0.05, var_e=0.95){
+sim_cRCT <- function(m = 10, n = 20, 
+                     beta_1 = 0.3, var_e = 0.95, var_u = 0.05){
+  
+  m <- floor(m); n <- floor(n)
+  
+  x <- rep(c(0,1), each = m) 
+  y <- rnorm(2*m, 0, sqrt(var_u + var_e/n))
+  y <- y + x*beta_1
 
-  # Number of patients in each cluster
-  m <- n/k
-  
-  # SD of cluster means
-  s_c <- sqrt(var_u + var_e/m)
-  
-  # Simulate cluster means
-  x0 <- stats::rnorm(k, 0, s_c); x1 <- stats::rnorm(k, mu, s_c)
-  
-  return(c(s = stats::t.test(x0, x1)$p.value >= 0.05))
+  s <- t.test(y[x==1], y[x==0], alternative = "greater")$p.value > 0.025
+
+  return(c(s = s))
 }
 
-det_func <- function(n=200, k=10, mu=0.3, var_u=0.05, var_e=0.95){
-  return(c(n=n, k=k))
-}
+det_cRCT <- function(m = 10, n = 5, 
+                     beta_1 = 0.3, var_e = 0.95, var_u = 0.05)
+{
+  return(c(m = m, N = n*m))
+}  
 
-design_space <- design_space(lower = c(10, 3),
-                             upper = c(500, 50),
-                             sim = sim_trial)
+design_space <- design_space(lower = c(5, 5), 
+                             upper = c(50, 40),
+                             sim = sim_cRCT)
 
-hypotheses <- hypotheses(values = matrix(c(0.3, 0.05, 0.95), ncol = 1),
+hypotheses <- hypotheses(values = matrix(c(0.3, 0.95, 0.05), ncol = 1),
                          hyp_names = c("alt"),
-                         sim = sim_trial)
+                         sim = sim_cRCT)
 
-constraints <- constraints(name = c("tII"),
+constraints <- constraints(name = c("con_tII"),
                    out = c("s"),
                    hyp = c("alt"),
-                   nom = c(0.1),
+                   nom = c(0.2),
                    delta = c(0.95),
                    binary = c(TRUE))
 
-objectives <- objectives(name = c("n", "k"),
-                 out = c("n", "k"),
+objectives <- objectives(name = c("N", "m"),
+                 out = c("N", "m"),
                  hyp = c("alt", "alt"),
-                 weight = c(10, 1),
+                 weight = c(1, 10),
                  binary = c(FALSE, FALSE))
 
-problem <- BOSSS_problem(sim_trial, design_space, hypotheses, objectives, constraints, det_func = det_func)
+problem <- BOSSS_problem(sim_cRCT, design_space, hypotheses, objectives, constraints, det_func = det_cRCT)
+
+set.seed(9823579)
 
 size <- 20
-N <- 500
+N <- 10^3
 
 solution <- BOSSS_solution(size, N, problem)
 
@@ -108,7 +118,8 @@ solution <- readRDS(p)
 ```{r}
 print(solution)
 ```
-We have eight designs to choose from. For example, the final design in the set involves 419 patients and 32 clusters in each arm. The estimated power for that design is $1 - 1/(1 + \exp(2.38)) = 0.92$.
+
+We have sixteen designs to choose from. For example, the final design in the set involves 288 patients and 28 clusters in each arm. The estimated power for that design is $1 - 1/(1 + \exp(1.535920)) = 0.82$.
 
 We can visualise the trade-offs between the two objectives by plotting the solution:
 
@@ -116,4 +127,4 @@ We can visualise the trade-offs between the two objectives by plotting the solut
 plot(solution)
 ```
 
-For a detailed walkthrough of how to specify and solve a problems with `BOSSS`, see the "Getting started" tab. Other applications are collected in the "Examples" article. 
+For a detailed walkthrough of how to specify and solve a problems with BOSSS, see the "Getting started" tab. Other applications are collected in the "Examples" article. 
