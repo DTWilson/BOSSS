@@ -30,7 +30,7 @@ Every application of BOSSS follows the same set of steps:
 3. Perform a number of iterations, each one updating and (hopefully) improving the `BOSSS_solution` object;
 4. Select a final design and run some diagnostics to check it is valid.
 
-We will work through these steps here for an example problem: designing a cluster randomised trial. For more illustrations, see the "Examples" article.
+We will work through these steps here for an example problem: designing a cluster randomised trial, as discussed in Section 2 of the manuscript associated with the package. For more illustrations, see the \code{vignette("Examples", package = "BOSSS")} article.
 
 ### Problem
 
@@ -56,21 +56,22 @@ sim_cRCT <- function(m = 10, n = 20,
 # For example,
 sim_cRCT()
 ```
-In our problem we are not just interested in the expected value of `s`; we also want to minimise the number of clusters and the number of participants, and to put an upper limit on the number of participants per cluster. Since these are fixed quantities given any design, we evaluate them in a separate deterministic function. This should conform to the same principles as the simulation function, with the same inputs, but allowing for different named outputs. Here, the outputs are just `m`, and `N = n*m`:
+
+In our problem we are not just interested in the expected value of `s`; we also want to minimise the number of clusters and the number of participants. Since these are fixed quantities given any design, we evaluate them in a separate deterministic function. This should conform to the same principles as the simulation function, with the same inputs, but allowing for different named outputs. Here, the outputs are just `m`, and `N = n*m`:
 
 ```{r}
 det_cRCT <- function(m = 10, n = 5, 
                      beta_1 = 0.3, var_e = 0.95, var_u = 0.05)
 {
-  return(c(m = m, N = n*m))
+  return(c(m = floor(m), N = floor(n)*floor(m)))
 }  
 ```
 
 Next, we need to note the ranges of the design variables which we plan to search over. We use the `design_space()` function for this, specifying the lower and upper limits of the design variables in the order they appear as simulation function arguments:
 
 ```{r}
-design_space <- design_space(lower = c(5, 5), 
-                             upper = c(50, 40),
+design_space <- design_space(lower = c(10, 5), 
+                             upper = c(50, 20),
                              sim = sim_cRCT)
 
 design_space
@@ -127,7 +128,7 @@ Having set up the problem, we now need to create an initial solution to it. This
 set.seed(9823579)
 
 size <- 20
-N <- 10^3
+N <- 100
 
 sol <- BOSSS_solution(size, N, prob)
 
@@ -142,7 +143,7 @@ The `print()` function will give a table of the Pareto set with associated objec
 We can now start improving this solution by calling the `iterate()` function. Each call uses the fitted Gaussian Process models to decide on the next design to be evaluated, computes the Monte Carlo estimates at that point, and then updates the estimated Pareto set and front. 
 
 ```{r}
-N <- 10^3
+N <- 100
 for(i in 1:20) {
   sol <- iterate(sol, prob, N) 
 }
@@ -153,8 +154,8 @@ plot(sol)
 We can compare the initial and final approximations to the Pareto front to the actual front since, for this simple example, we can calculate power analytically:
 
 ```{r}
-df <- expand.grid(m = 5:50,
-                  n = 5:40)
+df <- expand.grid(m = 10:50,
+                  n = 5:20)
 df$N <- df$m*df$n
 
 df$clust_var <- 0.05 + 0.95/df$n
@@ -166,26 +167,26 @@ df <- df[df$pow >= 0.8, c("m", "N")]
 df <-  data.frame(paretoFilter(as.matrix(df)))
 df$t <- "True"
 
-df <- rbind(df, data.frame(m = c(16, 21, 33,
-                                 25, 32, 18, 22, 19, 28, 17, 36, 15, 20, 39),
-                           N = c(16*31, 21*18, 33*9,
-                                 25*12, 32*8, 18*24, 22*15, 19*20, 28*10, 17*26, 36*7, 15*31, 20*18, 39*6),
-                           t = c(rep("Initial", 3), rep("Final", 11))))
+df <- rbind(df, data.frame(m = c(40, 23,
+                                 23, 31, 26, 20, 24, 27, 35, 21, 29),
+                           N = c(320, 345,
+                                 345, 248, 286, 380, 312, 270, 245, 357, 261),
+                           t = c(rep("Initial", 2), rep("Final", 9))))
 
 # Add ends of steps
 df2  <- rbind(data.frame(m=c(43, 43),
-                          N=c(297, 234),
+                          N=c(320, 245),
                           t=c("Initial", "Final")),
               df,
-              data.frame(m=c(16, 15),
-                         N=c(546, 546),
-                         t=c("Initial", "Final")))
+              data.frame(m=c(23, 20, 19),
+                         N=c(380, 380, 380),
+                         t=c("Initial", "Final", "True")))
 
 ggplot(df, aes(N, m, colour = t)) + geom_point() +
   xlab("Total sample size per arm, N") +
   ylab("Number of clusters per arm, m") +
   scale_colour_manual(name = "", values = c("#EF476F", "#FFD166", "#06D6A0")) +
-  geom_step(data=df2) +
+  geom_step(data=df2, alpha = 0.5) +
   theme_minimal()
 
 #ggsave(here("man", "figures", "cRCT_fronts.pdf"), height=9, width=14, units="cm")
