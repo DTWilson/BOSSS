@@ -200,23 +200,34 @@ To check the GP models are giving sensible predictions, we can choose a specific
 # Pick a specific design from the Pareto set
 design <- sol$p_set[1,]
 
-diag_plots(design, prob, sol)
+ps <- diag_plots(design, prob, sol)
+
+ps[[1]]
+#ggsave(here("man", "figures", "cRCT_diag_m.pdf"), height=8, width=8, units="cm")
+
+ps[[2]]
+#ggsave(here("man", "figures", "cRCT_diag_n.pdf"), height=8, width=8, units="cm")
 ```
 
 
 We can also get the predicted values and 95% credible intervals for each point we have evaluated, contrasting these with the empirical MC estimate and interval. This will return a data frame for each of the models, named according to the output-hypothesis combination which defines it. We highlight with a `*` any points where the two intervals do not overlap.
 
 ```{r}
-diag_predictions(prob, sol)
+dp <- diag_predictions(prob, sol)
+dp[[1]][dp[[1]]$no_overlap == "*",]
 ```
 
-If things aren't looking too good, it may indicate that we need more points in our initial evaluations, or more simulations at each of those points. We can do that via `extend_initial()`. For example, suppose we want to add an extra 500 simulations to our initial points:
+In this example we see that the empirical estimates agree with the predictions for all but three of the designs which have been evaluated. 
+
+At any point, but especially after initialisation, we may decide that we need more points in our initial evaluations, or more simulations at each of those points. We can do that via `extend_initial()`. For example, suppose we want to add an extra 500 simulations to our initial points and to add another ten points to the initial space-filling design:
 
 ```{r}
-sol <- extend_initial(prob, sol, extra_N = 500)
+sol <- extend_initial(prob, sol, extra_N = 5000)
 
-# Look at the first threee designs; the empirical and predicted estimates will have changed
+# Look at the first three designs; the empirical and predicted estimates will have changed
 diag_predictions(prob, sol)[[1]][1:3,]
+
+print(sol)
 ```
 
 Or, we could add another 10 points:
