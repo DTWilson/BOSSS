@@ -226,7 +226,7 @@ and then using those models to estimate the Pareto set and front:</p>
 <span></span>
 <span><span class="va">sol</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/BOSSS_solution.html">BOSSS_solution</a></span><span class="op">(</span><span class="va">size</span>, <span class="va">N</span>, <span class="va">prob</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Checking simulation speed...</span></span>
-<span><span class="co">#&gt; Initialisation will take approximately 0.5821941 secs </span></span>
+<span><span class="co">#&gt; Initialisation will take approximately 0.6058314 secs </span></span>
 <span><span class="co">#&gt; Solution found</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">sol</span><span class="op">)</span> </span>
@@ -360,164 +360,145 @@ range of each design variable.</p>
 <code class="sourceCode R"><span><span class="co"># Pick a specific design from the Pareto set</span></span>
 <span><span class="va">design</span> <span class="op">&lt;-</span> <span class="va">sol</span><span class="op">$</span><span class="va">p_set</span><span class="op">[</span><span class="fl">1</span>,<span class="op">]</span></span>
 <span></span>
-<span><span class="fu"><a href="../reference/diag_plots.html">diag_plots</a></span><span class="op">(</span><span class="va">design</span>, <span class="va">prob</span>, <span class="va">sol</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [[1]]</span></span></code></pre></div>
+<span><span class="va">ps</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/diag_plots.html">diag_plots</a></span><span class="op">(</span><span class="va">design</span>, <span class="va">prob</span>, <span class="va">sol</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">ps</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span></span></code></pre></div>
 <p><img src="BOSSS_files/figure-html/unnamed-chunk-12-1.png" width="700"></p>
-<pre><code><span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; [[2]]</span></span></code></pre>
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co">#ggsave(here("man", "figures", "cRCT_diag_m.pdf"), height=8, width=8, units="cm")</span></span>
+<span></span>
+<span><span class="va">ps</span><span class="op">[[</span><span class="fl">2</span><span class="op">]</span><span class="op">]</span></span></code></pre></div>
 <p><img src="BOSSS_files/figure-html/unnamed-chunk-12-2.png" width="700"></p>
+<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co">#ggsave(here("man", "figures", "cRCT_diag_n.pdf"), height=8, width=8, units="cm")</span></span></code></pre></div>
 <p>We can also get the predicted values and 95% credible intervals for
 each point we have evaluated, contrasting these with the empirical MC
 estimate and interval. This will return a data frame for each of the
 models, named according to the output-hypothesis combination which
 defines it. We highlight with a <code>*</code> any points where the two
 intervals do not overlap.</p>
-<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/diag_predictions.html">diag_predictions</a></span><span class="op">(</span><span class="va">prob</span>, <span class="va">sol</span><span class="op">)</span></span>
-<span><span class="co">#&gt; $`Output: s, hypothesis: alt`</span></span>
-<span><span class="co">#&gt;           m         n    MC_mean      MC_l95     MC_u95     p_mean      p_l95</span></span>
-<span><span class="co">#&gt; 1  30.00000 12.500000 0.11155378 0.093474037 0.13261893 0.12844211 0.10953898</span></span>
-<span><span class="co">#&gt; 2  40.00000  8.750000 0.08167331 0.064157711 0.10344225 0.13105165 0.10847245</span></span>
-<span><span class="co">#&gt; 3  20.00000 16.250000 0.21115538 0.192293981 0.23133694 0.22931271 0.19765167</span></span>
-<span><span class="co">#&gt; 4  25.00000 10.625000 0.18127490 0.162564778 0.20161998 0.22927818 0.20274198</span></span>
-<span><span class="co">#&gt; 5  45.00000 18.125000 0.01195219 0.002310747 0.05942580 0.02553896 0.01227327</span></span>
-<span><span class="co">#&gt; 6  35.00000  6.875000 0.23107570 0.212132963 0.25117070 0.22149422 0.19030404</span></span>
-<span><span class="co">#&gt; 7  15.00000 14.375000 0.44023904 0.420819656 0.45984308 0.35990800 0.31100472</span></span>
-<span><span class="co">#&gt; 8  17.50000  9.687500 0.40039841 0.381044339 0.42006835 0.38868694 0.33343641</span></span>
-<span><span class="co">#&gt; 9  37.50000 17.187500 0.06175299 0.044881952 0.08440538 0.04295109 0.02805080</span></span>
-<span><span class="co">#&gt; 10 47.50000  5.937500 0.20119522 0.182379770 0.22142610 0.19246112 0.13838511</span></span>
-<span><span class="co">#&gt; 11 27.50000 13.437500 0.11155378 0.093474037 0.13261893 0.14368077 0.12331917</span></span>
-<span><span class="co">#&gt; 12 22.50000  7.812500 0.37051793 0.351216894 0.39024165 0.35179626 0.29848017</span></span>
-<span><span class="co">#&gt; 13 42.50000 15.312500 0.03187251 0.017186919 0.05836126 0.03956829 0.02413875</span></span>
-<span><span class="co">#&gt; 14 32.50000 11.562500 0.10159363 0.083667914 0.12284502 0.11996896 0.10139064</span></span>
-<span><span class="co">#&gt; 15 12.50000 19.062500 0.35059761 0.331334690 0.37036014 0.34933836 0.28207382</span></span>
-<span><span class="co">#&gt; 16 13.75000 12.031250 0.35059761 0.331334690 0.37036014 0.41567966 0.35426677</span></span>
-<span><span class="co">#&gt; 17 33.75000 19.531250 0.02191235 0.008929752 0.05276491 0.04747565 0.03073315</span></span>
-<span><span class="co">#&gt; 18 43.75000  8.281250 0.12151394 0.103303622 0.14242451 0.12851465 0.10030694</span></span>
-<span><span class="co">#&gt; 19 23.75000 15.781250 0.19123506 0.172469806 0.21152016 0.16809262 0.14343974</span></span>
-<span><span class="co">#&gt; 20 28.75000  6.406250 0.28087649 0.261774427 0.30080449 0.30541329 0.25237696</span></span>
-<span><span class="co">#&gt; 21 31.98561  8.998203 0.18127490 0.162564778 0.20161998 0.18074393 0.16004691</span></span>
-<span><span class="co">#&gt; 22 21.99748 19.995216 0.17131474 0.152665528 0.19172662 0.15216186 0.12745975</span></span>
-<span><span class="co">#&gt; 23 26.99795 11.994627 0.14143426 0.123014243 0.16210265 0.17192465 0.15061600</span></span>
-<span><span class="co">#&gt; 24 21.99722 19.866490 0.14143426 0.123014243 0.16210265 0.15326525 0.12911999</span></span>
-<span><span class="co">#&gt; 25 34.99566  7.989802 0.21115538 0.192293981 0.23133694 0.18387317 0.16188899</span></span>
-<span><span class="co">#&gt; 26 20.99459 19.989657 0.21115538 0.192293981 0.23133694 0.16823708 0.14195789</span></span>
-<span><span class="co">#&gt; 27 25.99366 11.997557 0.21115538 0.192293981 0.23133694 0.18606573 0.16351402</span></span>
-<span><span class="co">#&gt; 28 24.99390 13.996301 0.20119522 0.182379770 0.22142610 0.17085774 0.14766255</span></span>
-<span><span class="co">#&gt; 29 21.99953 19.994798 0.16135458 0.142773096 0.18184140 0.15213383 0.12743635</span></span>
-<span><span class="co">#&gt; 30 39.84001  6.996653 0.23107570 0.212132963 0.25117070 0.18450449 0.15629637</span></span>
-<span><span class="co">#&gt; 31 32.99577  8.991093 0.14143426 0.123014243 0.16210265 0.17135879 0.15121078</span></span>
-<span><span class="co">#&gt; 32 27.99674 10.982857 0.17131474 0.152665528 0.19172662 0.17787616 0.15660911</span></span>
-<span><span class="co">#&gt; 33 20.96073 19.990724 0.13147410 0.113151595 0.15225419 0.16878846 0.14243884</span></span>
-<span><span class="co">#&gt; 34 34.99872  7.989235 0.18127490 0.162564778 0.20161998 0.18386663 0.16188114</span></span>
-<span><span class="co">#&gt; 35 20.99953 19.999414 0.14143426 0.123014243 0.16210265 0.16806623 0.14174677</span></span>
-<span><span class="co">#&gt; 36 35.96746  7.995976 0.14143426 0.123014243 0.16210265 0.17628337 0.15451908</span></span>
-<span><span class="co">#&gt; 37 21.98949 17.999186 0.14143426 0.123014243 0.16210265 0.17163886 0.14791486</span></span>
-<span><span class="co">#&gt; 38 24.97926 12.984413 0.21115538 0.192293981 0.23133694 0.18529658 0.16192892</span></span>
-<span><span class="co">#&gt; 39 29.72974  9.967550 0.21115538 0.192293981 0.23133694 0.17958020 0.15863843</span></span>
-<span><span class="co">#&gt; 40 34.99038  7.994194 0.21115538 0.192293981 0.23133694 0.18377724 0.16180967</span></span>
-<span><span class="co">#&gt;         p_u95 no_overlap</span></span>
-<span><span class="co">#&gt; 1  0.15005764           </span></span>
-<span><span class="co">#&gt; 2  0.15750053          *</span></span>
-<span><span class="co">#&gt; 3  0.26437430           </span></span>
-<span><span class="co">#&gt; 4  0.25816293          *</span></span>
-<span><span class="co">#&gt; 5  0.05238259           </span></span>
-<span><span class="co">#&gt; 6  0.25617901           </span></span>
-<span><span class="co">#&gt; 7  0.41190382          *</span></span>
-<span><span class="co">#&gt; 8  0.44695373           </span></span>
-<span><span class="co">#&gt; 9  0.06523502           </span></span>
-<span><span class="co">#&gt; 10 0.26126073           </span></span>
-<span><span class="co">#&gt; 11 0.16676482           </span></span>
-<span><span class="co">#&gt; 12 0.40908238           </span></span>
-<span><span class="co">#&gt; 13 0.06421147           </span></span>
-<span><span class="co">#&gt; 14 0.14141576           </span></span>
-<span><span class="co">#&gt; 15 0.42318807           </span></span>
-<span><span class="co">#&gt; 16 0.47982780           </span></span>
-<span><span class="co">#&gt; 17 0.07265529           </span></span>
-<span><span class="co">#&gt; 18 0.16321572           </span></span>
-<span><span class="co">#&gt; 19 0.19601298           </span></span>
-<span><span class="co">#&gt; 20 0.36416614           </span></span>
-<span><span class="co">#&gt; 21 0.20346911           </span></span>
-<span><span class="co">#&gt; 22 0.18066009           </span></span>
-<span><span class="co">#&gt; 23 0.19555391           </span></span>
-<span><span class="co">#&gt; 24 0.18098730           </span></span>
-<span><span class="co">#&gt; 25 0.20810148           </span></span>
-<span><span class="co">#&gt; 26 0.19825703           </span></span>
-<span><span class="co">#&gt; 27 0.21094339           </span></span>
-<span><span class="co">#&gt; 28 0.19685498           </span></span>
-<span><span class="co">#&gt; 29 0.18062691           </span></span>
-<span><span class="co">#&gt; 30 0.21649721           </span></span>
-<span><span class="co">#&gt; 31 0.19357914           </span></span>
-<span><span class="co">#&gt; 32 0.20134176           </span></span>
-<span><span class="co">#&gt; 33 0.19888202           </span></span>
-<span><span class="co">#&gt; 34 0.20809667           </span></span>
-<span><span class="co">#&gt; 35 0.19814443           </span></span>
-<span><span class="co">#&gt; 36 0.20038663           </span></span>
-<span><span class="co">#&gt; 37 0.19828249           </span></span>
-<span><span class="co">#&gt; 38 0.21118663           </span></span>
-<span><span class="co">#&gt; 39 0.20262070           </span></span>
-<span><span class="co">#&gt; 40 0.20798714</span></span></code></pre></div>
-<p>If things aren’t looking too good, it may indicate that we need more
-points in our initial evaluations, or more simulations at each of those
-points. We can do that via <code><a href="../reference/extend_initial.html">extend_initial()</a></code>. For example,
-suppose we want to add an extra 500 simulations to our initial
-points:</p>
 <div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">sol</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/extend_initial.html">extend_initial</a></span><span class="op">(</span><span class="va">prob</span>, <span class="va">sol</span>, extra_N <span class="op">=</span> <span class="fl">500</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">dp</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/diag_predictions.html">diag_predictions</a></span><span class="op">(</span><span class="va">prob</span>, <span class="va">sol</span><span class="op">)</span></span>
+<span><span class="va">dp</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span><span class="op">[</span><span class="va">dp</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span><span class="op">$</span><span class="va">no_overlap</span> <span class="op">==</span> <span class="st">"*"</span>,<span class="op">]</span></span>
+<span><span class="co">#&gt;    m      n    MC_mean     MC_l95    MC_u95    p_mean     p_l95     p_u95</span></span>
+<span><span class="co">#&gt; 2 40  8.750 0.08167331 0.06415771 0.1034422 0.1310516 0.1084724 0.1575005</span></span>
+<span><span class="co">#&gt; 4 25 10.625 0.18127490 0.16256478 0.2016200 0.2292782 0.2027420 0.2581629</span></span>
+<span><span class="co">#&gt; 7 15 14.375 0.44023904 0.42081966 0.4598431 0.3599080 0.3110047 0.4119038</span></span>
+<span><span class="co">#&gt;   no_overlap</span></span>
+<span><span class="co">#&gt; 2          *</span></span>
+<span><span class="co">#&gt; 4          *</span></span>
+<span><span class="co">#&gt; 7          *</span></span></code></pre></div>
+<p>In this example we see that the empirical estimates agree with the
+predictions for all but three of the designs which have been
+evaluated.</p>
+<p>At any point, but especially after initialisation, we may decide that
+we need more points in our initial evaluations, or more simulations at
+each of those points. We can do that via <code><a href="../reference/extend_initial.html">extend_initial()</a></code>.
+For example, suppose we want to add an extra 500 simulations to our
+initial points and to add another ten points to the initial
+space-filling design:</p>
+<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">sol</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/extend_initial.html">extend_initial</a></span><span class="op">(</span><span class="va">prob</span>, <span class="va">sol</span>, extra_N <span class="op">=</span> <span class="fl">5000</span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># Look at the first threee designs; the empirical and predicted estimates will have changed</span></span>
+<span><span class="co"># Look at the first three designs; the empirical and predicted estimates will have changed</span></span>
 <span><span class="fu"><a href="../reference/diag_predictions.html">diag_predictions</a></span><span class="op">(</span><span class="va">prob</span>, <span class="va">sol</span><span class="op">)</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">3</span>,<span class="op">]</span></span>
 <span><span class="co">#&gt;    m     n   MC_mean    MC_l95    MC_u95    p_mean     p_l95     p_u95</span></span>
-<span><span class="co">#&gt; 1 30 12.50 0.1102598 0.1070375 0.1135668 0.1156994 0.1049379 0.1274074</span></span>
-<span><span class="co">#&gt; 2 40  8.75 0.1152565 0.1120321 0.1185613 0.1141773 0.1017088 0.1279565</span></span>
-<span><span class="co">#&gt; 3 20 16.25 0.2201865 0.2169395 0.2234683 0.2173847 0.1987519 0.2372471</span></span>
+<span><span class="co">#&gt; 1 30 12.50 0.1078739 0.1074902 0.1082588 0.1127607 0.1080320 0.1176691</span></span>
+<span><span class="co">#&gt; 2 40  8.75 0.1098345 0.1094508 0.1102194 0.1080917 0.1025593 0.1138846</span></span>
+<span><span class="co">#&gt; 3 20 16.25 0.2084542 0.2080702 0.2088388 0.2148734 0.2065514 0.2234364</span></span>
 <span><span class="co">#&gt;   no_overlap</span></span>
 <span><span class="co">#&gt; 1           </span></span>
 <span><span class="co">#&gt; 2           </span></span>
-<span><span class="co">#&gt; 3</span></span></code></pre></div>
+<span><span class="co">#&gt; 3</span></span>
+<span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">sol</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Design variables for the Pareto set: </span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt;           m         n</span></span>
+<span><span class="co">#&gt; 19 23.75000 15.781250</span></span>
+<span><span class="co">#&gt; 21 31.98561  8.998203</span></span>
+<span><span class="co">#&gt; 25 34.99566  7.989802</span></span>
+<span><span class="co">#&gt; 26 20.99459 19.989657</span></span>
+<span><span class="co">#&gt; 27 25.99366 11.997557</span></span>
+<span><span class="co">#&gt; 28 24.99390 13.996301</span></span>
+<span><span class="co">#&gt; 30 39.84001  6.996653</span></span>
+<span><span class="co">#&gt; 32 27.99674 10.982857</span></span>
+<span><span class="co">#&gt; 37 21.98949 17.999186</span></span>
+<span><span class="co">#&gt; 38 24.97926 12.984413</span></span>
+<span><span class="co">#&gt; 39 29.72974  9.967550</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; Corresponding objective function values... </span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt;    N, alt (mean) m, alt (mean)</span></span>
+<span><span class="co">#&gt; 19           345            23</span></span>
+<span><span class="co">#&gt; 21           248            31</span></span>
+<span><span class="co">#&gt; 25           238            34</span></span>
+<span><span class="co">#&gt; 26           380            20</span></span>
+<span><span class="co">#&gt; 27           275            25</span></span>
+<span><span class="co">#&gt; 28           312            24</span></span>
+<span><span class="co">#&gt; 30           234            39</span></span>
+<span><span class="co">#&gt; 32           270            27</span></span>
+<span><span class="co">#&gt; 37           357            21</span></span>
+<span><span class="co">#&gt; 38           288            24</span></span>
+<span><span class="co">#&gt; 39           261            29</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; ...and constraint function values:</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt;    s, alt (mean) s, alt (var)</span></span>
+<span><span class="co">#&gt; 19     -1.669745  0.001470298</span></span>
+<span><span class="co">#&gt; 21     -1.507734  0.067110238</span></span>
+<span><span class="co">#&gt; 25     -1.317975  0.059795836</span></span>
+<span><span class="co">#&gt; 26     -1.317975  0.059795836</span></span>
+<span><span class="co">#&gt; 27     -1.317975  0.059795836</span></span>
+<span><span class="co">#&gt; 28     -1.378841  0.061973532</span></span>
+<span><span class="co">#&gt; 30     -1.202247  0.056056593</span></span>
+<span><span class="co">#&gt; 32     -1.576338  0.070158486</span></span>
+<span><span class="co">#&gt; 37     -1.803428  0.082023137</span></span>
+<span><span class="co">#&gt; 38     -1.317975  0.059795836</span></span>
+<span><span class="co">#&gt; 39     -1.317975  0.059795836</span></span></code></pre></div>
 <p>Or, we could add another 10 points:</p>
-<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">sol</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/extend_initial.html">extend_initial</a></span><span class="op">(</span><span class="va">prob</span>, <span class="va">sol</span>, extra_points <span class="op">=</span> <span class="fl">10</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Look at the added designs, which go to the top of the table</span></span>
 <span><span class="fu"><a href="../reference/diag_predictions.html">diag_predictions</a></span><span class="op">(</span><span class="va">prob</span>, <span class="va">sol</span><span class="op">)</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">10</span>,<span class="op">]</span></span>
-<span><span class="co">#&gt;        m        n    MC_mean     MC_l95      MC_u95     p_mean       p_l95</span></span>
-<span><span class="co">#&gt; 21 48.75 13.90625 0.00532978 0.00288635 0.009821312 0.01217504 0.008240483</span></span>
-<span><span class="co">#&gt; 22 38.75 10.15625 0.09526982 0.09205505 0.098584665 0.08640183 0.077232810</span></span>
-<span><span class="co">#&gt; 23 18.75 17.65625 0.26182545 0.25857418 0.265102987 0.24024167 0.222404341</span></span>
-<span><span class="co">#&gt; 24 16.25  7.34375 0.51832112 0.51505595 0.521584721 0.51036125 0.477430420</span></span>
-<span><span class="co">#&gt; 25 36.25 14.84375 0.04530313 0.04214846 0.048681914 0.04281035 0.036830831</span></span>
-<span><span class="co">#&gt; 26 46.25 11.09375 0.02031979 0.01729968 0.023854328 0.03314132 0.026322764</span></span>
-<span><span class="co">#&gt; 27 26.25 18.59375 0.09693538 0.09371965 0.100249232 0.09822977 0.086644469</span></span>
-<span><span class="co">#&gt; 28 21.25  9.21875 0.32345103 0.32019524 0.326724022 0.34295054 0.323982047</span></span>
-<span><span class="co">#&gt; 29 41.25 16.71875 0.01365756 0.01075002 0.017337726 0.01857558 0.014723404</span></span>
-<span><span class="co">#&gt; 30 31.25  5.46875 0.33510993 0.33185342 0.338382203 0.34089408 0.312692324</span></span>
+<span><span class="co">#&gt;        m        n    MC_mean     MC_l95     MC_u95     p_mean      p_l95</span></span>
+<span><span class="co">#&gt; 21 48.75 13.90625 0.01356756 0.01318861 0.01395726 0.01334306 0.01138131</span></span>
+<span><span class="co">#&gt; 22 38.75 10.15625 0.06964160 0.06925830 0.07002686 0.07665655 0.07267431</span></span>
+<span><span class="co">#&gt; 23 18.75 17.65625 0.23002117 0.22963712 0.23040568 0.22607536 0.21769971</span></span>
+<span><span class="co">#&gt; 24 16.25  7.34375 0.52137087 0.52098658 0.52175514 0.52371973 0.51071445</span></span>
+<span><span class="co">#&gt; 25 36.25 14.84375 0.04356521 0.04318255 0.04395111 0.04246471 0.03952891</span></span>
+<span><span class="co">#&gt; 26 46.25 11.09375 0.02925261 0.02887077 0.02963934 0.03110227 0.02813903</span></span>
+<span><span class="co">#&gt; 27 26.25 18.59375 0.08787546 0.08749194 0.08826050 0.09192164 0.08644759</span></span>
+<span><span class="co">#&gt; 28 21.25  9.21875 0.33550310 0.33511893 0.33588748 0.34737802 0.33927408</span></span>
+<span><span class="co">#&gt; 29 41.25 16.71875 0.01905733 0.01867683 0.01944543 0.01836489 0.01668195</span></span>
+<span><span class="co">#&gt; 30 31.25  5.46875 0.33785585 0.33747169 0.33824024 0.33934765 0.32739678</span></span>
 <span><span class="co">#&gt;         p_u95 no_overlap</span></span>
-<span><span class="co">#&gt; 21 0.01795421           </span></span>
-<span><span class="co">#&gt; 22 0.09654550           </span></span>
-<span><span class="co">#&gt; 23 0.25903303           </span></span>
-<span><span class="co">#&gt; 24 0.54320240           </span></span>
-<span><span class="co">#&gt; 25 0.04971055           </span></span>
-<span><span class="co">#&gt; 26 0.04165059          *</span></span>
-<span><span class="co">#&gt; 27 0.11117559           </span></span>
-<span><span class="co">#&gt; 28 0.36243419           </span></span>
-<span><span class="co">#&gt; 29 0.02341167           </span></span>
-<span><span class="co">#&gt; 30 0.37026910</span></span></code></pre></div>
+<span><span class="co">#&gt; 21 0.01563759           </span></span>
+<span><span class="co">#&gt; 22 0.08083798          *</span></span>
+<span><span class="co">#&gt; 23 0.23467659           </span></span>
+<span><span class="co">#&gt; 24 0.53669292           </span></span>
+<span><span class="co">#&gt; 25 0.04560820           </span></span>
+<span><span class="co">#&gt; 26 0.03436652           </span></span>
+<span><span class="co">#&gt; 27 0.09770525           </span></span>
+<span><span class="co">#&gt; 28 0.35557136          *</span></span>
+<span><span class="co">#&gt; 29 0.02021413           </span></span>
+<span><span class="co">#&gt; 30 0.35150677</span></span></code></pre></div>
 <p>Once we are happy with our solution and have chosen a specific design
 from the Pareto set, we might want to double check that point by running
 a large number of simulations at it.</p>
-<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">design</span> <span class="op">&lt;-</span> <span class="va">sol</span><span class="op">$</span><span class="va">p_set</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">sol</span><span class="op">$</span><span class="va">p_set</span><span class="op">)</span>,<span class="op">]</span></span>
 <span></span>
 <span><span class="va">r</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/diag_check_point.html">diag_check_point</a></span><span class="op">(</span><span class="va">design</span>, <span class="va">prob</span>, <span class="va">sol</span>, N<span class="op">=</span><span class="fl">10</span><span class="op">^</span><span class="fl">6</span><span class="op">)</span> </span>
-<span><span class="co">#&gt; Model 1 prediction interval: [0.161, 0.19]</span></span>
-<span><span class="co">#&gt; Model 1 empirical interval: [0.188, 0.189]</span></span></code></pre></div>
+<span><span class="co">#&gt; Model 1 prediction interval: [0.161, 0.176]</span></span>
+<span><span class="co">#&gt; Model 1 empirical interval: [0.187, 0.189]</span></span></code></pre></div>
 <p>If we decide we want to run more simulations at the same point, we
 can pass the previous results in so they are built upon.</p>
-<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">r</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/diag_check_point.html">diag_check_point</a></span><span class="op">(</span><span class="va">design</span>, <span class="va">prob</span>, <span class="va">sol</span>, N<span class="op">=</span><span class="fl">10</span><span class="op">^</span><span class="fl">4</span>, <span class="va">r</span><span class="op">)</span> </span>
-<span><span class="co">#&gt; Model 1 prediction interval: [0.161, 0.19]</span></span>
-<span><span class="co">#&gt; Model 1 empirical interval: [0.188, 0.189]</span></span></code></pre></div>
+<span><span class="co">#&gt; Model 1 prediction interval: [0.161, 0.176]</span></span>
+<span><span class="co">#&gt; Model 1 empirical interval: [0.187, 0.189]</span></span></code></pre></div>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>
