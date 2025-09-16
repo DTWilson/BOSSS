@@ -204,7 +204,7 @@ ggplot(df, aes(N, m, colour = t)) + geom_point() +
 df_init <- df[df$t == "Initial",]
 p <- PS_empirical_ests(sol_init, prob)[[2]][,1]
 df_init$pow <- 1 - 1/(1 + exp(-p))
-df_init <- df_init[,c(1,2,3,5)]
+df_init <- df_init[order(df_init$m), c(1,2,3,5)]
   
 colnames(df_init) <- c("$m$", "$n$", "$N$", "power")
 
@@ -213,7 +213,7 @@ colnames(df_init) <- c("$m$", "$n$", "$N$", "power")
 df_final <- df[df$t == "Final",]
 p <- PS_empirical_ests(sol_final, prob)[[2]][,1]
 df_final$pow <- 1 - 1/(1 + exp(-p))
-df_final <- df_final[,c(1,2,3,5)]
+df_final <- df_final[order(df_final$m), c(1,2,3,5)]
   
 colnames(df_final) <- c("$m$", "$n$", "$N$", "power")
 
@@ -241,11 +241,10 @@ ps[[2]]
 We can also get the predicted values and 95% credible intervals for each point we have evaluated, contrasting these with the empirical MC estimate and interval. This will return a data frame for each of the models, named according to the output-hypothesis combination which defines it. We highlight with a `*` any points where the two intervals do not overlap.
 
 ```{r}
-dp <- diag_predictions(prob, sol)
-dp[[1]][dp[[1]]$no_overlap == "*",]
+diag_predictions(prob, sol)
 ```
 
-In this example we see that the empirical estimates agree with the predictions for all but three of the designs which have been evaluated. 
+In this example we see that the empirical estimates agree with the predictions for all of the designs which have been evaluated. 
 
 At any point, but especially after initialisation, we may decide that we need more points in our initial evaluations, or more simulations at each of the points evaluated so far. We can do that via `extend_initial()`. For example, suppose we want to add an extra 500 simulations to our initial points and to add another ten points to the initial space-filling design:
 
@@ -254,8 +253,6 @@ sol <- extend_initial(prob, sol, extra_N = 1000)
 
 # Look at the first three designs; the empirical and predicted estimates will have changed
 diag_predictions(prob, sol)[[1]][1:3,]
-
-print(sol)
 ```
 
 Or, we could add another 10 points:
@@ -268,20 +265,11 @@ diag_predictions(prob, sol)[[1]][1:10,]
 ```
 
 
-Once we are happy with our solution and have chosen a specific design from the Pareto set, we might want to double check that point by running a large number of simulations at it.
+Once we are happy with our solution and have chosen a specific design from the Pareto set, we might want to double check that point by running a large number of simulations at it:
 
 ```{r}
 design <- sol$p_set[nrow(sol$p_set),]
 
-r <- diag_check_point(design, prob, sol, N=10^6) 
+r <- diag_check_point(design, prob, sol, N=10^5) 
 ```
-
-If we decide we want to run more simulations at the same point, we can pass the previous results in so they are built upon.
-
-```{r}
-r <- diag_check_point(design, prob, sol, N=10^4, r) 
-```
-
-
-
 

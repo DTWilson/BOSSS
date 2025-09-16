@@ -1,10 +1,10 @@
 % latex table generated in R 4.5.1 by xtable 1.8-4 package
-% Tue Sep 16 13:11:51 2025
+% Tue Sep 16 13:23:48 2025
 \begin{tabular}{rrrr}
   \toprule
 $m$ & $n$ & $N$ & power \\ 
   \midrule
-40 & 8 & 320 & 0.92 \\ 
-  23 & 15 & 345 & 0.81 \\ 
+23 & 15 & 345 & 0.81 \\ 
+  40 & 8 & 320 & 0.92 \\ 
    \bottomrule
 \end{tabular}
