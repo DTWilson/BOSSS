@@ -154,10 +154,33 @@ print.BOSSS_solution <- function(x, ...) {
   # First, print the Pareto set - i.e. the design variable values
   cat("Design variables for the Pareto set: \n\n")
   print(as.matrix(x$p_set[,1:x$problem$dimen]))
-  sol_nums <- as.numeric(rownames(x$p_set))
+
+  dfs <- PS_empirical_ests(x, x$problem)
+  obj_df <- dfs[[1]]
+
+  cat("\nCorresponding objective function values...\n\n")
+  print(obj_df)
+
+  con_df <- dfs[[2]]
+
+  cat("\n...and constraint function values:\n\n")
+  print(con_df)
+}
+
+#' Title
+#'
+#' @param solution BOSSS solution.
+#' @param problem BOSSS problem.
+#'
+#' @returns a list of two dataframes with the objective and constraint
+#'  estimates (empirical, not model based) of designs in the Pareto set
+#' @export
+#'
+PS_empirical_ests <- function(solution, problem) {
+  sol_nums <- as.numeric(rownames(solution$p_set))
 
   # Next, the corresponding objective values
-  objectives <- x$problem$objectives
+  objectives <- problem$objectives
   obj_df <- NULL
   labs <- NULL
   for(i in 1:nrow(objectives)){
@@ -166,7 +189,7 @@ print.BOSSS_solution <- function(x, ...) {
     lab <- paste0(out, ", ", hyp, " (mean)")
     labs <- c(labs, lab)
 
-    r <- x$results[[hyp, out]]
+    r <- solution$results[[hyp, out]]
     obj_df <- cbind(obj_df, r[sol_nums, 1])
     colnames(obj_df) <- labs
     if(objectives[i, "stoch"]) {
@@ -177,11 +200,9 @@ print.BOSSS_solution <- function(x, ...) {
     }
   }
   rownames(obj_df) <- sol_nums
-  cat("\nCorresponding objective function values... \n\n")
-  print(obj_df)
 
   # Finally, the constraint values
-  constraints <- x$problem$constraints
+  constraints <- problem$constraints
   con_df <- NULL
   labs <- NULL
   for(i in 1:nrow(constraints)){
@@ -190,7 +211,7 @@ print.BOSSS_solution <- function(x, ...) {
     lab <- paste0(out, ", ", hyp, " (mean)")
     labs <- c(labs, lab)
 
-    r <- x$results[[hyp, out]]
+    r <- solution$results[[hyp, out]]
     con_df <- cbind(con_df, r[sol_nums, 1])
     colnames(con_df) <- labs
     if(constraints[i, "stoch"]) {
@@ -202,10 +223,8 @@ print.BOSSS_solution <- function(x, ...) {
   }
   rownames(con_df) <- sol_nums
 
-  cat("\n...and constraint function values:\n\n")
-  print(con_df)
+  return(list(obj_df, con_df))
 }
-
 
 #' Plot the Pareto front of a BOSSS solution
 #'

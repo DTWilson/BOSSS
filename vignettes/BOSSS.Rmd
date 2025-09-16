@@ -134,6 +134,7 @@ sol <- BOSSS_solution(size, N, prob)
 
 print(sol) 
 plot(sol)
+sol_init <- sol
 ```
 
 The `print()` function will give a table of the Pareto set with associated objective function values. The `plot()` function will plot the Pareto front.
@@ -149,6 +150,7 @@ for(i in 1:20) {
 }
 print(sol)
 plot(sol)
+sol_final <- sol
 ```
 
 We can compare the initial and final approximations to the Pareto front to the actual front since, for this simple example, we can calculate power analytically:
@@ -163,24 +165,31 @@ df$clust_var <- 0.05 + 0.95/df$n
 df$pow <- power.t.test(df$m, delta = 0.3, sd = sqrt(df$clust_var),
                        alternative = "one.sided", sig.level = 0.025)$power
 
-df <- df[df$pow >= 0.8, c("m", "N")]
+df <- df[df$pow >= 0.8, c("m", "n", "N")]
 df <-  data.frame(paretoFilter(as.matrix(df)))
 df$t <- "True"
 
-df <- rbind(df, data.frame(m = c(40, 23,
-                                 23, 31, 26, 20, 24, 27, 35, 21, 29),
-                           N = c(320, 345,
-                                 345, 248, 286, 380, 312, 270, 245, 357, 261),
-                           t = c(rep("Initial", 2), rep("Final", 9))))
+df <- rbind(df, data.frame(m = c(floor(sol_init$p_set$m),
+                                 floor(sol_final$p_set$m)),
+                           n = c(floor(sol_init$p_set$n),
+                                 floor(sol_final$p_set$n)),
+                           N = c(floor(sol_init$p_set$N),
+                                 floor(sol_final$p_set$N)),
+                           t = c(rep("Initial", nrow(sol_init$p_set)),
+                                 rep("Final", nrow(sol_final$p_set)))))
 
 # Add ends of steps
-df2  <- rbind(data.frame(m=c(43, 43),
-                          N=c(320, 245),
-                          t=c("Initial", "Final")),
-              df,
-              data.frame(m=c(23, 20, 19),
-                         N=c(380, 380, 380),
-                         t=c("Initial", "Final", "True")))
+df2  <- rbind(data.frame(m=rep(max(df$m), 3),
+                          N=c(min(df[df$t == "Initial", "N"]),
+                              min(df[df$t == "True", "N"]),
+                              min(df[df$t == "Final", "N"])),
+                          t=c("Initial", "True", "Final")),
+              df[,c("m", "N", "t")],
+              data.frame(m=c(min(df[df$t == "Initial", "m"]),
+                             min(df[df$t == "True", "m"]),
+                             min(df[df$t == "Final", "m"])),
+                         N=rep(max(df$N), 3),
+                         t=c("Initial", "True", "Final")))
 
 ggplot(df, aes(N, m, colour = t)) + geom_point() +
   xlab("Total sample size per arm, N") +
@@ -190,6 +199,25 @@ ggplot(df, aes(N, m, colour = t)) + geom_point() +
   theme_minimal()
 
 #ggsave(here("man", "figures", "cRCT_fronts.pdf"), height=9, width=14, units="cm")
+
+# Tabulate results
+df_init <- df[df$t == "Initial",]
+p <- PS_empirical_ests(sol_init, prob)[[2]][,1]
+df_init$pow <- 1 - 1/(1 + exp(-p))
+df_init <- df_init[,c(1,2,3,5)]
+  
+colnames(df_init) <- c("$m$", "$n$", "$N$", "power")
+
+#print(xtable(df_init, digits = c(0,0,0,0,2)), booktabs = T, include.rownames = F, sanitize.text.function = function(x) {x}, floating = F, file = here("man", "tables", "cRCT_init.txt"))
+
+df_final <- df[df$t == "Final",]
+p <- PS_empirical_ests(sol_final, prob)[[2]][,1]
+df_final$pow <- 1 - 1/(1 + exp(-p))
+df_final <- df_final[,c(1,2,3,5)]
+  
+colnames(df_final) <- c("$m$", "$n$", "$N$", "power")
+
+#print(xtable(df_final, digits = c(0,0,0,0,2)), booktabs = T, include.rownames = F, sanitize.text.function = function(x) {x}, floating = F, file = here("man", "tables", "cRCT_final.txt"))
 ```
 
 ### Diagnostics
