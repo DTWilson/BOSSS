@@ -98,10 +98,10 @@ extend_initial <- function(problem, solution, extra_N = 0, extra_points = 0)
 
           a <- 0.2 + old_a + new_a; b <- 0.2 + old_b + new_b
           N <- old_N + extra_N
-          m <- a/(a+b); v <- (N*m*(1-m)/(0.2+N)^2)*(1/m + 1/(1-m))^2
+          m <- a/(a+b); #v <- (N*m*(1-m)/(0.2+N)^2)*(1/m + 1/(1-m))^2
 
           solution$results[[hyp, out]][1:solution$size, 1] <- log(m/(1 - m))
-          solution$results[[hyp, out]][1:solution$size, 2] <- v
+          solution$results[[hyp, out]][1:solution$size, 2] <- 1/(N*m*(1 - m))
         } else {
           # Continuous outcome
           old_m <- solution$results[[hyp, out]][1:solution$size, 1]

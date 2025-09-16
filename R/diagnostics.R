@@ -205,8 +205,8 @@ emp_interval <- function(mod_i, is_bin, problem, solution, type)
   r <- solution$results[solution$to_model[mod_i,"hyp"], solution$to_model[mod_i,"out"]][[1]]
 
   m_lp <- r[,1]
-  upper95_lp <- r[,1] + stats::qnorm(0.975)*r[,2]
-  lower95_lp <- r[,1] - stats::qnorm(0.975)*r[,2]
+  upper95_lp <- r[,1] + stats::qnorm(0.975)*sqrt(r[,2])
+  lower95_lp <- r[,1] - stats::qnorm(0.975)*sqrt(r[,2])
 
   if(is_bin & type == "response"){
     m <- 1/(exp(-m_lp) + 1)

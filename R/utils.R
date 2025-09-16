@@ -71,9 +71,9 @@ MC_estimates <- function(design, hypotheses, N, sim, clust = NULL)
         # and variance to avoid getting estimates of 0 with no uncertainty
         # (could try to address with a nugget in the GP models instead?)
         a <- 0.2 + sum(sims[j,] == 1); b <- 0.2 + sum(sims[j,] == 0)
-        m <- a/(a+b); v <- (N*m*(1-m)/(0.2+N)^2)*(1/m + 1/(1-m))^2
+        m <- a/(a+b); #v <- (N*m*(1-m)/(0.2+N)^2)*(1/m + 1/(1-m))^2
         #results <- c(results, a/(a + b), a*b/((a+b)^2*(a+b+1)))
-        results <- c(results, log(m/(1-m)), v)
+        results <- c(results, log(m/(1-m)), 1/(N*m*(1-m)))
       } else {
         results <- c(results, mean(sims[j,]), stats::var(sims[j,])/N)
       }

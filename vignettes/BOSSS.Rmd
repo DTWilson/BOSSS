@@ -219,10 +219,10 @@ dp[[1]][dp[[1]]$no_overlap == "*",]
 
 In this example we see that the empirical estimates agree with the predictions for all but three of the designs which have been evaluated. 
 
-At any point, but especially after initialisation, we may decide that we need more points in our initial evaluations, or more simulations at each of those points. We can do that via `extend_initial()`. For example, suppose we want to add an extra 500 simulations to our initial points and to add another ten points to the initial space-filling design:
+At any point, but especially after initialisation, we may decide that we need more points in our initial evaluations, or more simulations at each of the points evaluated so far. We can do that via `extend_initial()`. For example, suppose we want to add an extra 500 simulations to our initial points and to add another ten points to the initial space-filling design:
 
 ```{r}
-sol <- extend_initial(prob, sol, extra_N = 5000)
+sol <- extend_initial(prob, sol, extra_N = 1000)
 
 # Look at the first three designs; the empirical and predicted estimates will have changed
 diag_predictions(prob, sol)[[1]][1:3,]
