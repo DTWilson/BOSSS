@@ -226,7 +226,7 @@ and then using those models to estimate the Pareto set and front:</p>
 <span></span>
 <span><span class="va">sol</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/BOSSS_solution.html">BOSSS_solution</a></span><span class="op">(</span><span class="va">size</span>, <span class="va">N</span>, <span class="va">prob</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Checking simulation speed...</span></span>
-<span><span class="co">#&gt; Initialisation will take approximately 0.5765498 secs </span></span>
+<span><span class="co">#&gt; Initialisation will take approximately 0.592622 secs </span></span>
 <span><span class="co">#&gt; Solution found</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">sol</span><span class="op">)</span> </span>
@@ -493,63 +493,87 @@ intervals do not overlap.</p>
 <span><span class="co">#&gt; 39 0.19684762           </span></span>
 <span><span class="co">#&gt; 40 0.19179528</span></span></code></pre></div>
 <p>In this example we see that the empirical estimates agree with the
-predictions for all of the designs which have been evaluated.</p>
+predictions for all of the designs which have been evaluated. Once we
+are happy with our solution and have chosen a specific design from the
+Pareto set, we might want to double check that point by running a large
+number of simulations at it:</p>
+<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">design</span> <span class="op">&lt;-</span> <span class="va">sol</span><span class="op">$</span><span class="va">p_set</span><span class="op">[</span><span class="fl">1</span>,<span class="op">]</span></span>
+<span><span class="va">r</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/diag_check_point.html">diag_check_point</a></span><span class="op">(</span><span class="va">design</span>, <span class="va">prob</span>, <span class="va">sol</span>, N<span class="op">=</span><span class="fl">10</span><span class="op">^</span><span class="fl">5</span><span class="op">)</span> </span>
+<span><span class="co">#&gt; Model 1 prediction interval: [0.137, 0.188]</span></span>
+<span><span class="co">#&gt; Model 1 empirical interval: [0.157, 0.161]</span></span></code></pre></div>
 <p>At any point, but especially after initialisation, we may decide that
 we need more points in our initial evaluations, or more simulations at
 each of the points evaluated so far. We can do that via
-<code><a href="../reference/extend_initial.html">extend_initial()</a></code>. For example, suppose we want to add an
-extra 500 simulations to our initial points and to add another ten
-points to the initial space-filling design:</p>
-<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">sol</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/extend_initial.html">extend_initial</a></span><span class="op">(</span><span class="va">prob</span>, <span class="va">sol</span>, extra_N <span class="op">=</span> <span class="fl">1000</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Look at the first three designs; the empirical and predicted estimates will have changed</span></span>
-<span><span class="fu"><a href="../reference/diag_predictions.html">diag_predictions</a></span><span class="op">(</span><span class="va">prob</span>, <span class="va">sol</span><span class="op">)</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">3</span>,<span class="op">]</span></span>
-<span><span class="co">#&gt;    m     n   MC_mean     MC_l95    MC_u95    p_mean     p_l95     p_u95</span></span>
-<span><span class="co">#&gt; 1 30 12.50 0.1083242 0.09127888 0.1281039 0.1131025 0.1046321 0.1221651</span></span>
-<span><span class="co">#&gt; 2 40  8.75 0.1055980 0.08876514 0.1251843 0.1096610 0.1000709 0.1200476</span></span>
-<span><span class="co">#&gt; 3 20 16.25 0.2101054 0.18704137 0.2351907 0.2274885 0.2123577 0.2433643</span></span>
-<span><span class="co">#&gt;   no_overlap</span></span>
-<span><span class="co">#&gt; 1           </span></span>
-<span><span class="co">#&gt; 2           </span></span>
-<span><span class="co">#&gt; 3</span></span></code></pre></div>
-<p>Or, we could add another 10 points:</p>
+<code><a href="../reference/extend_initial.html">extend_initial()</a></code>. For example, suppose we started off with
+only 10 evaluations at each of 6 initial designs:</p>
 <div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">sol</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/extend_initial.html">extend_initial</a></span><span class="op">(</span><span class="va">prob</span>, <span class="va">sol</span>, extra_points <span class="op">=</span> <span class="fl">10</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">98579</span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># Look at the added designs, which go to the top of the table</span></span>
-<span><span class="fu"><a href="../reference/diag_predictions.html">diag_predictions</a></span><span class="op">(</span><span class="va">prob</span>, <span class="va">sol</span><span class="op">)</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">10</span>,<span class="op">]</span></span>
-<span><span class="co">#&gt;        m        n    MC_mean      MC_l95     MC_u95     p_mean      p_l95</span></span>
-<span><span class="co">#&gt; 21 48.75 13.90625 0.01381316 0.008371256 0.02271166 0.01511661 0.01158683</span></span>
-<span><span class="co">#&gt; 22 38.75 10.15625 0.07470011 0.060573487 0.09179933 0.07946652 0.07286336</span></span>
-<span><span class="co">#&gt; 23 18.75 17.65625 0.24827336 0.223630553 0.27467094 0.24263386 0.22880319</span></span>
-<span><span class="co">#&gt; 24 16.25  7.34375 0.54271174 0.513157083 0.57196877 0.52977902 0.50515836</span></span>
-<span><span class="co">#&gt; 25 36.25 14.84375 0.04289349 0.032393933 0.05659713 0.04277614 0.03827216</span></span>
-<span><span class="co">#&gt; 26 46.25 11.09375 0.02744457 0.019275177 0.03893891 0.03582203 0.03056656</span></span>
-<span><span class="co">#&gt; 27 26.25 18.59375 0.08924028 0.073765769 0.10758395 0.09408199 0.08510138</span></span>
-<span><span class="co">#&gt; 28 21.25  9.21875 0.32733551 0.300230866 0.35564352 0.33783443 0.32360286</span></span>
-<span><span class="co">#&gt; 29 41.25 16.71875 0.01744820 0.011181489 0.02713075 0.01897361 0.01600875</span></span>
-<span><span class="co">#&gt; 30 31.25  5.46875 0.36095965 0.333089462 0.38979880 0.35146736 0.32981766</span></span>
-<span><span class="co">#&gt;         p_u95 no_overlap</span></span>
-<span><span class="co">#&gt; 21 0.01970025           </span></span>
-<span><span class="co">#&gt; 22 0.08661219           </span></span>
-<span><span class="co">#&gt; 23 0.25702192           </span></span>
-<span><span class="co">#&gt; 24 0.55425561           </span></span>
-<span><span class="co">#&gt; 25 0.04778383           </span></span>
-<span><span class="co">#&gt; 26 0.04194200           </span></span>
-<span><span class="co">#&gt; 27 0.10390269           </span></span>
-<span><span class="co">#&gt; 28 0.35236582           </span></span>
-<span><span class="co">#&gt; 29 0.02247502           </span></span>
-<span><span class="co">#&gt; 30 0.37374564</span></span></code></pre></div>
-<p>Once we are happy with our solution and have chosen a specific design
-from the Pareto set, we might want to double check that point by running
-a large number of simulations at it:</p>
+<span><span class="va">size</span> <span class="op">&lt;-</span> <span class="fl">6</span></span>
+<span><span class="va">N</span> <span class="op">&lt;-</span> <span class="fl">10</span></span>
+<span></span>
+<span><span class="va">sol</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/BOSSS_solution.html">BOSSS_solution</a></span><span class="op">(</span><span class="va">size</span>, <span class="va">N</span>, <span class="va">prob</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Checking simulation speed...</span></span>
+<span><span class="co">#&gt; Initialisation will take approximately 0.01507163 secs </span></span>
+<span><span class="co">#&gt; Solution found</span></span>
+<span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">sol</span><span class="op">)</span> </span>
+<span><span class="co">#&gt; Design variables for the Pareto set: </span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt;    m      n</span></span>
+<span><span class="co">#&gt; 3 20 16.250</span></span>
+<span><span class="co">#&gt; 4 25 10.625</span></span>
+<span><span class="co">#&gt; 6 35  6.875</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; Corresponding objective function values...</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt;   N, alt (mean) m, alt (mean)</span></span>
+<span><span class="co">#&gt; 3           320            20</span></span>
+<span><span class="co">#&gt; 4           250            25</span></span>
+<span><span class="co">#&gt; 6           210            35</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; ...and constraint function values:</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt;   s, alt (mean) s, alt (var)</span></span>
+<span><span class="co">#&gt; 3    -1.3156768    0.5995565</span></span>
+<span><span class="co">#&gt; 4    -1.3156768    0.5995565</span></span>
+<span><span class="co">#&gt; 6    -0.3894648    0.4153610</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">sol</span><span class="op">)</span></span></code></pre></div>
+<p><img src="BOSSS_files/figure-html/unnamed-chunk-15-1.png" width="700"></p>
 <div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">design</span> <span class="op">&lt;-</span> <span class="va">sol</span><span class="op">$</span><span class="va">p_set</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">sol</span><span class="op">$</span><span class="va">p_set</span><span class="op">)</span>,<span class="op">]</span></span>
+<code class="sourceCode R"><span><span class="va">sol_init</span> <span class="op">&lt;-</span> <span class="va">sol</span></span>
 <span></span>
-<span><span class="va">r</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/diag_check_point.html">diag_check_point</a></span><span class="op">(</span><span class="va">design</span>, <span class="va">prob</span>, <span class="va">sol</span>, N<span class="op">=</span><span class="fl">10</span><span class="op">^</span><span class="fl">5</span><span class="op">)</span> </span>
-<span><span class="co">#&gt; Model 1 prediction interval: [0.155, 0.178]</span></span>
-<span><span class="co">#&gt; Model 1 empirical interval: [0.168, 0.173]</span></span></code></pre></div>
+<span><span class="co"># Take the first solution in the Pareto set and plot diagnostics:</span></span>
+<span><span class="va">sol</span><span class="op">$</span><span class="va">p_set</span><span class="op">[</span><span class="fl">1</span>,<span class="op">]</span></span>
+<span><span class="co">#&gt;    m     n   N  m</span></span>
+<span><span class="co">#&gt; 3 20 16.25 320 20</span></span>
+<span><span class="fu"><a href="../reference/diag_plots.html">diag_plots</a></span><span class="op">(</span><span class="va">design</span>, <span class="va">prob</span>, <span class="va">sol</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [[1]]</span></span></code></pre></div>
+<p><img src="BOSSS_files/figure-html/unnamed-chunk-15-2.png" width="700"></p>
+<pre><code><span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; [[2]]</span></span></code></pre>
+<p><img src="BOSSS_files/figure-html/unnamed-chunk-15-3.png" width="700"></p>
+<p>The diagnostic plots here show a GP model of the true power function
+which is just a constant, which we know is not true. When we see a poor
+initial fit like this we might want to add more simulations to designs
+already evaluated, or add more designs, or both. We can use the
+<code><a href="../reference/extend_initial.html">extend_initial()</a></code> function for this. For example, suppose we
+want an extra 4 designs and for every design to have 500
+simulations:</p>
+<div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">sol</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/extend_initial.html">extend_initial</a></span><span class="op">(</span><span class="va">prob</span>, <span class="va">sol</span>, extra_points <span class="op">=</span> <span class="fl">4</span>, extra_N <span class="op">=</span> <span class="fl">490</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">sol</span><span class="op">$</span><span class="va">p_set</span><span class="op">[</span><span class="fl">1</span>,<span class="op">]</span></span>
+<span><span class="co">#&gt;       m      n   N  m</span></span>
+<span><span class="co">#&gt; 10 47.5 5.9375 235 47</span></span>
+<span><span class="fu"><a href="../reference/diag_plots.html">diag_plots</a></span><span class="op">(</span><span class="va">design</span>, <span class="va">prob</span>, <span class="va">sol</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [[1]]</span></span></code></pre></div>
+<p><img src="BOSSS_files/figure-html/unnamed-chunk-16-1.png" width="700"></p>
+<pre><code><span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; [[2]]</span></span></code></pre>
+<p><img src="BOSSS_files/figure-html/unnamed-chunk-16-2.png" width="700"></p>
+<p>Our lots now suggest a more plausible model.</p>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>
