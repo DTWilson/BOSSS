@@ -414,7 +414,7 @@ prob <- BOSSS_problem(sim_P2, design_space, hypotheses, objectives, constraints,
 set.seed(327324)
 
 size <- 30
-N <- 500
+N <- 100
 
 ptm <- proc.time()
 sol <- BOSSS_solution(size, N, prob)
@@ -439,10 +439,12 @@ plot(sol)
 ```
 
 ```{r}
-N <- 500
+N <- 100
+ptm <- proc.time()
 for(i in 1:20) {
   sol <- iterate(sol, prob, N) 
 }
+proc.time() - ptm
 ```
 
 ```{r, include = FALSE, eval=TRUE}
@@ -452,9 +454,26 @@ p <- here("vignettes", "example_files", "P2_sol_final.rds")
 sol <- readRDS(p)
 ```
 
-```{r, eval = TRUE}
+
+```{r, eval=TRUE}
 print(sol)
+
+p <- PS_empirical_ests(sol, prob)[[1]][, c(1,3,5)]
+p[,1] <- 1/(1 + exp(-p[,1]))
+p[,2] <- 1/(1 + exp(-p[,2]))
+
+df <- cbind(sol$p_set[,1:4], p)
+
+df <- df[order(df[,1]),]
+  
+colnames(df) <- c("$n$", "$n_{int}$", "$\\alpha_{int}$", "$\\alpha_{f}$",
+                       "$E[g ~|~ H_0]$", "$E[s ~|~ H_1]$", "$E[N ~|~ H_0]$")
+
+#print(xtable(df, digits = c(0,0,2,2,2,2,2,0)), booktabs = T, include.rownames = T, sanitize.text.function = function(x) {x}, floating = F, file = here("man", "tables", "NIFTy.txt"))
+
 plot(sol)
+
+#ggsave(here("man", "figures", "NIFTy.pdf"), height=9, width=14, units="cm")
 ```
 
 ## Recruitment
