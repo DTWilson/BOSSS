@@ -600,7 +600,7 @@ be (probably) less than 0.2 and the follow-up length to be less than
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">327324</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">size</span> <span class="op">&lt;-</span> <span class="fl">30</span></span>
-<span><span class="va">N</span> <span class="op">&lt;-</span> <span class="fl">500</span></span>
+<span><span class="va">N</span> <span class="op">&lt;-</span> <span class="fl">100</span></span>
 <span></span>
 <span><span class="va">ptm</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/proc.time.html" class="external-link">proc.time</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="va">sol</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/BOSSS_solution.html">BOSSS_solution</a></span><span class="op">(</span><span class="va">size</span>, <span class="va">N</span>, <span class="va">prob</span><span class="op">)</span></span>
@@ -611,11 +611,10 @@ be (probably) less than 0.2 and the follow-up length to be less than
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;           n      fu      af</span></span>
 <span><span class="co">#&gt; 9  359.3750 50.6250 8.31250</span></span>
-<span><span class="co">#&gt; 11 246.8750 38.1250 1.56250</span></span>
 <span><span class="co">#&gt; 13 415.6250 44.3750 4.93750</span></span>
 <span><span class="co">#&gt; 17 317.1875 58.4375 4.09375</span></span>
-<span><span class="co">#&gt; 18 429.6875 20.9375 1.84375</span></span>
 <span><span class="co">#&gt; 21 485.9375 39.6875 9.71875</span></span>
+<span><span class="co">#&gt; 25 345.3125 42.8125 1.28125</span></span>
 <span><span class="co">#&gt; 26 457.8125 30.3125 3.53125</span></span>
 <span><span class="co">#&gt; 29 401.5625 49.0625 6.90625</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -623,83 +622,117 @@ be (probably) less than 0.2 and the follow-up length to be less than
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;    n, alt (mean) a, alt (mean) f, alt (mean)</span></span>
 <span><span class="co">#&gt; 9       359.3750      2156.250       50.6250</span></span>
-<span><span class="co">#&gt; 11      246.8750      5925.000       38.1250</span></span>
 <span><span class="co">#&gt; 13      415.6250      3325.000       44.3750</span></span>
 <span><span class="co">#&gt; 17      317.1875      4440.625       58.4375</span></span>
-<span><span class="co">#&gt; 18      429.6875      4726.562       20.9375</span></span>
 <span><span class="co">#&gt; 21      485.9375      1943.750       39.6875</span></span>
+<span><span class="co">#&gt; 25      345.3125     11395.312       42.8125</span></span>
 <span><span class="co">#&gt; 26      457.8125      3662.500       30.3125</span></span>
 <span><span class="co">#&gt; 29      401.5625      2810.938       49.0625</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ...and constraint function values:</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;    s, alt (mean) s, alt (var)</span></span>
-<span><span class="co">#&gt; 9      -2.818081   0.03757873</span></span>
-<span><span class="co">#&gt; 11     -1.780150   0.01618577</span></span>
-<span><span class="co">#&gt; 13     -2.936892   0.04178691</span></span>
-<span><span class="co">#&gt; 17     -3.221373   0.05416146</span></span>
-<span><span class="co">#&gt; 18     -1.732408   0.01564970</span></span>
-<span><span class="co">#&gt; 21     -2.710611   0.03418256</span></span>
-<span><span class="co">#&gt; 26     -2.437794   0.02704859</span></span>
-<span><span class="co">#&gt; 29     -3.221373   0.05416146</span></span>
+<span><span class="co">#&gt; 9      -2.419826    0.1333284</span></span>
+<span><span class="co">#&gt; 13     -3.131345    0.2494842</span></span>
+<span><span class="co">#&gt; 17     -3.131345    0.2494842</span></span>
+<span><span class="co">#&gt; 21     -2.560667    0.1502170</span></span>
+<span><span class="co">#&gt; 25     -2.907321    0.2036231</span></span>
+<span><span class="co">#&gt; 26     -3.798549    0.4665877</span></span>
+<span><span class="co">#&gt; 29     -3.798549    0.4665877</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">sol</span><span class="op">)</span></span></code></pre></div>
 <p><img src="Examples_files/figure-html/unnamed-chunk-15-1.png" width="700"></p>
 <div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">N</span> <span class="op">&lt;-</span> <span class="fl">500</span></span>
+<code class="sourceCode R"><span><span class="va">N</span> <span class="op">&lt;-</span> <span class="fl">100</span></span>
+<span><span class="va">ptm</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/proc.time.html" class="external-link">proc.time</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="kw">for</span><span class="op">(</span><span class="va">i</span> <span class="kw">in</span> <span class="fl">1</span><span class="op">:</span><span class="fl">20</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="va">sol</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/iterate.html">iterate</a></span><span class="op">(</span><span class="va">sol</span>, <span class="va">prob</span>, <span class="va">N</span><span class="op">)</span> </span>
-<span><span class="op">}</span></span></code></pre></div>
+<span><span class="op">}</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/proc.time.html" class="external-link">proc.time</a></span><span class="op">(</span><span class="op">)</span> <span class="op">-</span> <span class="va">ptm</span></span></code></pre></div>
 <div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">sol</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Design variables for the Pareto set: </span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;           n       fu       af</span></span>
-<span><span class="co">#&gt; 9  359.3750 50.62500 8.312500</span></span>
-<span><span class="co">#&gt; 11 246.8750 38.12500 1.562500</span></span>
-<span><span class="co">#&gt; 14 303.1250 31.87500 2.687500</span></span>
-<span><span class="co">#&gt; 18 429.6875 20.93750 1.843750</span></span>
-<span><span class="co">#&gt; 34 230.0819 53.88707 6.759177</span></span>
-<span><span class="co">#&gt; 38 199.7083 52.63788 3.515716</span></span>
-<span><span class="co">#&gt; 39 368.6289 27.57863 3.947984</span></span>
-<span><span class="co">#&gt; 42 476.0093 19.61557 2.193718</span></span>
-<span><span class="co">#&gt; 43 233.1484 44.00125 4.014669</span></span>
-<span><span class="co">#&gt; 46 466.5642 19.70490 1.971585</span></span>
-<span><span class="co">#&gt; 47 426.7519 38.53797 9.637794</span></span>
-<span><span class="co">#&gt; 49 464.0631 17.94535 1.257592</span></span>
+<span><span class="co">#&gt; 31 228.5281 49.35014 3.796745</span></span>
+<span><span class="co">#&gt; 32 436.0485 24.43320 3.054609</span></span>
+<span><span class="co">#&gt; 33 427.0384 25.46592 2.831004</span></span>
+<span><span class="co">#&gt; 35 375.1751 35.87907 7.225270</span></span>
+<span><span class="co">#&gt; 36 299.7509 33.84992 2.426087</span></span>
+<span><span class="co">#&gt; 37 266.0080 45.64281 5.707002</span></span>
+<span><span class="co">#&gt; 38 409.0015 39.50040 9.875706</span></span>
+<span><span class="co">#&gt; 39 460.2070 27.09531 5.422619</span></span>
+<span><span class="co">#&gt; 40 210.6164 53.24293 3.328948</span></span>
+<span><span class="co">#&gt; 41 351.2584 29.99896 3.340470</span></span>
+<span><span class="co">#&gt; 42 460.0331 28.08401 5.657101</span></span>
+<span><span class="co">#&gt; 43 492.5110 22.98154 2.639792</span></span>
+<span><span class="co">#&gt; 44 284.9192 51.21357 8.542463</span></span>
+<span><span class="co">#&gt; 45 224.9842 52.27752 5.274293</span></span>
+<span><span class="co">#&gt; 46 497.8736 20.94598 2.201160</span></span>
+<span><span class="co">#&gt; 48 198.2200 56.76570 2.842515</span></span>
+<span><span class="co">#&gt; 49 257.5549 39.58456 2.950562</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Corresponding objective function values...</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;    n, alt (mean) a, alt (mean) f, alt (mean)</span></span>
-<span><span class="co">#&gt; 9       359.3750      2156.250      50.62500</span></span>
-<span><span class="co">#&gt; 11      246.8750      5925.000      38.12500</span></span>
-<span><span class="co">#&gt; 14      303.1250      3334.375      31.87500</span></span>
-<span><span class="co">#&gt; 18      429.6875      4726.562      20.93750</span></span>
-<span><span class="co">#&gt; 34      230.0819      1610.573      53.88707</span></span>
-<span><span class="co">#&gt; 38      199.7083      2795.917      52.63788</span></span>
-<span><span class="co">#&gt; 39      368.6289      2211.773      27.57863</span></span>
-<span><span class="co">#&gt; 42      476.0093      3808.074      19.61557</span></span>
-<span><span class="co">#&gt; 43      233.1484      2331.484      44.00125</span></span>
-<span><span class="co">#&gt; 46      466.5642      4199.077      19.70490</span></span>
-<span><span class="co">#&gt; 47      426.7519      1280.256      38.53797</span></span>
-<span><span class="co">#&gt; 49      464.0631      6496.883      17.94535</span></span>
+<span><span class="co">#&gt; 31      228.5281      2742.337      49.35014</span></span>
+<span><span class="co">#&gt; 32      436.0485      3052.340      24.43320</span></span>
+<span><span class="co">#&gt; 33      427.0384      3416.307      25.46592</span></span>
+<span><span class="co">#&gt; 35      375.1751      1500.700      35.87907</span></span>
+<span><span class="co">#&gt; 36      299.7509      3896.762      33.84992</span></span>
+<span><span class="co">#&gt; 37      266.0080      1862.056      45.64281</span></span>
+<span><span class="co">#&gt; 38      409.0015      1227.004      39.50040</span></span>
+<span><span class="co">#&gt; 39      460.2070      1840.828      27.09531</span></span>
+<span><span class="co">#&gt; 40      210.6164      3159.247      53.24293</span></span>
+<span><span class="co">#&gt; 41      351.2584      2810.067      29.99896</span></span>
+<span><span class="co">#&gt; 42      460.0331      1840.132      28.08401</span></span>
+<span><span class="co">#&gt; 43      492.5110      3940.088      22.98154</span></span>
+<span><span class="co">#&gt; 44      284.9192      1424.596      51.21357</span></span>
+<span><span class="co">#&gt; 45      224.9842      2024.858      52.27752</span></span>
+<span><span class="co">#&gt; 46      497.8736      4480.862      20.94598</span></span>
+<span><span class="co">#&gt; 48      198.2200      3766.181      56.76570</span></span>
+<span><span class="co">#&gt; 49      257.5549      3348.214      39.58456</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ...and constraint function values:</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;    s, alt (mean) s, alt (var)</span></span>
-<span><span class="co">#&gt; 9      -2.818081   0.03757873</span></span>
-<span><span class="co">#&gt; 11     -1.780150   0.01618577</span></span>
-<span><span class="co">#&gt; 14     -1.448401   0.01297212</span></span>
-<span><span class="co">#&gt; 18     -1.732408   0.01564970</span></span>
-<span><span class="co">#&gt; 34     -1.732408   0.01564970</span></span>
-<span><span class="co">#&gt; 38     -1.397322   0.01257317</span></span>
-<span><span class="co">#&gt; 39     -1.435480   0.01286903</span></span>
-<span><span class="co">#&gt; 42     -1.569679   0.01401522</span></span>
-<span><span class="co">#&gt; 43     -1.597971   0.01427917</span></span>
-<span><span class="co">#&gt; 46     -1.612318   0.01441616</span></span>
-<span><span class="co">#&gt; 47     -1.474557   0.01318541</span></span>
-<span><span class="co">#&gt; 49     -1.656207   0.01484864</span></span>
+<span><span class="co">#&gt; 31     -1.442005   0.06465620</span></span>
+<span><span class="co">#&gt; 32     -1.317975   0.06003526</span></span>
+<span><span class="co">#&gt; 33     -2.179642   0.10956219</span></span>
+<span><span class="co">#&gt; 35     -1.648184   0.07389930</span></span>
+<span><span class="co">#&gt; 36     -1.648184   0.07389930</span></span>
+<span><span class="co">#&gt; 37     -1.648184   0.07389930</span></span>
+<span><span class="co">#&gt; 38     -1.648184   0.07389930</span></span>
+<span><span class="co">#&gt; 39     -1.378841   0.06222167</span></span>
+<span><span class="co">#&gt; 40     -1.723706   0.07783667</span></span>
+<span><span class="co">#&gt; 41     -1.442005   0.06465620</span></span>
+<span><span class="co">#&gt; 42     -1.576338   0.07043940</span></span>
+<span><span class="co">#&gt; 43     -1.978171   0.09367830</span></span>
+<span><span class="co">#&gt; 44     -1.978171   0.09367830</span></span>
+<span><span class="co">#&gt; 45     -1.507734   0.06737895</span></span>
+<span><span class="co">#&gt; 46     -1.803428   0.08235156</span></span>
+<span><span class="co">#&gt; 48     -1.648184   0.07389930</span></span>
+<span><span class="co">#&gt; 49     -1.442005   0.06465620</span></span>
+<span></span>
+<span><span class="va">p</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/PS_empirical_ests.html">PS_empirical_ests</a></span><span class="op">(</span><span class="va">sol</span>, <span class="va">prob</span><span class="op">)</span><span class="op">[[</span><span class="fl">2</span><span class="op">]</span><span class="op">]</span><span class="op">[</span>, <span class="fl">1</span><span class="op">]</span></span>
+<span><span class="va">p</span> <span class="op">&lt;-</span> <span class="fl">1</span> <span class="op">-</span> <span class="fl">1</span><span class="op">/</span><span class="op">(</span><span class="fl">1</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">exp</a></span><span class="op">(</span><span class="op">-</span><span class="va">p</span><span class="op">)</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">df</span> <span class="op">&lt;-</span> <span class="va">sol</span><span class="op">$</span><span class="va">p_set</span><span class="op">[</span>,<span class="fl">1</span><span class="op">:</span><span class="fl">3</span><span class="op">]</span></span>
+<span><span class="va">df</span><span class="op">$</span><span class="va">a</span> <span class="op">&lt;-</span> <span class="op">(</span><span class="va">df</span><span class="op">$</span><span class="va">fu</span> <span class="op"><a href="https://rdrr.io/r/base/Arithmetic.html" class="external-link">%/%</a></span> <span class="va">df</span><span class="op">$</span><span class="va">af</span><span class="op">)</span><span class="op">*</span><span class="va">df</span><span class="op">$</span><span class="va">n</span></span>
+<span></span>
+<span><span class="va">df</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">cbind</a></span><span class="op">(</span><span class="va">df</span>, <span class="va">p</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">df</span> <span class="op">&lt;-</span> <span class="va">df</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/order.html" class="external-link">order</a></span><span class="op">(</span><span class="va">df</span><span class="op">[</span>,<span class="fl">1</span><span class="op">]</span><span class="op">)</span>,<span class="op">]</span></span>
+<span>  </span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">df</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"$n$"</span>, <span class="st">"$f$"</span>, <span class="st">"$a_f$"</span>, <span class="st">"a"</span>,</span>
+<span>                       <span class="st">"$E[s ~|~ H_1]$"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co">#print(xtable(df, digits = c(0,0,0,0,0,2)), booktabs = T, include.rownames = T, sanitize.text.function = function(x) {x}, floating = F, file = here("man", "tables", "P2.txt"))</span></span>
+<span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">sol</span><span class="op">)</span></span></code></pre></div>
 <p><img src="Examples_files/figure-html/unnamed-chunk-18-1.png" width="700"></p>
+<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span></span>
+<span><span class="co">#ggsave(here("man", "figures", "P2.pdf"), height=9, width=14, units="cm")</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="recruitment">Recruitment<a class="anchor" aria-label="anchor" href="#recruitment"></a>
@@ -726,7 +759,7 @@ function which returns the conditional power (conditioning on the
 attained sample size and the parameters of the outcome model) for any
 given design and hypothesis, and a deterministic function to return the
 two objective functions.</p>
-<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://dtwilson.github.io/BOSSS/">BOSSS</a></span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">sim_rec</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">m</span><span class="op">=</span><span class="fl">20</span>, <span class="va">t</span><span class="op">=</span><span class="fl">3</span>, </span>
@@ -790,7 +823,7 @@ two objective functions.</p>
 <p>Now we set up the problem using the <code>BOSSS</code> helper
 functions. We are going to look at designs with between 3 and 40 sites,
 running from between 6 months and 5 years.</p>
-<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Problem specification</span></span>
 <span><span class="va">design_space</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/design_space.html">design_space</a></span><span class="op">(</span>lower <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">3</span>,<span class="fl">0.5</span><span class="op">)</span>, </span>
 <span>                             upper <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">40</span>,<span class="fl">5</span><span class="op">)</span>,</span>
@@ -815,7 +848,7 @@ running from between 6 months and 5 years.</p>
 <span>                 binary <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="cn">FALSE</span>, <span class="cn">FALSE</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">prob</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/BOSSS_problem.html">BOSSS_problem</a></span><span class="op">(</span><span class="va">sim_rec</span>, <span class="va">design_space</span>, <span class="va">hypotheses</span>, <span class="va">objectives</span>, <span class="va">constraints</span>, det_func <span class="op">=</span> <span class="va">det_rec</span><span class="op">)</span></span></code></pre></div>
-<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">size</span> <span class="op">&lt;-</span> <span class="fl">20</span></span>
 <span><span class="va">N</span> <span class="op">&lt;-</span> <span class="fl">500</span></span>
 <span></span>
@@ -823,7 +856,7 @@ running from between 6 months and 5 years.</p>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">sol</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">sol</span><span class="op">)</span></span></code></pre></div>
-<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw">for</span><span class="op">(</span><span class="va">i</span> <span class="kw">in</span> <span class="fl">1</span><span class="op">:</span><span class="fl">30</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="va">sol</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/iterate.html">iterate</a></span><span class="op">(</span><span class="va">sol</span>, <span class="va">prob</span>, <span class="va">N</span><span class="op">)</span> </span>
 <span><span class="op">}</span></span>
@@ -849,7 +882,7 @@ multistate model analysis of longitudinal discrete outcomes in disease
 prevention trials. <em>Statistics in Medicine</em>, 40: 1960–1971
 (2021). <a href="https://doi.org/10.1002/sim.8882" class="external-link uri">https://doi.org/10.1002/sim.8882</a></p></li>
 </ul>
-<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">knitr</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/knitr/man/knit_exit.html" class="external-link">knit_exit</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
