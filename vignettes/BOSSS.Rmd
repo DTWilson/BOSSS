@@ -39,8 +39,11 @@ The first ingredient of a BOSSS problem is the simulation function. The argument
 The other element of interface the simulation function must conform to is in its return value, which should be a named vector of the quantities who's mean values we want to estimate using the Monte Carlo method. Here, we have one such quantity: a boolean indicator of a negative decision, `s`.
 
 ```{r}
-sim_cRCT <- function(m = 10, n = 20, 
-                     beta_1 = 0.3, var_e = 0.95, var_u = 0.05){
+sim_cRCT <- function(design = list(m = 10, n = 20), 
+                     hypothesis = list(beta_1 = 0.3, var_e = 0.95, var_u = 0.05)){
+  
+  m <- design[[1]]; n <- design[[2]]
+  beta_1 <- hypothesis[[1]]; var_e <- hypothesis[[2]]; var_u <- hypothesis[[3]]
   
   m <- floor(m); n <- floor(n)
   
@@ -60,9 +63,12 @@ sim_cRCT()
 In our problem we are not just interested in the expected value of `s`; we also want to minimise the number of clusters and the number of participants. Since these are fixed quantities given any design, we evaluate them in a separate deterministic function. This should conform to the same principles as the simulation function, with the same inputs, but allowing for different named outputs. Here, the outputs are just `m`, and `N = n*m`:
 
 ```{r}
-det_cRCT <- function(m = 10, n = 5, 
-                     beta_1 = 0.3, var_e = 0.95, var_u = 0.05)
+det_cRCT <- function(design = list(m = 10, n = 20), 
+                     hypothesis = list(beta_1 = 0.3, var_e = 0.95, var_u = 0.05))
 {
+  m <- design[[1]]; n <- design[[2]]
+  beta_1 <- hypothesis[[1]]; var_e <- hypothesis[[2]]; var_u <- hypothesis[[3]]
+  
   return(c(m = floor(m), N = floor(n)*floor(m)))
 }  
 ```
@@ -248,10 +254,10 @@ In this example we see that the empirical estimates agree with the predictions f
 
 ```{r}
 design <- sol$p_set[1,]
-r <- diag_check_point(design, prob, sol, N=10^5) 
+r <- diag_check_point(design, prob, sol, N=10^4) 
 ```
 
-At any point, but especially after initialisation, we may decide that we need more points in our initial evaluations, or more simulations at each of the points evaluated so far. We can do that via `extend_initial()`. For example, suppose we started off with only 10 evaluations at each of 6 initial designs:
+At any point, but especially after initialisation, we may decide that we need more points in our initial evaluations, or more simulations at each of the points evaluated so far. For example, suppose we started off with only 10 evaluations at each of 6 initial designs:
 
 ```{r}
 set.seed(98579)
@@ -279,5 +285,5 @@ sol$p_set[1,]
 diag_plots(design, prob, sol)
 ```
 
-Our lots now suggest a more plausible model. 
+Our plots now suggest a more plausible model. 
 

@@ -1,5 +1,5 @@
 % latex table generated in R 4.5.1 by xtable 1.8-4 package
-% Wed Sep 24 11:59:43 2025
+% Wed Oct  1 13:35:51 2025
 \begin{tabular}{rrrrrrrr}
   \toprule
  & $n$ & $n_{int}$ & $\alpha_{int}$ & $\alpha_{f}$ & $E[g ~|~ H_0]$ & $E[s ~|~ H_1]$ & $E[N ~|~ H_0]$ \\ 

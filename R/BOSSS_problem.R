@@ -147,31 +147,35 @@ BOSSS_problem <- function(sim_trial, design_space, hypotheses,
 reformat_sim <- function(sim_trial, design_space){
 
   arg_num <- length(formals(sim_trial))
-  for(i in 1:arg_num){
-    if(is.symbol(formals(sim_trial)[[i]])){
-      stop("Simulation function missing default value(s)")
-    }
-    if(!is.numeric(formals(sim_trial)[[i]])){
-      stop(paste0(i, "-th default argument of simulation function is not numeric"))
+
+  if(arg_num != 2) stop("Simulation must have two arguments - a design and a hypothesis")
+
+  design <- eval(formals(sim_trial)[[1]])
+  hypothesis <- eval(formals(sim_trial)[[2]])
+
+  for(i in 1:length(design)){
+    if(!is.numeric(design[[i]])){
+      stop(paste0(i, "-th design variable default in simulation function is not numeric"))
     }
   }
 
-  arg_names <- methods::formalArgs(sim_trial)
-  defaults <- as.numeric(formals(sim_trial))
-  dim <- nrow(design_space)
+  #arg_names <- methods::formalArgs(sim_trial)
+  #defaults <- as.numeric(formals(sim_trial))
+  #dim <- nrow(design_space)
 
-  int_sim <- function(design, hypothesis = defaults[(dim+1):length(names)]){
+  int_sim <- function(design, hypothesis){ #} = defaults[(dim+1):length(names)]){
 
-    design <- as.numeric(design); hypothesis <- as.numeric(hypothesis)
+    #arg_names <- c(names(design), names(hypothesis))
+    #design <- as.numeric(design); hypothesis <- as.numeric(hypothesis)
 
-    args <- as.list(c(design, hypothesis))
-    names(args) <- arg_names
+    args <- list(design = as.list(design), hypothesis = as.list(hypothesis))
+    #names(args) <- arg_names
 
     do.call("sim_trial", args)
   }
 
-  formals(int_sim)$design <- defaults[1:dim]
-  formals(int_sim)$hypothesis <- defaults[(dim+1):length(arg_names)]
+  formals(int_sim)$design <- as.numeric(design) # defaults[1:dim]
+  formals(int_sim)$hypothesis <- as.numeric(hypothesis) # defaults[(dim+1):length(arg_names)]
 
   int_sim
 }
@@ -181,31 +185,63 @@ reformat_sim <- function(sim_trial, design_space){
 reformat_det <- function(det_func, design_space){
 
   arg_num <- length(formals(det_func))
-  for(i in 1:arg_num){
-    if(is.symbol(formals(det_func)[[i]])){
-      stop("Determinsitic function missing default value(s)")
-    }
-    if(!is.numeric(formals(det_func)[[i]])){
-      stop(paste0(i, "-th default argument of deterministic function is not numeric"))
+
+  if(arg_num != 2) stop("Deterministic function must have two arguments - a design and a hypothesis")
+
+  design <- eval(formals(det_func)[[1]])
+  hypothesis <- eval(formals(det_func)[[2]])
+
+  for(i in 1:length(design)){
+    if(!is.numeric(design[[i]])){
+      stop(paste0(i, "-th design variable default in deterministic function is not numeric"))
     }
   }
 
-  arg_names <- methods::formalArgs(det_func)
-  defaults <- as.numeric(formals(det_func))
-  dim <- nrow(design_space)
+  int_det <- function(design, hypothesis){#} = defaults[(dim+1):length(names)]){
 
-  int_det <- function(design, hypothesis = defaults[(dim+1):length(names)]){
+    #design <- as.numeric(design); hypothesis <- as.numeric(hypothesis)
 
-    design <- as.numeric(design); hypothesis <- as.numeric(hypothesis)
+    #args <- as.list(c(design, hypothesis))
+    #names(args) <- arg_names
 
-    args <- as.list(c(design, hypothesis))
-    names(args) <- arg_names
+    args <- list(design = as.list(design), hypothesis = as.list(hypothesis))
 
     do.call("det_func", args)
   }
 
-  formals(int_det)$design <- defaults[1:dim]
-  formals(int_det)$hypothesis <- defaults[(dim+1):length(arg_names)]
+  formals(int_det)$design <- as.numeric(design)
+  formals(int_det)$hypothesis <-as.numeric(hypothesis)
 
   int_det
+  #
+  #
+  #
+  #
+  # for(i in 1:arg_num){
+  #   if(is.symbol(formals(det_func)[[i]])){
+  #     stop("Determinsitic function missing default value(s)")
+  #   }
+  #   if(!is.numeric(formals(det_func)[[i]])){
+  #     stop(paste0(i, "-th default argument of deterministic function is not numeric"))
+  #   }
+  # }
+  #
+  # arg_names <- methods::formalArgs(det_func)
+  # defaults <- as.numeric(formals(det_func))
+  # dim <- nrow(design_space)
+  #
+  # int_det <- function(design, hypothesis = defaults[(dim+1):length(names)]){
+  #
+  #   design <- as.numeric(design); hypothesis <- as.numeric(hypothesis)
+  #
+  #   args <- as.list(c(design, hypothesis))
+  #   names(args) <- arg_names
+  #
+  #   do.call("det_func", args)
+  # }
+  #
+  # formals(int_det)$design <- defaults[1:dim]
+  # formals(int_det)$hypothesis <- defaults[(dim+1):length(arg_names)]
+  #
+  # int_det
 }

@@ -51,8 +51,11 @@ The output of applying BOSSS to this problem is a set solutions which satisfy th
 ```{r, include = FALSE, eval = FALSE}
 library(BOSSS)
 
-sim_cRCT <- function(m = 10, n = 20, 
-                     beta_1 = 0.3, var_e = 0.95, var_u = 0.05){
+sim_cRCT <- function(design = list(m = 10, n = 20), 
+                     hypothesis = list(beta_1 = 0.3, var_e = 0.95, var_u = 0.05)){
+  
+  m <- design[[1]]; n <- design[[2]]
+  beta_1 <- hypothesis[[1]]; var_e <- hypothesis[[2]]; var_u <- hypothesis[[3]]
   
   m <- floor(m); n <- floor(n)
   
@@ -65,9 +68,12 @@ sim_cRCT <- function(m = 10, n = 20,
   return(c(s = s))
 }
 
-det_cRCT <- function(m = 10, n = 5, 
-                     beta_1 = 0.3, var_e = 0.95, var_u = 0.05)
+det_cRCT <- function(design = list(m = 10, n = 20), 
+                     hypothesis = list(beta_1 = 0.3, var_e = 0.95, var_u = 0.05))
 {
+  m <- design[[1]]; n <- design[[2]]
+  beta_1 <- hypothesis[[1]]; var_e <- hypothesis[[2]]; var_u <- hypothesis[[3]]
+  
   return(c(m = m, N = n*m))
 }  
 
