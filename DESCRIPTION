@@ -23,7 +23,8 @@ Suggests:
     dirmult,
     here,
     reshape2,
-    mco
+    mco,
+    msm
 Imports:
     randtoolbox,
     DiceKriging,
@@ -32,7 +33,6 @@ Imports:
     RcppDE,
     emoa,
     parallel,
-    methods,
     rlang
 VignetteBuilder: knitr
 URL: https://dtwilson.github.io/BOSSS/

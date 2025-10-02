@@ -11,14 +11,15 @@ vignette: >
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>",
-  eval = TRUE
+  eval = FALSE
 )
 ```
 
-```{r setup}
+```{r setup, eval = TRUE}
 library(BOSSS)
 library(ggplot2)
 library(mco)
+library(here)
 ```
 
 <!-- Note - a Twitter thread on power analysis had a couple of people mentioning the R package simr for power through simulation when using mixed models. So might be worth including that in one of our examples, to save people having to write their own simulation code? -->
@@ -137,7 +138,20 @@ size <- 20
 N <- 100
 
 sol <- BOSSS_solution(size, N, prob)
+```
 
+```{r, include = FALSE, eval=TRUE}
+# Save problems and initial solution
+p <- here("vignettes", "example_files", "cRCT_prob.rds")
+#saveRDS(prob, p)
+prob <- readRDS(p)
+
+p <- here("vignettes", "example_files", "cRCT_sol_init.rds")
+#saveRDS(sol, p)
+sol <- readRDS(p)
+```
+
+```{r, eval=TRUE}
 print(sol) 
 plot(sol)
 sol_init <- sol
@@ -154,6 +168,16 @@ N <- 100
 for(i in 1:20) {
   sol <- iterate(sol, prob, N) 
 }
+```
+
+```{r, include = FALSE, eval=TRUE}
+# Save problems and initial solution
+p <- here("vignettes", "example_files", "cRCT_sol_final.rds")
+#saveRDS(sol, p)
+sol <- readRDS(p)
+```
+
+```{r, eval=TRUE}
 print(sol)
 plot(sol)
 sol_final <- sol
@@ -161,7 +185,7 @@ sol_final <- sol
 
 We can compare the initial and final approximations to the Pareto front to the actual front since, for this simple example, we can calculate power analytically:
 
-```{r}
+```{r, eval=TRUE, include=FALSE}
 df <- expand.grid(m = 10:50,
                   n = 5:20)
 df$N <- df$m*df$n
@@ -230,7 +254,7 @@ colnames(df_final) <- c("$m$", "$n$", "$N$", "power")
 
 To check the GP models are giving sensible predictions, we can choose a specific design and then plot the predictions for each model along the range of each design variable.
 
-```{r}
+```{r, eval=TRUE}
 # Pick a specific design from the Pareto set
 design <- sol$p_set[1,]
 
@@ -246,20 +270,20 @@ ps[[2]]
 
 We can also get the predicted values and 95% credible intervals for each point we have evaluated, contrasting these with the empirical MC estimate and interval. This will return a data frame for each of the models, named according to the output-hypothesis combination which defines it. We highlight with a `*` any points where the two intervals do not overlap.
 
-```{r}
+```{r, eval=TRUE}
 diag_predictions(prob, sol)
 ```
 
 In this example we see that the empirical estimates agree with the predictions for all of the designs which have been evaluated. Once we are happy with our solution and have chosen a specific design from the Pareto set, we might want to double check that point by running a large number of simulations at it:
 
-```{r}
+```{r, eval=TRUE}
 design <- sol$p_set[1,]
 r <- diag_check_point(design, prob, sol, N=10^4) 
 ```
 
 At any point, but especially after initialisation, we may decide that we need more points in our initial evaluations, or more simulations at each of the points evaluated so far. For example, suppose we started off with only 10 evaluations at each of 6 initial designs:
 
-```{r}
+```{r, eval=TRUE}
 set.seed(98579)
 
 size <- 6
@@ -278,7 +302,7 @@ diag_plots(design, prob, sol)
 
 The diagnostic plots here show a GP model of the true power function which is just a constant, which we know is not true. When we see a poor initial fit like this we might want to add more simulations to designs already evaluated, or add more designs, or both. We can use the `extend_initial()` function for this. For example, suppose we want an extra 4 designs and for every design to have 500 simulations:
 
-```{r}
+```{r, eval=TRUE}
 sol <- extend_initial(prob, sol, extra_points = 4, extra_N = 490)
 
 sol$p_set[1,]
