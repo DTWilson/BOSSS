@@ -200,7 +200,7 @@ number of clusters <code>m</code>, with the latter carrying a weight of
 <p>We now put this simulation function and set of data frames together
 to create an object of class <code>BOSSS_problem</code>.</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">prob</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/BOSSS_problem.html">BOSSS_problem</a></span><span class="op">(</span><span class="va">sim_cRCT</span>, <span class="va">design_space</span>, <span class="va">hypotheses</span>, <span class="va">objectives</span>, <span class="va">constraints</span>, det_func <span class="op">=</span> <span class="va">det_cRCT</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="va">prob</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/BOSSS_problem.html">BOSSS_problem</a></span><span class="op">(</span><span class="va">sim_cRCT</span>, <span class="va">design_space</span>, <span class="va">objectives</span>, <span class="va">hypotheses</span>, <span class="va">constraints</span>, det_func <span class="op">=</span> <span class="va">det_cRCT</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="initialisation">Initialisation<a class="anchor" aria-label="anchor" href="#initialisation"></a>
@@ -440,8 +440,9 @@ with only 10 evaluations at each of 6 initial designs:</p>
 <span><span class="va">N</span> <span class="op">&lt;-</span> <span class="fl">10</span></span>
 <span></span>
 <span><span class="va">sol</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/BOSSS_solution.html">BOSSS_solution</a></span><span class="op">(</span><span class="va">size</span>, <span class="va">N</span>, <span class="va">prob</span><span class="op">)</span></span>
+<span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Checking simulation speed...</span></span>
-<span><span class="co">#&gt; Initialisation will take approximately 0.0158143 secs </span></span>
+<span><span class="co">#&gt; Initialisation will take approximately 0.01580715 secs </span></span>
 <span><span class="co">#&gt; Solution found</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">sol</span><span class="op">)</span> </span>

@@ -42,7 +42,7 @@
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">objectives</span><span class="op">(</span><span class="va">name</span>, <span class="va">out</span>, <span class="va">hyp</span>, <span class="va">weight</span>, binary <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">objectives</span><span class="op">(</span><span class="va">name</span>, <span class="va">out</span>, <span class="va">weight</span>, binary <span class="op">=</span> <span class="cn">NULL</span>, hyp <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -58,11 +58,6 @@
 pertains to.</p></dd>
 
 
-<dt id="arg-hyp">hyp<a class="anchor" aria-label="anchor" href="#arg-hyp"></a></dt>
-<dd><p>character vector denoting which hypothesis each objective
-pertains to.</p></dd>
-
-
 <dt id="arg-weight">weight<a class="anchor" aria-label="anchor" href="#arg-weight"></a></dt>
 <dd><p>numeric vector of weights assigned to each objective.</p></dd>
 
@@ -70,6 +65,12 @@ pertains to.</p></dd>
 <dt id="arg-binary">binary<a class="anchor" aria-label="anchor" href="#arg-binary"></a></dt>
 <dd><p>optional boolean vector denoting if the output of the objective
 function is binary (TRUE) or continuous (FALSE).</p></dd>
+
+
+<dt id="arg-hyp">hyp<a class="anchor" aria-label="anchor" href="#arg-hyp"></a></dt>
+<dd><p>optional character vector denoting which hypothesis each constraint
+pertains to. Defaults to NULL, in which case the simultion function's default
+hypothesis is used for all objectives.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -83,9 +84,9 @@ function is binary (TRUE) or continuous (FALSE).</p></dd>
 <span class="r-in"><span>                     out <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"n"</span>, <span class="st">"k"</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>                     hyp <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"alt"</span>, <span class="st">"alt"</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>                     weight <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">10</span>, <span class="fl">1</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    name out hyp weight</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1 min_n   n alt     10</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2 min_k   k alt      1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    name out weight hyp</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1 min_n   n     10 alt</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2 min_k   k      1 alt</span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
     </div>

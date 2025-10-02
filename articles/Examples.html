@@ -103,7 +103,7 @@ values to conform to the BOSSS standards.</p>
 <span><span class="co">#p01_relative is s.t. p01_relative*pexplong = probability of having </span></span>
 <span><span class="co"># a long term outcome after no short term outcome</span></span>
 <span></span>
-<span><span class="va">sim_trial</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">design</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>n <span class="op">=</span> <span class="fl">300</span>, ninterim <span class="op">=</span> <span class="fl">0.5</span>, ainterim <span class="op">=</span> <span class="fl">0.4</span>, afinal <span class="op">=</span> <span class="fl">0.1</span><span class="op">)</span>,</span>
+<span><span class="va">sim_NIFTy</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">design</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>n <span class="op">=</span> <span class="fl">300</span>, ninterim <span class="op">=</span> <span class="fl">0.5</span>, ainterim <span class="op">=</span> <span class="fl">0.4</span>, afinal <span class="op">=</span> <span class="fl">0.1</span><span class="op">)</span>,</span>
 <span>                      <span class="va">hypothesis</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>pcontshort <span class="op">=</span> <span class="fl">0.25</span>, pexpshort <span class="op">=</span> <span class="fl">0.125</span>,</span>
 <span>                      pcontlong <span class="op">=</span> <span class="fl">0.1</span>, pexplong <span class="op">=</span> <span class="fl">0.03</span>, p01_relative <span class="op">=</span> <span class="fl">0</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="op">{</span></span>
@@ -223,18 +223,18 @@ values to conform to the BOSSS standards.</p>
 <code class="sourceCode R"><span><span class="co"># Problem specification</span></span>
 <span><span class="va">design_space</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/design_space.html">design_space</a></span><span class="op">(</span>lower <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">300</span>,<span class="fl">0.05</span>,<span class="fl">0</span>,<span class="fl">0</span><span class="op">)</span>, </span>
 <span>                             upper <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">700</span>,<span class="fl">0.5</span>,<span class="fl">1</span>,<span class="fl">1</span><span class="op">)</span>,</span>
-<span>                             sim <span class="op">=</span> <span class="va">sim_trial</span><span class="op">)</span></span>
+<span>                             sim <span class="op">=</span> <span class="va">sim_NIFTy</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">hypotheses</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/hypotheses.html">hypotheses</a></span><span class="op">(</span>values <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.25</span>, <span class="fl">0.25</span>, <span class="fl">0.1</span>, <span class="fl">0.1</span>, <span class="fl">0</span>, </span>
 <span>                                           <span class="fl">0.25</span>, <span class="fl">0.125</span>, <span class="fl">0.1</span>, <span class="fl">0.03</span>, <span class="fl">0</span><span class="op">)</span>, ncol <span class="op">=</span> <span class="fl">2</span><span class="op">)</span>,</span>
 <span>                         hyp_names <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"null"</span>, <span class="st">"alt"</span><span class="op">)</span>,</span>
-<span>                         sim <span class="op">=</span> <span class="va">sim_trial</span><span class="op">)</span></span>
+<span>                         sim <span class="op">=</span> <span class="va">sim_NIFTy</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">constraints</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/constraints.html">constraints</a></span><span class="op">(</span>name <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"TI_con"</span>, <span class="st">"TII_con"</span><span class="op">)</span>,</span>
 <span>                   out <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"g"</span>, <span class="st">"s"</span><span class="op">)</span>,</span>
 <span>                   hyp <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"null"</span>, <span class="st">"alt"</span><span class="op">)</span>,</span>
 <span>                   nom <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.1</span>, <span class="fl">0.2</span><span class="op">)</span>,</span>
-<span>                   delta <span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.95</span>, <span class="fl">0.95</span><span class="op">)</span>,</span>
+<span>                   delta <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.95</span>, <span class="fl">0.95</span><span class="op">)</span>,</span>
 <span>                   binary <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="cn">TRUE</span>, <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">objectives</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/objectives.html">objectives</a></span><span class="op">(</span>name <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"TI"</span>, <span class="st">"TII"</span>, <span class="st">"EN"</span><span class="op">)</span>,</span>
@@ -243,7 +243,11 @@ values to conform to the BOSSS standards.</p>
 <span>                 weight <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">100</span>, <span class="fl">100</span>, <span class="fl">1</span><span class="op">)</span>,</span>
 <span>                 binary <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="cn">TRUE</span>, <span class="cn">TRUE</span>, <span class="cn">FALSE</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">prob</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/BOSSS_problem.html">BOSSS_problem</a></span><span class="op">(</span><span class="va">sim_trial</span>, <span class="va">design_space</span>, <span class="va">hypotheses</span>, <span class="va">objectives</span>, <span class="va">constraints</span><span class="op">)</span></span></code></pre></div>
+<span><span class="va">prob</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/BOSSS_problem.html">BOSSS_problem</a></span><span class="op">(</span>sim_trial <span class="op">=</span> <span class="va">sim_NIFTy</span>,</span>
+<span>                      design_space <span class="op">=</span> <span class="va">design_space</span>,</span>
+<span>                      objectives <span class="op">=</span> <span class="va">objectives</span>,</span>
+<span>                      hypotheses <span class="op">=</span> <span class="va">hypotheses</span>,</span>
+<span>                      constraints <span class="op">=</span> <span class="va">constraints</span><span class="op">)</span></span></code></pre></div>
 <p>This implies we are going to search over a space of sample sizes and
 decision criteria, looking for trial designs which simultaneously
 minimise the type I error rate (<code>"TI"</code>), type II error rate
@@ -599,24 +603,26 @@ be (probably) less than 0.2 and the follow-up length to be less than
 <span>                             upper <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">500</span>, <span class="fl">60</span>, <span class="fl">10</span><span class="op">)</span>,</span>
 <span>                             sim <span class="op">=</span> <span class="va">sim_P2</span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">hypotheses</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/hypotheses.html">hypotheses</a></span><span class="op">(</span>values <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.05</span>, <span class="fl">0.05</span>, <span class="fl">0.03</span>, <span class="fl">0.67</span>, <span class="fl">0.67</span>, <span class="fl">0.67</span><span class="op">)</span>, ncol <span class="op">=</span> <span class="fl">1</span><span class="op">)</span>,</span>
-<span>                         hyp_names <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"alt"</span><span class="op">)</span>,</span>
-<span>                         sim <span class="op">=</span> <span class="va">sim_P2</span><span class="op">)</span></span>
-<span></span>
 <span><span class="va">constraints</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/constraints.html">constraints</a></span><span class="op">(</span>name <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"a"</span><span class="op">)</span>,</span>
 <span>                   out <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"s"</span><span class="op">)</span>,</span>
-<span>                   hyp <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"alt"</span><span class="op">)</span>,</span>
 <span>                   nom <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.2</span><span class="op">)</span>,</span>
 <span>                   delta <span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.95</span><span class="op">)</span>,</span>
 <span>                   binary <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">objectives</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/objectives.html">objectives</a></span><span class="op">(</span>name <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"n"</span>, <span class="st">"a"</span>, <span class="st">"f"</span><span class="op">)</span>,</span>
 <span>                 out <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"n"</span>, <span class="st">"a"</span>, <span class="st">"f"</span><span class="op">)</span>,</span>
-<span>                 hyp <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"alt"</span>, <span class="st">"alt"</span>, <span class="st">"alt"</span><span class="op">)</span>,</span>
 <span>                 weight <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">10</span>, <span class="fl">1</span>, <span class="fl">10</span><span class="op">)</span>,</span>
 <span>                 binary <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="cn">FALSE</span>, <span class="cn">FALSE</span>, <span class="cn">FALSE</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">prob</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/BOSSS_problem.html">BOSSS_problem</a></span><span class="op">(</span><span class="va">sim_P2</span>, <span class="va">design_space</span>, <span class="va">hypotheses</span>, <span class="va">objectives</span>, <span class="va">constraints</span>, det_func <span class="op">=</span> <span class="va">det_P2</span><span class="op">)</span></span></code></pre></div>
+<span><span class="va">prob</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/BOSSS_problem.html">BOSSS_problem</a></span><span class="op">(</span>sim_trial <span class="op">=</span> <span class="va">sim_P2</span>,</span>
+<span>                      design_space <span class="op">=</span> <span class="va">design_space</span>,</span>
+<span>                      objectives <span class="op">=</span> <span class="va">objectives</span>,</span>
+<span>                      constraints <span class="op">=</span> <span class="va">constraints</span>,</span>
+<span>                      det_func <span class="op">=</span> <span class="va">det_P2</span><span class="op">)</span></span></code></pre></div>
+<p>Note that we haven’t specified a set of hypotheses; because we only
+need to simulate under a single hypothesis (to estimate the type II
+error rate), we can leave it to be specified implicitly through the
+default <code>hypothesis</code> argument of the simulation function.</p>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">327324</span><span class="op">)</span></span>
 <span></span>
@@ -641,25 +647,25 @@ be (probably) less than 0.2 and the follow-up length to be less than
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Corresponding objective function values...</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;    n, alt (mean) a, alt (mean) f, alt (mean)</span></span>
-<span><span class="co">#&gt; 9       359.3750      2156.250       50.6250</span></span>
-<span><span class="co">#&gt; 13      415.6250      3325.000       44.3750</span></span>
-<span><span class="co">#&gt; 17      317.1875      4440.625       58.4375</span></span>
-<span><span class="co">#&gt; 21      485.9375      1943.750       39.6875</span></span>
-<span><span class="co">#&gt; 25      345.3125     11395.312       42.8125</span></span>
-<span><span class="co">#&gt; 26      457.8125      3662.500       30.3125</span></span>
-<span><span class="co">#&gt; 29      401.5625      2810.938       49.0625</span></span>
+<span><span class="co">#&gt;    n, default (mean) a, default (mean) f, default (mean)</span></span>
+<span><span class="co">#&gt; 9           359.3750          2156.250           50.6250</span></span>
+<span><span class="co">#&gt; 13          415.6250          3325.000           44.3750</span></span>
+<span><span class="co">#&gt; 17          317.1875          4440.625           58.4375</span></span>
+<span><span class="co">#&gt; 21          485.9375          1943.750           39.6875</span></span>
+<span><span class="co">#&gt; 25          345.3125         11395.312           42.8125</span></span>
+<span><span class="co">#&gt; 26          457.8125          3662.500           30.3125</span></span>
+<span><span class="co">#&gt; 29          401.5625          2810.938           49.0625</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ...and constraint function values:</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;    s, alt (mean) s, alt (var)</span></span>
-<span><span class="co">#&gt; 9      -2.419826    0.1333284</span></span>
-<span><span class="co">#&gt; 13     -3.131345    0.2494842</span></span>
-<span><span class="co">#&gt; 17     -3.131345    0.2494842</span></span>
-<span><span class="co">#&gt; 21     -2.560667    0.1502170</span></span>
-<span><span class="co">#&gt; 25     -2.907321    0.2036231</span></span>
-<span><span class="co">#&gt; 26     -3.798549    0.4665877</span></span>
-<span><span class="co">#&gt; 29     -3.798549    0.4665877</span></span>
+<span><span class="co">#&gt;    s, default (mean) s, default (var)</span></span>
+<span><span class="co">#&gt; 9          -2.419826        0.1333284</span></span>
+<span><span class="co">#&gt; 13         -3.131345        0.2494842</span></span>
+<span><span class="co">#&gt; 17         -3.131345        0.2494842</span></span>
+<span><span class="co">#&gt; 21         -2.560667        0.1502170</span></span>
+<span><span class="co">#&gt; 25         -2.907321        0.2036231</span></span>
+<span><span class="co">#&gt; 26         -3.798549        0.4665877</span></span>
+<span><span class="co">#&gt; 29         -3.798549        0.4665877</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">sol</span><span class="op">)</span></span></code></pre></div>
 <p><img src="Examples_files/figure-html/unnamed-chunk-15-1.png" width="700"></p>
 <div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
@@ -693,43 +699,43 @@ be (probably) less than 0.2 and the follow-up length to be less than
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Corresponding objective function values...</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;    n, alt (mean) a, alt (mean) f, alt (mean)</span></span>
-<span><span class="co">#&gt; 14      303.1250      3334.375      31.87500</span></span>
-<span><span class="co">#&gt; 31      226.7023      2947.129      49.48812</span></span>
-<span><span class="co">#&gt; 32      437.1483      3060.038      24.37747</span></span>
-<span><span class="co">#&gt; 33      371.7745      1487.098      33.72155</span></span>
-<span><span class="co">#&gt; 36      282.0871      2538.783      36.80602</span></span>
-<span><span class="co">#&gt; 37      248.6326      1740.428      50.85734</span></span>
-<span><span class="co">#&gt; 39      208.7821      2505.385      53.31176</span></span>
-<span><span class="co">#&gt; 40      410.2598      2051.299      27.16768</span></span>
-<span><span class="co">#&gt; 41      213.8159      2351.975      54.30283</span></span>
-<span><span class="co">#&gt; 43      482.4240      2894.544      22.17029</span></span>
-<span><span class="co">#&gt; 44      341.9060      1367.624      44.84317</span></span>
-<span><span class="co">#&gt; 45      363.7644      1818.822      30.17949</span></span>
-<span><span class="co">#&gt; 46      252.3668      2271.302      42.81866</span></span>
-<span><span class="co">#&gt; 47      213.8567      2566.281      52.59133</span></span>
-<span><span class="co">#&gt; 48      479.9210      1919.684      25.29238</span></span>
-<span><span class="co">#&gt; 50      207.7006      3115.509      53.61345</span></span>
+<span><span class="co">#&gt;    n, default (mean) a, default (mean) f, default (mean)</span></span>
+<span><span class="co">#&gt; 14          303.1250          3334.375          31.87500</span></span>
+<span><span class="co">#&gt; 31          226.7023          2947.129          49.48812</span></span>
+<span><span class="co">#&gt; 32          437.1483          3060.038          24.37747</span></span>
+<span><span class="co">#&gt; 33          371.7745          1487.098          33.72155</span></span>
+<span><span class="co">#&gt; 36          282.0871          2538.783          36.80602</span></span>
+<span><span class="co">#&gt; 37          248.6326          1740.428          50.85734</span></span>
+<span><span class="co">#&gt; 39          208.7821          2505.385          53.31176</span></span>
+<span><span class="co">#&gt; 40          410.2598          2051.299          27.16768</span></span>
+<span><span class="co">#&gt; 41          213.8159          2351.975          54.30283</span></span>
+<span><span class="co">#&gt; 43          482.4240          2894.544          22.17029</span></span>
+<span><span class="co">#&gt; 44          341.9060          1367.624          44.84317</span></span>
+<span><span class="co">#&gt; 45          363.7644          1818.822          30.17949</span></span>
+<span><span class="co">#&gt; 46          252.3668          2271.302          42.81866</span></span>
+<span><span class="co">#&gt; 47          213.8567          2566.281          52.59133</span></span>
+<span><span class="co">#&gt; 48          479.9210          1919.684          25.29238</span></span>
+<span><span class="co">#&gt; 50          207.7006          3115.509          53.61345</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ...and constraint function values:</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;    s, alt (mean) s, alt (var)</span></span>
-<span><span class="co">#&gt; 14     -1.648184   0.07389930</span></span>
-<span><span class="co">#&gt; 31     -1.723706   0.07783667</span></span>
-<span><span class="co">#&gt; 32     -1.723706   0.07783667</span></span>
-<span><span class="co">#&gt; 33     -2.074967   0.10089846</span></span>
-<span><span class="co">#&gt; 36     -1.648184   0.07389930</span></span>
-<span><span class="co">#&gt; 37     -1.576338   0.07043940</span></span>
-<span><span class="co">#&gt; 39     -1.442005   0.06465620</span></span>
-<span><span class="co">#&gt; 40     -1.978171   0.09367830</span></span>
-<span><span class="co">#&gt; 41     -1.378841   0.06222167</span></span>
-<span><span class="co">#&gt; 43     -1.442005   0.06465620</span></span>
-<span><span class="co">#&gt; 44     -1.723706   0.07783667</span></span>
-<span><span class="co">#&gt; 45     -1.378841   0.06222167</span></span>
-<span><span class="co">#&gt; 46     -1.507734   0.06737895</span></span>
-<span><span class="co">#&gt; 47     -1.507734   0.06737895</span></span>
-<span><span class="co">#&gt; 48     -1.648184   0.07389930</span></span>
-<span><span class="co">#&gt; 50     -1.648184   0.07389930</span></span>
+<span><span class="co">#&gt;    s, default (mean) s, default (var)</span></span>
+<span><span class="co">#&gt; 14         -1.648184       0.07389930</span></span>
+<span><span class="co">#&gt; 31         -1.723706       0.07783667</span></span>
+<span><span class="co">#&gt; 32         -1.723706       0.07783667</span></span>
+<span><span class="co">#&gt; 33         -2.074967       0.10089846</span></span>
+<span><span class="co">#&gt; 36         -1.648184       0.07389930</span></span>
+<span><span class="co">#&gt; 37         -1.576338       0.07043940</span></span>
+<span><span class="co">#&gt; 39         -1.442005       0.06465620</span></span>
+<span><span class="co">#&gt; 40         -1.978171       0.09367830</span></span>
+<span><span class="co">#&gt; 41         -1.378841       0.06222167</span></span>
+<span><span class="co">#&gt; 43         -1.442005       0.06465620</span></span>
+<span><span class="co">#&gt; 44         -1.723706       0.07783667</span></span>
+<span><span class="co">#&gt; 45         -1.378841       0.06222167</span></span>
+<span><span class="co">#&gt; 46         -1.507734       0.06737895</span></span>
+<span><span class="co">#&gt; 47         -1.507734       0.06737895</span></span>
+<span><span class="co">#&gt; 48         -1.648184       0.07389930</span></span>
+<span><span class="co">#&gt; 50         -1.648184       0.07389930</span></span>
 <span></span>
 <span><span class="va">p</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/PS_empirical_ests.html">PS_empirical_ests</a></span><span class="op">(</span><span class="va">sol</span>, <span class="va">prob</span><span class="op">)</span><span class="op">[[</span><span class="fl">2</span><span class="op">]</span><span class="op">]</span><span class="op">[</span>, <span class="fl">1</span><span class="op">]</span></span>
 <span><span class="va">p</span> <span class="op">&lt;-</span> <span class="fl">1</span> <span class="op">-</span> <span class="fl">1</span><span class="op">/</span><span class="op">(</span><span class="fl">1</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">exp</a></span><span class="op">(</span><span class="op">-</span><span class="va">p</span><span class="op">)</span><span class="op">)</span></span>
@@ -858,11 +864,6 @@ running from between 6 months and 5 years.</p>
 <span>                             upper <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">40</span>,<span class="fl">5</span><span class="op">)</span>,</span>
 <span>                             sim <span class="op">=</span> <span class="va">sim_rec</span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">hypotheses</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/hypotheses.html">hypotheses</a></span><span class="op">(</span>values <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">7</span>, <span class="fl">2</span>, <span class="fl">2</span>, <span class="fl">0.8</span>, </span>
-<span>                                           <span class="fl">10</span>, <span class="fl">1</span>, <span class="fl">0.3</span>, <span class="fl">0.3</span>, <span class="fl">1</span>, <span class="fl">0.2</span><span class="op">)</span>, ncol <span class="op">=</span> <span class="fl">1</span><span class="op">)</span>,</span>
-<span>                         hyp_names <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"alt"</span><span class="op">)</span>,</span>
-<span>                         sim <span class="op">=</span> <span class="va">sim_rec</span><span class="op">)</span></span>
-<span></span>
 <span><span class="va">constraints</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/constraints.html">constraints</a></span><span class="op">(</span>name <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"TII_ass"</span><span class="op">)</span>,</span>
 <span>                   out <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"pr_tII"</span><span class="op">)</span>,</span>
 <span>                   hyp <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"alt"</span><span class="op">)</span>,</span>
@@ -876,7 +877,11 @@ running from between 6 months and 5 years.</p>
 <span>                 weight <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">10</span><span class="op">)</span>,</span>
 <span>                 binary <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="cn">FALSE</span>, <span class="cn">FALSE</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">prob</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/BOSSS_problem.html">BOSSS_problem</a></span><span class="op">(</span><span class="va">sim_rec</span>, <span class="va">design_space</span>, <span class="va">hypotheses</span>, <span class="va">objectives</span>, <span class="va">constraints</span>, det_func <span class="op">=</span> <span class="va">det_rec</span><span class="op">)</span></span></code></pre></div>
+<span><span class="va">prob</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/BOSSS_problem.html">BOSSS_problem</a></span><span class="op">(</span>sim_trial <span class="op">=</span> <span class="va">sim_rec</span>,</span>
+<span>                      design_space <span class="op">=</span> <span class="va">design_space</span>,</span>
+<span>                      objectives <span class="op">=</span> <span class="va">objectives</span>,</span>
+<span>                      constraints <span class="op">=</span> <span class="va">constraints</span>,</span>
+<span>                      det_func <span class="op">=</span> <span class="va">det_rec</span><span class="op">)</span></span></code></pre></div>
 <div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">size</span> <span class="op">&lt;-</span> <span class="fl">20</span></span>
 <span><span class="va">N</span> <span class="op">&lt;-</span> <span class="fl">100</span></span>
