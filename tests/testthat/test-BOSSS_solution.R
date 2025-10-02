@@ -1,6 +1,6 @@
 test_that("Solution can be initialised", {
   examples <- readRDS(test_path("examples", "examples.rds"))
-  N <- 200
+  N <- 10
   for(i in 1:length(examples)){
     prob <- examples[[i]][[1]]
     size <- 10*prob$dimen

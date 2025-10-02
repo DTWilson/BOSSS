@@ -109,8 +109,8 @@ validate_BOSSS_problem <- function(prob) {
 #' @return An object of class BOSSS_problem.
 #'
 #' @export
-BOSSS_problem <- function(sim_trial, design_space, hypotheses,
-                              objectives, constraints = NULL, det_func = NULL){
+BOSSS_problem <- function(sim_trial, design_space, objectives,
+                          hypotheses = NULL, constraints = NULL, det_func = NULL){
 
   internal_sim_trial <- reformat_sim(sim_trial, design_space)
   if(is.null(det_func)) {
@@ -129,6 +129,18 @@ BOSSS_problem <- function(sim_trial, design_space, hypotheses,
   if(!is.null(det_func)){
     test_out_det <- det_func()
   }
+
+  # If no hypothesis is given, construct one using the default arguments
+  if(is.null(hypotheses)){
+    hypotheses <- hypotheses(values = matrix(as.numeric(eval(formals(sim_trial)[[2]])), ncol = 1),
+                             hyp_names = c("default"),
+                             sim = sim_trial)
+
+    objectives$hyp <- "default"
+    constraints$hyp <- "default"
+    cat("No hypotheses specified so using the function argument defaults.\n")
+  }
+
 
   # To remove or replace:
   #if(!("binary" %in% names(objectives))) objectives <- check_binary(objectives, test_out, test_out_det)

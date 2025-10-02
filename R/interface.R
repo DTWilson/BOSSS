@@ -82,11 +82,12 @@ hypotheses <- function(par_name = NULL, sim = NULL, values, hyp_names) {
 #' @param name character vector of constraint names.
 #' @param out character vector denoting which simulation output each constraint
 #' pertains to.
-#' @param hyp character vector denoting which hypothesis each constraint
-#' pertains to.
 #' @param nom numeric vector of nominal upper limits.
 #' @param delta numeric vector of probabilities.
 #' @param binary boolean vector denoting if the constraint output is binary or otherwise.
+#' @param hyp optional character vector denoting which hypothesis each constraint
+#' pertains to. Defaults to NULL, in which case the simultion function's default
+#' hypothesis is used for all constraints.
 #'
 #' @return A data.frame defining the constraints.
 #'
@@ -99,14 +100,17 @@ hypotheses <- function(par_name = NULL, sim = NULL, values, hyp_names) {
 #'             binary = c(TRUE))
 #'
 #' @export
-constraints <- function(name, out, hyp, nom, delta, binary) {
+constraints <- function(name, out, nom, delta, binary, hyp = NULL) {
 
-  data.frame(name = name,
+  df <- data.frame(name = name,
              out = out,
-             hyp = hyp,
              nom = nom,
              delta = delta,
              binary = binary)
+
+  if(!is.null(hyp)) df$hyp = hyp
+
+  df
 }
 
 
@@ -115,11 +119,12 @@ constraints <- function(name, out, hyp, nom, delta, binary) {
 #' @param name character vector of objective names.
 #' @param out character vector denoting which simulation output each objective
 #' pertains to.
-#' @param hyp character vector denoting which hypothesis each objective
-#' pertains to.
 #' @param weight numeric vector of weights assigned to each objective.
 #' @param binary optional boolean vector denoting if the output of the objective
 #' function is binary (TRUE) or continuous (FALSE).
+#' @param hyp optional character vector denoting which hypothesis each constraint
+#' pertains to. Defaults to NULL, in which case the simultion function's default
+#' hypothesis is used for all objectives.
 #'
 #' @return A data.frame defining the objectives.
 #'
@@ -129,14 +134,14 @@ constraints <- function(name, out, hyp, nom, delta, binary) {
 #'                      weight = c(10, 1))
 #'
 #' @export
-objectives <- function(name, out, hyp, weight, binary = NULL) {
+objectives <- function(name, out, weight, binary = NULL, hyp = NULL) {
 
   df <- data.frame(name = name,
              out = out,
-             hyp = hyp,
              weight = weight)
 
   if(!is.null(binary)) df$binary = binary
+  if(!is.null(hyp)) df$hyp = hyp
 
   df
 }

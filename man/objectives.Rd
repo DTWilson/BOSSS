@@ -4,7 +4,7 @@
 \alias{objectives}
 \title{Create a set of objectives}
 \usage{
-objectives(name, out, hyp, weight, binary = NULL)
+objectives(name, out, weight, binary = NULL, hyp = NULL)
 }
 \arguments{
 \item{name}{character vector of objective names.}
@@ -12,13 +12,14 @@ objectives(name, out, hyp, weight, binary = NULL)
 \item{out}{character vector denoting which simulation output each objective
 pertains to.}
 
-\item{hyp}{character vector denoting which hypothesis each objective
-pertains to.}
-
 \item{weight}{numeric vector of weights assigned to each objective.}
 
 \item{binary}{optional boolean vector denoting if the output of the objective
 function is binary (TRUE) or continuous (FALSE).}
+
+\item{hyp}{optional character vector denoting which hypothesis each constraint
+pertains to. Defaults to NULL, in which case the simultion function's default
+hypothesis is used for all objectives.}
 }
 \value{
 A data.frame defining the objectives.

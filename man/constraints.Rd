@@ -4,7 +4,7 @@
 \alias{constraints}
 \title{Create a set of constraints}
 \usage{
-constraints(name, out, hyp, nom, delta, binary)
+constraints(name, out, nom, delta, binary, hyp = NULL)
 }
 \arguments{
 \item{name}{character vector of constraint names.}
@@ -12,14 +12,15 @@ constraints(name, out, hyp, nom, delta, binary)
 \item{out}{character vector denoting which simulation output each constraint
 pertains to.}
 
-\item{hyp}{character vector denoting which hypothesis each constraint
-pertains to.}
-
 \item{nom}{numeric vector of nominal upper limits.}
 
 \item{delta}{numeric vector of probabilities.}
 
 \item{binary}{boolean vector denoting if the constraint output is binary or otherwise.}
+
+\item{hyp}{optional character vector denoting which hypothesis each constraint
+pertains to. Defaults to NULL, in which case the simultion function's default
+hypothesis is used for all constraints.}
 }
 \value{
 A data.frame defining the constraints.

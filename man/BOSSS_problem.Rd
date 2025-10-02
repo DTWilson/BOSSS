@@ -7,8 +7,8 @@
 BOSSS_problem(
   sim_trial,
   design_space,
-  hypotheses,
   objectives,
+  hypotheses = NULL,
   constraints = NULL,
   det_func = NULL
 )
@@ -19,9 +19,9 @@ Monte Carlo outcome of a design under a hypothesis.}
 
 \item{design_space}{data frame constructed via \code{design_space()}.}
 
-\item{hypotheses}{data frame constructed via \code{hypotheses()}.}
-
 \item{objectives}{data frame constructed via \code{objectives()}.}
+
+\item{hypotheses}{data frame constructed via \code{hypotheses()}.}
 
 \item{constraints}{optional ata frame constructed via \code{constraints()}.}
 

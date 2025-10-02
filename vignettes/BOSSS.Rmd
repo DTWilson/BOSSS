@@ -124,7 +124,7 @@ objectives
 We now put this simulation function and set of data frames together to create an object of class `BOSSS_problem`. 
 
 ```{r}
-prob <- BOSSS_problem(sim_cRCT, design_space, hypotheses, objectives, constraints, det_func = det_cRCT)
+prob <- BOSSS_problem(sim_cRCT, design_space, objectives, hypotheses, constraints, det_func = det_cRCT)
 ```
 
 ### Initialisation

@@ -46,7 +46,7 @@ This is the simulation function, exactly as provided by the trial statistician e
 #p01_relative is s.t. p01_relative*pexplong = probability of having 
 # a long term outcome after no short term outcome
 
-sim_trial <- function(design = list(n = 300, ninterim = 0.5, ainterim = 0.4, afinal = 0.1),
+sim_NIFTy <- function(design = list(n = 300, ninterim = 0.5, ainterim = 0.4, afinal = 0.1),
                       hypothesis = list(pcontshort = 0.25, pexpshort = 0.125,
                       pcontlong = 0.1, pexplong = 0.03, p01_relative = 0))
 {
@@ -168,18 +168,18 @@ We can construct the BOSSS problem object as follows:
 # Problem specification
 design_space <- design_space(lower = c(300,0.05,0,0), 
                              upper = c(700,0.5,1,1),
-                             sim = sim_trial)
+                             sim = sim_NIFTy)
 
 hypotheses <- hypotheses(values = matrix(c(0.25, 0.25, 0.1, 0.1, 0, 
                                            0.25, 0.125, 0.1, 0.03, 0), ncol = 2),
                          hyp_names = c("null", "alt"),
-                         sim = sim_trial)
+                         sim = sim_NIFTy)
 
 constraints <- constraints(name = c("TI_con", "TII_con"),
                    out = c("g", "s"),
                    hyp = c("null", "alt"),
                    nom = c(0.1, 0.2),
-                   delta =c(0.95, 0.95),
+                   delta = c(0.95, 0.95),
                    binary = c(TRUE, TRUE))
 
 objectives <- objectives(name = c("TI", "TII", "EN"),
@@ -188,10 +188,14 @@ objectives <- objectives(name = c("TI", "TII", "EN"),
                  weight = c(100, 100, 1),
                  binary = c(TRUE, TRUE, FALSE))
 
-prob <- BOSSS_problem(sim_trial, design_space, hypotheses, objectives, constraints)
+prob <- BOSSS_problem(sim_trial = sim_NIFTy,
+                      design_space = design_space,
+                      objectives = objectives,
+                      hypotheses = hypotheses,
+                      constraints = constraints)
 ```
 
-This implies we are going to search over a space of sample sizes and decision criteria, looking for trial designs which simultaneously minimise the type I error rate (`"TI"`), type II error rate (`"TII"`) and expected sample size (`"EN"`), subject to the type I error rate being (probably) less than 0.1 (`"TI_con"`) and the type II error rate being (probably) less than 0.2 (`"TIIcon"`).
+This implies we are going to search over a space of sample sizes and decision criteria, looking for trial designs which simultaneously minimise the type I error rate (`"TI"`), type II error rate (`"TII"`) and expected sample size (`"EN"`), subject to the type I error rate being (probably) less than 0.1 (`"TI_con"`) and the type II error rate being (probably) less than 0.2 (`"TIIcon"`). 
 
 Now we initialise to get an initial estimate of the Pareto front:
 
@@ -410,25 +414,25 @@ design_space <- design_space(lower = c(50, 10, 1),
                              upper = c(500, 60, 10),
                              sim = sim_P2)
 
-hypotheses <- hypotheses(values = matrix(c(0.05, 0.05, 0.03, 0.67, 0.67, 0.67), ncol = 1),
-                         hyp_names = c("alt"),
-                         sim = sim_P2)
-
 constraints <- constraints(name = c("a"),
                    out = c("s"),
-                   hyp = c("alt"),
                    nom = c(0.2),
                    delta =c(0.95),
                    binary = c(TRUE))
 
 objectives <- objectives(name = c("n", "a", "f"),
                  out = c("n", "a", "f"),
-                 hyp = c("alt", "alt", "alt"),
                  weight = c(10, 1, 10),
                  binary = c(FALSE, FALSE, FALSE))
 
-prob <- BOSSS_problem(sim_P2, design_space, hypotheses, objectives, constraints, det_func = det_P2)
+prob <- BOSSS_problem(sim_trial = sim_P2,
+                      design_space = design_space,
+                      objectives = objectives,
+                      constraints = constraints,
+                      det_func = det_P2)
 ```
+
+Note that we haven't specified a set of hypotheses; because we only need to simulate under a single hypothesis (to estimate the type II error rate), we can leave it to be specified implicitly through the default `hypothesis` argument of the simulation function.
 
 
 ```{r}
@@ -587,11 +591,6 @@ design_space <- design_space(lower = c(3,0.5),
                              upper = c(40,5),
                              sim = sim_rec)
 
-hypotheses <- hypotheses(values = matrix(c(7, 2, 2, 0.8, 
-                                           10, 1, 0.3, 0.3, 1, 0.2), ncol = 1),
-                         hyp_names = c("alt"),
-                         sim = sim_rec)
-
 constraints <- constraints(name = c("TII_ass"),
                    out = c("pr_tII"),
                    hyp = c("alt"),
@@ -605,7 +604,11 @@ objectives <- objectives(name = c("Sites", "Time"),
                  weight = c(1, 10),
                  binary = c(FALSE, FALSE))
 
-prob <- BOSSS_problem(sim_rec, design_space, hypotheses, objectives, constraints, det_func = det_rec)
+prob <- BOSSS_problem(sim_trial = sim_rec,
+                      design_space = design_space,
+                      objectives = objectives,
+                      constraints = constraints,
+                      det_func = det_rec)
 ```
 
 ```{r}

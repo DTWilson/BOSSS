@@ -38,7 +38,7 @@ BOSSS_solution <- function(size, N, problem){
   #clust <- parallel::makeCluster(n.cores)
 
   # Get a rough estimate of how long initialisation will take
-  cat("Checking simulation speed...\n")
+  cat("\nChecking simulation speed...\n")
   t <- Sys.time()
   r_sim <- try({
     MC_estimates(DoE[1,1:problem$dimen], hypotheses=problem$hypotheses, N=N, sim=problem$simulation)
