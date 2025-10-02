@@ -67,7 +67,9 @@
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://dtwilson.github.io/BOSSS/">BOSSS</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://ggplot2.tidyverse.org" class="external-link">ggplot2</a></span><span class="op">)</span></span>
-<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/olafmersmann/mco" class="external-link">mco</a></span><span class="op">)</span></span></code></pre></div>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/olafmersmann/mco" class="external-link">mco</a></span><span class="op">)</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://here.r-lib.org/" class="external-link">here</a></span><span class="op">)</span></span>
+<span><span class="co">#&gt; here() starts at /home/runner/work/BOSSS/BOSSS</span></span></code></pre></div>
 <!-- Note - a Twitter thread on power analysis had a couple of people mentioning the R package simr for power through simulation when using mixed models. So might be worth including that in one of our examples, to save people having to write their own simulation code? -->
 <p>Every application of BOSSS follows the same set of steps:</p>
 <ol style="list-style-type: decimal">
@@ -102,8 +104,11 @@ quantities who’s mean values we want to estimate using the Monte Carlo
 method. Here, we have one such quantity: a boolean indicator of a
 negative decision, <code>s</code>.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">sim_cRCT</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">m</span> <span class="op">=</span> <span class="fl">10</span>, <span class="va">n</span> <span class="op">=</span> <span class="fl">20</span>, </span>
-<span>                     <span class="va">beta_1</span> <span class="op">=</span> <span class="fl">0.3</span>, <span class="va">var_e</span> <span class="op">=</span> <span class="fl">0.95</span>, <span class="va">var_u</span> <span class="op">=</span> <span class="fl">0.05</span><span class="op">)</span><span class="op">{</span></span>
+<code class="sourceCode R"><span><span class="va">sim_cRCT</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">design</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>m <span class="op">=</span> <span class="fl">10</span>, n <span class="op">=</span> <span class="fl">20</span><span class="op">)</span>, </span>
+<span>                     <span class="va">hypothesis</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>beta_1 <span class="op">=</span> <span class="fl">0.3</span>, var_e <span class="op">=</span> <span class="fl">0.95</span>, var_u <span class="op">=</span> <span class="fl">0.05</span><span class="op">)</span><span class="op">)</span><span class="op">{</span></span>
+<span>  </span>
+<span>  <span class="va">m</span> <span class="op">&lt;-</span> <span class="va">design</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span>; <span class="va">n</span> <span class="op">&lt;-</span> <span class="va">design</span><span class="op">[[</span><span class="fl">2</span><span class="op">]</span><span class="op">]</span></span>
+<span>  <span class="va">beta_1</span> <span class="op">&lt;-</span> <span class="va">hypothesis</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span>; <span class="va">var_e</span> <span class="op">&lt;-</span> <span class="va">hypothesis</span><span class="op">[[</span><span class="fl">2</span><span class="op">]</span><span class="op">]</span>; <span class="va">var_u</span> <span class="op">&lt;-</span> <span class="va">hypothesis</span><span class="op">[[</span><span class="fl">3</span><span class="op">]</span><span class="op">]</span></span>
 <span>  </span>
 <span>  <span class="va">m</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">floor</a></span><span class="op">(</span><span class="va">m</span><span class="op">)</span>; <span class="va">n</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">floor</a></span><span class="op">(</span><span class="va">n</span><span class="op">)</span></span>
 <span>  </span>
@@ -117,9 +122,7 @@ negative decision, <code>s</code>.</p>
 <span><span class="op">}</span></span>
 <span></span>
 <span><span class="co"># For example,</span></span>
-<span><span class="fu">sim_cRCT</span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt;     s </span></span>
-<span><span class="co">#&gt; FALSE</span></span></code></pre></div>
+<span><span class="fu">sim_cRCT</span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 <p>In our problem we are not just interested in the expected value of
 <code>s</code>; we also want to minimise the number of clusters and the
 number of participants. Since these are fixed quantities given any
@@ -128,9 +131,12 @@ should conform to the same principles as the simulation function, with
 the same inputs, but allowing for different named outputs. Here, the
 outputs are just <code>m</code>, and <code>N = n*m</code>:</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">det_cRCT</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">m</span> <span class="op">=</span> <span class="fl">10</span>, <span class="va">n</span> <span class="op">=</span> <span class="fl">5</span>, </span>
-<span>                     <span class="va">beta_1</span> <span class="op">=</span> <span class="fl">0.3</span>, <span class="va">var_e</span> <span class="op">=</span> <span class="fl">0.95</span>, <span class="va">var_u</span> <span class="op">=</span> <span class="fl">0.05</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">det_cRCT</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">design</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>m <span class="op">=</span> <span class="fl">10</span>, n <span class="op">=</span> <span class="fl">20</span><span class="op">)</span>, </span>
+<span>                     <span class="va">hypothesis</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>beta_1 <span class="op">=</span> <span class="fl">0.3</span>, var_e <span class="op">=</span> <span class="fl">0.95</span>, var_u <span class="op">=</span> <span class="fl">0.05</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="op">{</span></span>
+<span>  <span class="va">m</span> <span class="op">&lt;-</span> <span class="va">design</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span>; <span class="va">n</span> <span class="op">&lt;-</span> <span class="va">design</span><span class="op">[[</span><span class="fl">2</span><span class="op">]</span><span class="op">]</span></span>
+<span>  <span class="va">beta_1</span> <span class="op">&lt;-</span> <span class="va">hypothesis</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span>; <span class="va">var_e</span> <span class="op">&lt;-</span> <span class="va">hypothesis</span><span class="op">[[</span><span class="fl">2</span><span class="op">]</span><span class="op">]</span>; <span class="va">var_u</span> <span class="op">&lt;-</span> <span class="va">hypothesis</span><span class="op">[[</span><span class="fl">3</span><span class="op">]</span><span class="op">]</span></span>
+<span>  </span>
 <span>  <span class="kw"><a href="https://rdrr.io/r/base/function.html" class="external-link">return</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>m <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">floor</a></span><span class="op">(</span><span class="va">m</span><span class="op">)</span>, N <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">floor</a></span><span class="op">(</span><span class="va">n</span><span class="op">)</span><span class="op">*</span><span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">floor</a></span><span class="op">(</span><span class="va">m</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="op">}</span>  </span></code></pre></div>
 <p>Next, we need to note the ranges of the design variables which we
@@ -142,10 +148,7 @@ the order they appear as simulation function arguments:</p>
 <span>                             upper <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">50</span>, <span class="fl">20</span><span class="op">)</span>,</span>
 <span>                             sim <span class="op">=</span> <span class="va">sim_cRCT</span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">design_space</span></span>
-<span><span class="co">#&gt;   name lower upper</span></span>
-<span><span class="co">#&gt; 1    m    10    50</span></span>
-<span><span class="co">#&gt; 2    n     5    20</span></span></code></pre></div>
+<span><span class="va">design_space</span></span></code></pre></div>
 <p>Note that the function automatically retrieves the names of the
 design variables based on the order they take in the simulation
 function.</p>
@@ -159,11 +162,7 @@ will be estimating the type II error rate.</p>
 <span>                         hyp_names <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"alt"</span><span class="op">)</span>,</span>
 <span>                         sim <span class="op">=</span> <span class="va">sim_cRCT</span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">hypotheses</span></span>
-<span><span class="co">#&gt;         alt</span></span>
-<span><span class="co">#&gt; beta_1 0.30</span></span>
-<span><span class="co">#&gt; var_e  0.95</span></span>
-<span><span class="co">#&gt; var_u  0.05</span></span></code></pre></div>
+<span><span class="va">hypotheses</span></span></code></pre></div>
 <p>Constraints should be specified using the <code>constraints</code>
 function. Each constraint should be named, and should be defined with
 respect to a specific output and a specific hypothesis. It should have a
@@ -181,9 +180,7 @@ output is binary or otherwise.</p>
 <span>                   delta <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.95</span><span class="op">)</span>,</span>
 <span>                   binary <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">constraints</span></span>
-<span><span class="co">#&gt;      name out hyp nom delta binary</span></span>
-<span><span class="co">#&gt; 1 con_tII   s alt 0.2  0.95   TRUE</span></span></code></pre></div>
+<span><span class="va">constraints</span></span></code></pre></div>
 <p>The final ingredient of the problem is the set of objectives we want
 to minimise. Similar to constraints, objectives are tied to a specific
 output and hypothesis. We also specify weights for each objective which
@@ -199,10 +196,7 @@ number of clusters <code>m</code>, with the latter carrying a weight of
 <span>                 weight <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">10</span><span class="op">)</span>,</span>
 <span>                 binary <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="cn">FALSE</span>, <span class="cn">FALSE</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">objectives</span></span>
-<span><span class="co">#&gt;   name out hyp weight binary</span></span>
-<span><span class="co">#&gt; 1    N   N alt      1  FALSE</span></span>
-<span><span class="co">#&gt; 2    m   m alt     10  FALSE</span></span></code></pre></div>
+<span><span class="va">objectives</span></span></code></pre></div>
 <p>We now put this simulation function and set of data frames together
 to create an object of class <code>BOSSS_problem</code>.</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
@@ -224,12 +218,9 @@ and then using those models to estimate the Pareto set and front:</p>
 <span><span class="va">size</span> <span class="op">&lt;-</span> <span class="fl">20</span></span>
 <span><span class="va">N</span> <span class="op">&lt;-</span> <span class="fl">100</span></span>
 <span></span>
-<span><span class="va">sol</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/BOSSS_solution.html">BOSSS_solution</a></span><span class="op">(</span><span class="va">size</span>, <span class="va">N</span>, <span class="va">prob</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Checking simulation speed...</span></span>
-<span><span class="co">#&gt; Initialisation will take approximately 0.5868146 secs </span></span>
-<span><span class="co">#&gt; Solution found</span></span>
-<span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">sol</span><span class="op">)</span> </span>
+<span><span class="va">sol</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/BOSSS_solution.html">BOSSS_solution</a></span><span class="op">(</span><span class="va">size</span>, <span class="va">N</span>, <span class="va">prob</span><span class="op">)</span></span></code></pre></div>
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">sol</span><span class="op">)</span> </span>
 <span><span class="co">#&gt; Design variables for the Pareto set: </span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;        m        n</span></span>
@@ -248,8 +239,8 @@ and then using those models to estimate the Pareto set and front:</p>
 <span><span class="co">#&gt; 2      -2.419826    0.1333284</span></span>
 <span><span class="co">#&gt; 19     -1.442005    0.0646562</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">sol</span><span class="op">)</span></span></code></pre></div>
-<p><img src="BOSSS_files/figure-html/unnamed-chunk-9-1.png" width="700"></p>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<p><img src="BOSSS_files/figure-html/unnamed-chunk-11-1.png" width="700"></p>
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">sol_init</span> <span class="op">&lt;-</span> <span class="va">sol</span></span></code></pre></div>
 <p>The <code><a href="https://rdrr.io/r/base/print.html" class="external-link">print()</a></code> function will give a table of the Pareto set
 with associated objective function values. The <code><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot()</a></code>
@@ -263,12 +254,13 @@ function will plot the Pareto front.</p>
 Process models to decide on the next design to be evaluated, computes
 the Monte Carlo estimates at that point, and then updates the estimated
 Pareto set and front.</p>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">N</span> <span class="op">&lt;-</span> <span class="fl">100</span></span>
 <span><span class="kw">for</span><span class="op">(</span><span class="va">i</span> <span class="kw">in</span> <span class="fl">1</span><span class="op">:</span><span class="fl">20</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="va">sol</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/iterate.html">iterate</a></span><span class="op">(</span><span class="va">sol</span>, <span class="va">prob</span>, <span class="va">N</span><span class="op">)</span> </span>
-<span><span class="op">}</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">sol</span><span class="op">)</span></span>
+<span><span class="op">}</span></span></code></pre></div>
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">sol</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Design variables for the Pareto set: </span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;           m         n</span></span>
@@ -308,77 +300,12 @@ Pareto set and front.</p>
 <span><span class="co">#&gt; 36     -1.576338   0.07043940</span></span>
 <span><span class="co">#&gt; 40     -1.978171   0.09367830</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">sol</span><span class="op">)</span></span></code></pre></div>
-<p><img src="BOSSS_files/figure-html/unnamed-chunk-10-1.png" width="700"></p>
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<p><img src="BOSSS_files/figure-html/unnamed-chunk-14-1.png" width="700"></p>
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">sol_final</span> <span class="op">&lt;-</span> <span class="va">sol</span></span></code></pre></div>
 <p>We can compare the initial and final approximations to the Pareto
 front to the actual front since, for this simple example, we can
 calculate power analytically:</p>
-<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">df</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/expand.grid.html" class="external-link">expand.grid</a></span><span class="op">(</span>m <span class="op">=</span> <span class="fl">10</span><span class="op">:</span><span class="fl">50</span>,</span>
-<span>                  n <span class="op">=</span> <span class="fl">5</span><span class="op">:</span><span class="fl">20</span><span class="op">)</span></span>
-<span><span class="va">df</span><span class="op">$</span><span class="va">N</span> <span class="op">&lt;-</span> <span class="va">df</span><span class="op">$</span><span class="va">m</span><span class="op">*</span><span class="va">df</span><span class="op">$</span><span class="va">n</span></span>
-<span></span>
-<span><span class="va">df</span><span class="op">$</span><span class="va">clust_var</span> <span class="op">&lt;-</span> <span class="fl">0.05</span> <span class="op">+</span> <span class="fl">0.95</span><span class="op">/</span><span class="va">df</span><span class="op">$</span><span class="va">n</span></span>
-<span></span>
-<span><span class="va">df</span><span class="op">$</span><span class="va">pow</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/power.t.test.html" class="external-link">power.t.test</a></span><span class="op">(</span><span class="va">df</span><span class="op">$</span><span class="va">m</span>, delta <span class="op">=</span> <span class="fl">0.3</span>, sd <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">sqrt</a></span><span class="op">(</span><span class="va">df</span><span class="op">$</span><span class="va">clust_var</span><span class="op">)</span>,</span>
-<span>                       alternative <span class="op">=</span> <span class="st">"one.sided"</span>, sig.level <span class="op">=</span> <span class="fl">0.025</span><span class="op">)</span><span class="op">$</span><span class="va">power</span></span>
-<span></span>
-<span><span class="va">df</span> <span class="op">&lt;-</span> <span class="va">df</span><span class="op">[</span><span class="va">df</span><span class="op">$</span><span class="va">pow</span> <span class="op">&gt;=</span> <span class="fl">0.8</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"m"</span>, <span class="st">"n"</span>, <span class="st">"N"</span><span class="op">)</span><span class="op">]</span></span>
-<span><span class="va">df</span> <span class="op">&lt;-</span>  <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/pkg/mco/man/paretoFront.html" class="external-link">paretoFilter</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span><span class="va">df</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="va">df</span><span class="op">$</span><span class="va">t</span> <span class="op">&lt;-</span> <span class="st">"True"</span></span>
-<span></span>
-<span><span class="va">df</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">rbind</a></span><span class="op">(</span><span class="va">df</span>, <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>m <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">floor</a></span><span class="op">(</span><span class="va">sol_init</span><span class="op">$</span><span class="va">p_set</span><span class="op">$</span><span class="va">m</span><span class="op">)</span>,</span>
-<span>                                 <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">floor</a></span><span class="op">(</span><span class="va">sol_final</span><span class="op">$</span><span class="va">p_set</span><span class="op">$</span><span class="va">m</span><span class="op">)</span><span class="op">)</span>,</span>
-<span>                           n <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">floor</a></span><span class="op">(</span><span class="va">sol_init</span><span class="op">$</span><span class="va">p_set</span><span class="op">$</span><span class="va">n</span><span class="op">)</span>,</span>
-<span>                                 <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">floor</a></span><span class="op">(</span><span class="va">sol_final</span><span class="op">$</span><span class="va">p_set</span><span class="op">$</span><span class="va">n</span><span class="op">)</span><span class="op">)</span>,</span>
-<span>                           N <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">floor</a></span><span class="op">(</span><span class="va">sol_init</span><span class="op">$</span><span class="va">p_set</span><span class="op">$</span><span class="va">N</span><span class="op">)</span>,</span>
-<span>                                 <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">floor</a></span><span class="op">(</span><span class="va">sol_final</span><span class="op">$</span><span class="va">p_set</span><span class="op">$</span><span class="va">N</span><span class="op">)</span><span class="op">)</span>,</span>
-<span>                           t <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="st">"Initial"</span>, <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">sol_init</span><span class="op">$</span><span class="va">p_set</span><span class="op">)</span><span class="op">)</span>,</span>
-<span>                                 <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="st">"Final"</span>, <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">sol_final</span><span class="op">$</span><span class="va">p_set</span><span class="op">)</span><span class="op">)</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Add ends of steps</span></span>
-<span><span class="va">df2</span>  <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">rbind</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>m<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="va">df</span><span class="op">$</span><span class="va">m</span><span class="op">)</span>, <span class="fl">3</span><span class="op">)</span>,</span>
-<span>                          N<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">min</a></span><span class="op">(</span><span class="va">df</span><span class="op">[</span><span class="va">df</span><span class="op">$</span><span class="va">t</span> <span class="op">==</span> <span class="st">"Initial"</span>, <span class="st">"N"</span><span class="op">]</span><span class="op">)</span>,</span>
-<span>                              <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">min</a></span><span class="op">(</span><span class="va">df</span><span class="op">[</span><span class="va">df</span><span class="op">$</span><span class="va">t</span> <span class="op">==</span> <span class="st">"True"</span>, <span class="st">"N"</span><span class="op">]</span><span class="op">)</span>,</span>
-<span>                              <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">min</a></span><span class="op">(</span><span class="va">df</span><span class="op">[</span><span class="va">df</span><span class="op">$</span><span class="va">t</span> <span class="op">==</span> <span class="st">"Final"</span>, <span class="st">"N"</span><span class="op">]</span><span class="op">)</span><span class="op">)</span>,</span>
-<span>                          t<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Initial"</span>, <span class="st">"True"</span>, <span class="st">"Final"</span><span class="op">)</span><span class="op">)</span>,</span>
-<span>              <span class="va">df</span><span class="op">[</span>,<span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"m"</span>, <span class="st">"N"</span>, <span class="st">"t"</span><span class="op">)</span><span class="op">]</span>,</span>
-<span>              <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>m<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">min</a></span><span class="op">(</span><span class="va">df</span><span class="op">[</span><span class="va">df</span><span class="op">$</span><span class="va">t</span> <span class="op">==</span> <span class="st">"Initial"</span>, <span class="st">"m"</span><span class="op">]</span><span class="op">)</span>,</span>
-<span>                             <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">min</a></span><span class="op">(</span><span class="va">df</span><span class="op">[</span><span class="va">df</span><span class="op">$</span><span class="va">t</span> <span class="op">==</span> <span class="st">"True"</span>, <span class="st">"m"</span><span class="op">]</span><span class="op">)</span>,</span>
-<span>                             <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">min</a></span><span class="op">(</span><span class="va">df</span><span class="op">[</span><span class="va">df</span><span class="op">$</span><span class="va">t</span> <span class="op">==</span> <span class="st">"Final"</span>, <span class="st">"m"</span><span class="op">]</span><span class="op">)</span><span class="op">)</span>,</span>
-<span>                         N<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="va">df</span><span class="op">$</span><span class="va">N</span><span class="op">)</span>, <span class="fl">3</span><span class="op">)</span>,</span>
-<span>                         t<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Initial"</span>, <span class="st">"True"</span>, <span class="st">"Final"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
-<span></span>
-<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">df</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span><span class="va">N</span>, <span class="va">m</span>, colour <span class="op">=</span> <span class="va">t</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_point.html" class="external-link">geom_point</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">xlab</a></span><span class="op">(</span><span class="st">"Total sample size per arm, N"</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">ylab</a></span><span class="op">(</span><span class="st">"Number of clusters per arm, m"</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_manual.html" class="external-link">scale_colour_manual</a></span><span class="op">(</span>name <span class="op">=</span> <span class="st">""</span>, values <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"#EF476F"</span>, <span class="st">"#FFD166"</span>, <span class="st">"#06D6A0"</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_path.html" class="external-link">geom_step</a></span><span class="op">(</span>data<span class="op">=</span><span class="va">df2</span>, alpha <span class="op">=</span> <span class="fl">0.5</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html" class="external-link">theme_minimal</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
-<p><img src="BOSSS_files/figure-html/unnamed-chunk-11-1.png" width="700"></p>
-<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span></span>
-<span><span class="co">#ggsave(here("man", "figures", "cRCT_fronts.pdf"), height=9, width=14, units="cm")</span></span>
-<span></span>
-<span><span class="co"># Tabulate results</span></span>
-<span><span class="va">df_init</span> <span class="op">&lt;-</span> <span class="va">df</span><span class="op">[</span><span class="va">df</span><span class="op">$</span><span class="va">t</span> <span class="op">==</span> <span class="st">"Initial"</span>,<span class="op">]</span></span>
-<span><span class="va">p</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/PS_empirical_ests.html">PS_empirical_ests</a></span><span class="op">(</span><span class="va">sol_init</span>, <span class="va">prob</span><span class="op">)</span><span class="op">[[</span><span class="fl">2</span><span class="op">]</span><span class="op">]</span><span class="op">[</span>,<span class="fl">1</span><span class="op">]</span></span>
-<span><span class="va">df_init</span><span class="op">$</span><span class="va">pow</span> <span class="op">&lt;-</span> <span class="fl">1</span> <span class="op">-</span> <span class="fl">1</span><span class="op">/</span><span class="op">(</span><span class="fl">1</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">exp</a></span><span class="op">(</span><span class="op">-</span><span class="va">p</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="va">df_init</span> <span class="op">&lt;-</span> <span class="va">df_init</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/order.html" class="external-link">order</a></span><span class="op">(</span><span class="va">df_init</span><span class="op">$</span><span class="va">m</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>,<span class="fl">2</span>,<span class="fl">3</span>,<span class="fl">5</span><span class="op">)</span><span class="op">]</span></span>
-<span>  </span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">df_init</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"$m$"</span>, <span class="st">"$n$"</span>, <span class="st">"$N$"</span>, <span class="st">"power"</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co">#print(xtable(df_init, digits = c(0,0,0,0,2)), booktabs = T, include.rownames = F, sanitize.text.function = function(x) {x}, floating = F, file = here("man", "tables", "cRCT_init.txt"))</span></span>
-<span></span>
-<span><span class="va">df_final</span> <span class="op">&lt;-</span> <span class="va">df</span><span class="op">[</span><span class="va">df</span><span class="op">$</span><span class="va">t</span> <span class="op">==</span> <span class="st">"Final"</span>,<span class="op">]</span></span>
-<span><span class="va">p</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/PS_empirical_ests.html">PS_empirical_ests</a></span><span class="op">(</span><span class="va">sol_final</span>, <span class="va">prob</span><span class="op">)</span><span class="op">[[</span><span class="fl">2</span><span class="op">]</span><span class="op">]</span><span class="op">[</span>,<span class="fl">1</span><span class="op">]</span></span>
-<span><span class="va">df_final</span><span class="op">$</span><span class="va">pow</span> <span class="op">&lt;-</span> <span class="fl">1</span> <span class="op">-</span> <span class="fl">1</span><span class="op">/</span><span class="op">(</span><span class="fl">1</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">exp</a></span><span class="op">(</span><span class="op">-</span><span class="va">p</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="va">df_final</span> <span class="op">&lt;-</span> <span class="va">df_final</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/order.html" class="external-link">order</a></span><span class="op">(</span><span class="va">df_final</span><span class="op">$</span><span class="va">m</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>,<span class="fl">2</span>,<span class="fl">3</span>,<span class="fl">5</span><span class="op">)</span><span class="op">]</span></span>
-<span>  </span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">df_final</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"$m$"</span>, <span class="st">"$n$"</span>, <span class="st">"$N$"</span>, <span class="st">"power"</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co">#print(xtable(df_final, digits = c(0,0,0,0,2)), booktabs = T, include.rownames = F, sanitize.text.function = function(x) {x}, floating = F, file = here("man", "tables", "cRCT_final.txt"))</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="diagnostics">Diagnostics<a class="anchor" aria-label="anchor" href="#diagnostics"></a>
@@ -393,12 +320,12 @@ range of each design variable.</p>
 <span><span class="va">ps</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/diag_plots.html">diag_plots</a></span><span class="op">(</span><span class="va">design</span>, <span class="va">prob</span>, <span class="va">sol</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">ps</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span></span></code></pre></div>
-<p><img src="BOSSS_files/figure-html/unnamed-chunk-12-1.png" width="700"></p>
+<p><img src="BOSSS_files/figure-html/unnamed-chunk-16-1.png" width="700"></p>
 <div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co">#ggsave(here("man", "figures", "cRCT_diag_m.pdf"), height=8, width=8, units="cm")</span></span>
 <span></span>
 <span><span class="va">ps</span><span class="op">[[</span><span class="fl">2</span><span class="op">]</span><span class="op">]</span></span></code></pre></div>
-<p><img src="BOSSS_files/figure-html/unnamed-chunk-12-2.png" width="700"></p>
+<p><img src="BOSSS_files/figure-html/unnamed-chunk-16-2.png" width="700"></p>
 <div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co">#ggsave(here("man", "figures", "cRCT_diag_n.pdf"), height=8, width=8, units="cm")</span></span></code></pre></div>
 <p>We can also get the predicted values and 95% credible intervals for
@@ -499,14 +426,13 @@ Pareto set, we might want to double check that point by running a large
 number of simulations at it:</p>
 <div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">design</span> <span class="op">&lt;-</span> <span class="va">sol</span><span class="op">$</span><span class="va">p_set</span><span class="op">[</span><span class="fl">1</span>,<span class="op">]</span></span>
-<span><span class="va">r</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/diag_check_point.html">diag_check_point</a></span><span class="op">(</span><span class="va">design</span>, <span class="va">prob</span>, <span class="va">sol</span>, N<span class="op">=</span><span class="fl">10</span><span class="op">^</span><span class="fl">5</span><span class="op">)</span> </span>
+<span><span class="va">r</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/diag_check_point.html">diag_check_point</a></span><span class="op">(</span><span class="va">design</span>, <span class="va">prob</span>, <span class="va">sol</span>, N<span class="op">=</span><span class="fl">10</span><span class="op">^</span><span class="fl">4</span><span class="op">)</span> </span>
 <span><span class="co">#&gt; Model 1 prediction interval: [0.137, 0.188]</span></span>
-<span><span class="co">#&gt; Model 1 empirical interval: [0.157, 0.161]</span></span></code></pre></div>
+<span><span class="co">#&gt; Model 1 empirical interval: [0.151, 0.165]</span></span></code></pre></div>
 <p>At any point, but especially after initialisation, we may decide that
 we need more points in our initial evaluations, or more simulations at
-each of the points evaluated so far. We can do that via
-<code><a href="../reference/extend_initial.html">extend_initial()</a></code>. For example, suppose we started off with
-only 10 evaluations at each of 6 initial designs:</p>
+each of the points evaluated so far. For example, suppose we started off
+with only 10 evaluations at each of 6 initial designs:</p>
 <div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">98579</span><span class="op">)</span></span>
 <span></span>
@@ -515,7 +441,7 @@ only 10 evaluations at each of 6 initial designs:</p>
 <span></span>
 <span><span class="va">sol</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/BOSSS_solution.html">BOSSS_solution</a></span><span class="op">(</span><span class="va">size</span>, <span class="va">N</span>, <span class="va">prob</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Checking simulation speed...</span></span>
-<span><span class="co">#&gt; Initialisation will take approximately 0.01511574 secs </span></span>
+<span><span class="co">#&gt; Initialisation will take approximately 0.0158143 secs </span></span>
 <span><span class="co">#&gt; Solution found</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">sol</span><span class="op">)</span> </span>
@@ -540,7 +466,7 @@ only 10 evaluations at each of 6 initial designs:</p>
 <span><span class="co">#&gt; 4    -1.3156768    0.5995565</span></span>
 <span><span class="co">#&gt; 6    -0.3894648    0.4153610</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">sol</span><span class="op">)</span></span></code></pre></div>
-<p><img src="BOSSS_files/figure-html/unnamed-chunk-15-1.png" width="700"></p>
+<p><img src="BOSSS_files/figure-html/unnamed-chunk-19-1.png" width="700"></p>
 <div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">sol_init</span> <span class="op">&lt;-</span> <span class="va">sol</span></span>
 <span></span>
@@ -550,10 +476,10 @@ only 10 evaluations at each of 6 initial designs:</p>
 <span><span class="co">#&gt; 3 20 16.25 320 20</span></span>
 <span><span class="fu"><a href="../reference/diag_plots.html">diag_plots</a></span><span class="op">(</span><span class="va">design</span>, <span class="va">prob</span>, <span class="va">sol</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [[1]]</span></span></code></pre></div>
-<p><img src="BOSSS_files/figure-html/unnamed-chunk-15-2.png" width="700"></p>
+<p><img src="BOSSS_files/figure-html/unnamed-chunk-19-2.png" width="700"></p>
 <pre><code><span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; [[2]]</span></span></code></pre>
-<p><img src="BOSSS_files/figure-html/unnamed-chunk-15-3.png" width="700"></p>
+<p><img src="BOSSS_files/figure-html/unnamed-chunk-19-3.png" width="700"></p>
 <p>The diagnostic plots here show a GP model of the true power function
 which is just a constant, which we know is not true. When we see a poor
 initial fit like this we might want to add more simulations to designs
@@ -569,11 +495,11 @@ simulations:</p>
 <span><span class="co">#&gt; 10 47.5 5.9375 235 47</span></span>
 <span><span class="fu"><a href="../reference/diag_plots.html">diag_plots</a></span><span class="op">(</span><span class="va">design</span>, <span class="va">prob</span>, <span class="va">sol</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [[1]]</span></span></code></pre></div>
-<p><img src="BOSSS_files/figure-html/unnamed-chunk-16-1.png" width="700"></p>
+<p><img src="BOSSS_files/figure-html/unnamed-chunk-20-1.png" width="700"></p>
 <pre><code><span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; [[2]]</span></span></code></pre>
-<p><img src="BOSSS_files/figure-html/unnamed-chunk-16-2.png" width="700"></p>
-<p>Our lots now suggest a more plausible model.</p>
+<p><img src="BOSSS_files/figure-html/unnamed-chunk-20-2.png" width="700"></p>
+<p>Our plots now suggest a more plausible model.</p>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>

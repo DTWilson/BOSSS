@@ -68,7 +68,8 @@
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://dtwilson.github.io/BOSSS/">BOSSS</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://here.r-lib.org/" class="external-link">here</a></span><span class="op">)</span></span>
 <span><span class="co">#&gt; here() starts at /home/runner/work/BOSSS/BOSSS</span></span>
-<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/hadley/reshape" class="external-link">reshape2</a></span><span class="op">)</span></span></code></pre></div>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/hadley/reshape" class="external-link">reshape2</a></span><span class="op">)</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/chjackson/msm" class="external-link">msm</a></span><span class="op">)</span></span></code></pre></div>
 <p>In this vignette we provide a few example applications of BOSSS.</p>
 <div class="section level2">
 <h2 id="nifty">NIFTy<a class="anchor" aria-label="anchor" href="#nifty"></a>
@@ -102,10 +103,16 @@ values to conform to the BOSSS standards.</p>
 <span><span class="co">#p01_relative is s.t. p01_relative*pexplong = probability of having </span></span>
 <span><span class="co"># a long term outcome after no short term outcome</span></span>
 <span></span>
-<span><span class="va">sim_trial</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">n</span> <span class="op">=</span> <span class="fl">300</span>, <span class="va">ninterim</span> <span class="op">=</span> <span class="fl">0.5</span>, <span class="va">ainterim</span> <span class="op">=</span> <span class="fl">0.4</span>, <span class="va">afinal</span> <span class="op">=</span> <span class="fl">0.1</span>,</span>
-<span>                      <span class="va">pcontshort</span> <span class="op">=</span> <span class="fl">0.25</span>, <span class="va">pexpshort</span> <span class="op">=</span> <span class="fl">0.125</span>,</span>
-<span>                      <span class="va">pcontlong</span> <span class="op">=</span> <span class="fl">0.1</span>, <span class="va">pexplong</span> <span class="op">=</span> <span class="fl">0.03</span>, <span class="va">p01_relative</span> <span class="op">=</span> <span class="fl">0</span><span class="op">)</span></span>
+<span><span class="va">sim_trial</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">design</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>n <span class="op">=</span> <span class="fl">300</span>, ninterim <span class="op">=</span> <span class="fl">0.5</span>, ainterim <span class="op">=</span> <span class="fl">0.4</span>, afinal <span class="op">=</span> <span class="fl">0.1</span><span class="op">)</span>,</span>
+<span>                      <span class="va">hypothesis</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>pcontshort <span class="op">=</span> <span class="fl">0.25</span>, pexpshort <span class="op">=</span> <span class="fl">0.125</span>,</span>
+<span>                      pcontlong <span class="op">=</span> <span class="fl">0.1</span>, pexplong <span class="op">=</span> <span class="fl">0.03</span>, p01_relative <span class="op">=</span> <span class="fl">0</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="op">{</span></span>
+<span>  <span class="va">n</span> <span class="op">&lt;-</span> <span class="va">design</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span>; <span class="va">ninterim</span> <span class="op">&lt;-</span> <span class="va">design</span><span class="op">[[</span><span class="fl">2</span><span class="op">]</span><span class="op">]</span></span>
+<span>  <span class="va">ainterim</span> <span class="op">&lt;-</span> <span class="va">design</span><span class="op">[[</span><span class="fl">3</span><span class="op">]</span><span class="op">]</span>; <span class="va">afinal</span> <span class="op">&lt;-</span> <span class="va">design</span><span class="op">[[</span><span class="fl">4</span><span class="op">]</span><span class="op">]</span></span>
+<span>  </span>
+<span>  <span class="va">pcontshort</span> <span class="op">&lt;-</span> <span class="va">hypothesis</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span>; <span class="va">pexpshort</span> <span class="op">&lt;-</span> <span class="va">hypothesis</span><span class="op">[[</span><span class="fl">2</span><span class="op">]</span><span class="op">]</span></span>
+<span>  <span class="va">pcontlong</span> <span class="op">&lt;-</span> <span class="va">hypothesis</span><span class="op">[[</span><span class="fl">3</span><span class="op">]</span><span class="op">]</span>; <span class="va">pexplong</span> <span class="op">&lt;-</span> <span class="va">hypothesis</span><span class="op">[[</span><span class="fl">4</span><span class="op">]</span><span class="op">]</span>; <span class="va">p01_relative</span> <span class="op">&lt;-</span> <span class="va">hypothesis</span><span class="op">[[</span><span class="fl">5</span><span class="op">]</span><span class="op">]</span></span>
+<span>  </span>
 <span>  <span class="va">ninterim</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">floor</a></span><span class="op">(</span><span class="va">ninterim</span><span class="op">*</span><span class="va">n</span><span class="op">)</span></span>
 <span>  </span>
 <span>  <span class="va">patients</span><span class="op">&lt;-</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="va">n</span><span class="op">)</span> <span class="co">#create patients</span></span>
@@ -469,15 +476,19 @@ analysis. Herw we will extend this approach to searching for an optimal
 design.</p>
 <p>The simulation and deterministic functions are:</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">sim_P2</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">n</span> <span class="op">=</span> <span class="fl">500</span>, <span class="va">fu</span> <span class="op">=</span> <span class="fl">60</span>, <span class="va">af</span> <span class="op">=</span> <span class="fl">1</span>, </span>
-<span>                   <span class="va">q12</span> <span class="op">=</span> <span class="fl">0.05</span>, <span class="va">q23</span> <span class="op">=</span> <span class="fl">0.05</span>, <span class="va">q34</span> <span class="op">=</span> <span class="fl">0.03</span>,</span>
-<span>                   <span class="va">b12</span> <span class="op">=</span> <span class="fl">0.67</span>, <span class="va">b23</span> <span class="op">=</span> <span class="fl">0.67</span>, <span class="va">b34</span> <span class="op">=</span> <span class="fl">0.67</span><span class="op">)</span><span class="op">{</span></span>
+<code class="sourceCode R"><span><span class="va">sim_P2</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">design</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>n <span class="op">=</span> <span class="fl">500</span>, fu <span class="op">=</span> <span class="fl">60</span>, af <span class="op">=</span> <span class="fl">1</span><span class="op">)</span>, </span>
+<span>                   <span class="va">hypothesis</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>q12 <span class="op">=</span> <span class="fl">0.05</span>, q23 <span class="op">=</span> <span class="fl">0.05</span>, q34 <span class="op">=</span> <span class="fl">0.03</span>, </span>
+<span>                                     b12 <span class="op">=</span> <span class="fl">0.67</span>, b23 <span class="op">=</span> <span class="fl">0.67</span>, b34 <span class="op">=</span> <span class="fl">0.67</span><span class="op">)</span><span class="op">)</span><span class="op">{</span></span>
 <span>  </span>
 <span>  <span class="co"># n: total number of patients</span></span>
 <span>  <span class="co"># fu: follow-up length (days)</span></span>
 <span>  <span class="co"># af: assemment frequency (days)</span></span>
 <span>  <span class="co"># q12, q23, q34: transition probabilities</span></span>
 <span>  <span class="co"># b12, b23, b34: treatment effects</span></span>
+<span>  </span>
+<span>  <span class="va">n</span> <span class="op">&lt;-</span> <span class="va">design</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span>; <span class="va">fu</span> <span class="op">&lt;-</span> <span class="va">design</span><span class="op">[[</span><span class="fl">2</span><span class="op">]</span><span class="op">]</span>; <span class="va">af</span> <span class="op">&lt;-</span> <span class="va">design</span><span class="op">[[</span><span class="fl">3</span><span class="op">]</span><span class="op">]</span></span>
+<span>  <span class="va">q12</span> <span class="op">&lt;-</span> <span class="va">hypothesis</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span>; <span class="va">q23</span> <span class="op">&lt;-</span> <span class="va">hypothesis</span><span class="op">[[</span><span class="fl">2</span><span class="op">]</span><span class="op">]</span>; <span class="va">q34</span> <span class="op">&lt;-</span> <span class="va">hypothesis</span><span class="op">[[</span><span class="fl">3</span><span class="op">]</span><span class="op">]</span> </span>
+<span>  <span class="va">b12</span> <span class="op">&lt;-</span> <span class="va">hypothesis</span><span class="op">[[</span><span class="fl">4</span><span class="op">]</span><span class="op">]</span>; <span class="va">b23</span> <span class="op">&lt;-</span> <span class="va">hypothesis</span><span class="op">[[</span><span class="fl">5</span><span class="op">]</span><span class="op">]</span>; <span class="va">b34</span> <span class="op">&lt;-</span> <span class="va">hypothesis</span><span class="op">[[</span><span class="fl">6</span><span class="op">]</span><span class="op">]</span></span>
 <span>  </span>
 <span>  <span class="co"># Calculate length of follow up</span></span>
 <span>  <span class="va">na</span> <span class="op">&lt;-</span> <span class="va">n</span><span class="op">*</span><span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">floor</a></span><span class="op">(</span><span class="va">fu</span><span class="op">/</span><span class="va">af</span><span class="op">)</span></span>
@@ -531,7 +542,7 @@ design.</p>
 <span></span>
 <span>  <span class="co"># If msm returns an error we take this as a non-significant result</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/warning.html" class="external-link">suppressWarnings</a></span><span class="op">(</span><span class="va">fit</span> <span class="op">&lt;-</span> <span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="op">{</span></span>
-<span>    <span class="fu">msm</span><span class="op">(</span><span class="va">state</span> <span class="op">~</span> <span class="va">time</span>, subject<span class="op">=</span><span class="va">id</span>, data <span class="op">=</span> <span class="va">y</span>, qmatrix <span class="op">=</span> <span class="va">Q</span>,</span>
+<span>    <span class="fu"><a href="https://chjackson.github.io/msm/reference/msm.html" class="external-link">msm</a></span><span class="op">(</span><span class="va">state</span> <span class="op">~</span> <span class="va">time</span>, subject<span class="op">=</span><span class="va">id</span>, data <span class="op">=</span> <span class="va">y</span>, qmatrix <span class="op">=</span> <span class="va">Q</span>,</span>
 <span>             covariates <span class="op">=</span> <span class="op">~</span> <span class="va">trt</span><span class="op">)</span></span>
 <span>  <span class="op">}</span>, silent <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span></span>
 <span>  </span>
@@ -539,16 +550,16 @@ design.</p>
 <span>    <span class="va">sig</span> <span class="op">&lt;-</span> <span class="fl">0</span></span>
 <span>  <span class="op">}</span> <span class="kw">else</span> <span class="op">{</span></span>
 <span>    <span class="co"># If not converged, will not return CIs</span></span>
-<span>    <span class="va">r1.67</span> <span class="op">&lt;-</span> <span class="fu">hazard.msm</span><span class="op">(</span><span class="va">fit</span>, cl <span class="op">=</span> <span class="fl">1</span> <span class="op">-</span> <span class="fl">0.0167</span><span class="op">)</span><span class="op">$</span><span class="va">trt</span></span>
+<span>    <span class="va">r1.67</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://chjackson.github.io/msm/reference/hazard.msm.html" class="external-link">hazard.msm</a></span><span class="op">(</span><span class="va">fit</span>, cl <span class="op">=</span> <span class="fl">1</span> <span class="op">-</span> <span class="fl">0.0167</span><span class="op">)</span><span class="op">$</span><span class="va">trt</span></span>
 <span>    <span class="kw">if</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">ncol</a></span><span class="op">(</span><span class="va">r1.67</span><span class="op">)</span> <span class="op">!=</span> <span class="fl">3</span><span class="op">)</span><span class="op">{</span></span>
 <span>      <span class="va">sig</span> <span class="op">&lt;-</span> <span class="fl">0</span></span>
 <span>    <span class="op">}</span> <span class="kw">else</span> <span class="op">{</span></span>
 <span>      <span class="va">sig1.67</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="op">!</span><span class="op">(</span><span class="va">r1.67</span><span class="op">[</span>,<span class="fl">2</span><span class="op">]</span> <span class="op">&lt;</span> <span class="fl">1</span> <span class="op">&amp;</span> <span class="va">r1.67</span><span class="op">[</span>,<span class="fl">3</span><span class="op">]</span> <span class="op">&gt;</span> <span class="fl">1</span><span class="op">)</span><span class="op">)</span> <span class="op">&gt;=</span> <span class="fl">3</span></span>
 <span>      </span>
-<span>      <span class="va">r2.5</span> <span class="op">&lt;-</span> <span class="fu">hazard.msm</span><span class="op">(</span><span class="va">fit</span>, cl <span class="op">=</span> <span class="fl">1</span> <span class="op">-</span> <span class="fl">0.025</span><span class="op">)</span><span class="op">$</span><span class="va">trt</span></span>
+<span>      <span class="va">r2.5</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://chjackson.github.io/msm/reference/hazard.msm.html" class="external-link">hazard.msm</a></span><span class="op">(</span><span class="va">fit</span>, cl <span class="op">=</span> <span class="fl">1</span> <span class="op">-</span> <span class="fl">0.025</span><span class="op">)</span><span class="op">$</span><span class="va">trt</span></span>
 <span>      <span class="va">sig2.5</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="op">!</span><span class="op">(</span><span class="va">r2.5</span><span class="op">[</span>,<span class="fl">2</span><span class="op">]</span> <span class="op">&lt;</span> <span class="fl">1</span> <span class="op">&amp;</span> <span class="va">r2.5</span><span class="op">[</span>,<span class="fl">3</span><span class="op">]</span> <span class="op">&gt;</span> <span class="fl">1</span><span class="op">)</span><span class="op">)</span> <span class="op">&gt;=</span> <span class="fl">2</span></span>
 <span>      </span>
-<span>      <span class="va">r5</span> <span class="op">&lt;-</span> <span class="fu">hazard.msm</span><span class="op">(</span><span class="va">fit</span>, cl <span class="op">=</span> <span class="fl">1</span> <span class="op">-</span> <span class="fl">0.05</span><span class="op">)</span><span class="op">$</span><span class="va">trt</span></span>
+<span>      <span class="va">r5</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://chjackson.github.io/msm/reference/hazard.msm.html" class="external-link">hazard.msm</a></span><span class="op">(</span><span class="va">fit</span>, cl <span class="op">=</span> <span class="fl">1</span> <span class="op">-</span> <span class="fl">0.05</span><span class="op">)</span><span class="op">$</span><span class="va">trt</span></span>
 <span>      <span class="va">sig5</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="op">!</span><span class="op">(</span><span class="va">r5</span><span class="op">[</span>,<span class="fl">2</span><span class="op">]</span> <span class="op">&lt;</span> <span class="fl">1</span> <span class="op">&amp;</span> <span class="va">r5</span><span class="op">[</span>,<span class="fl">3</span><span class="op">]</span> <span class="op">&gt;</span> <span class="fl">1</span><span class="op">)</span><span class="op">)</span> <span class="op">&gt;=</span> <span class="fl">1</span></span>
 <span>      </span>
 <span>      <span class="va">sig</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/any.html" class="external-link">any</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">sig1.67</span>, <span class="va">sig2.5</span>, <span class="va">sig5</span><span class="op">)</span><span class="op">)</span></span>
@@ -557,9 +568,19 @@ design.</p>
 <span>  <span class="kw"><a href="https://rdrr.io/r/base/function.html" class="external-link">return</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>s <span class="op">=</span> <span class="op">!</span><span class="va">sig</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="op">}</span></span>
 <span></span>
-<span><span class="va">det_P2</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">n</span> <span class="op">=</span> <span class="fl">500</span>, <span class="va">fu</span> <span class="op">=</span> <span class="fl">60</span>, <span class="va">af</span> <span class="op">=</span> <span class="fl">1</span>, </span>
-<span>                   <span class="va">q12</span> <span class="op">=</span> <span class="fl">0.05</span>, <span class="va">q23</span> <span class="op">=</span> <span class="fl">0.05</span>, <span class="va">q34</span> <span class="op">=</span> <span class="fl">0.03</span>,</span>
-<span>                   <span class="va">b12</span> <span class="op">=</span> <span class="fl">0.67</span>, <span class="va">b23</span> <span class="op">=</span> <span class="fl">0.67</span>, <span class="va">b34</span> <span class="op">=</span> <span class="fl">0.67</span><span class="op">)</span><span class="op">{</span></span>
+<span><span class="va">det_P2</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">design</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>n <span class="op">=</span> <span class="fl">500</span>, fu <span class="op">=</span> <span class="fl">60</span>, af <span class="op">=</span> <span class="fl">1</span><span class="op">)</span>, </span>
+<span>                   <span class="va">hypothesis</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>q12 <span class="op">=</span> <span class="fl">0.05</span>, q23 <span class="op">=</span> <span class="fl">0.05</span>, q34 <span class="op">=</span> <span class="fl">0.03</span>, </span>
+<span>                                     b12 <span class="op">=</span> <span class="fl">0.67</span>, b23 <span class="op">=</span> <span class="fl">0.67</span>, b34 <span class="op">=</span> <span class="fl">0.67</span><span class="op">)</span><span class="op">)</span><span class="op">{</span></span>
+<span>  </span>
+<span>  <span class="co"># n: total number of patients</span></span>
+<span>  <span class="co"># fu: follow-up length (days)</span></span>
+<span>  <span class="co"># af: assemment frequency (days)</span></span>
+<span>  <span class="co"># q12, q23, q34: transition probabilities</span></span>
+<span>  <span class="co"># b12, b23, b34: treatment effects</span></span>
+<span>  </span>
+<span>  <span class="va">n</span> <span class="op">&lt;-</span> <span class="va">design</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span>; <span class="va">fu</span> <span class="op">&lt;-</span> <span class="va">design</span><span class="op">[[</span><span class="fl">2</span><span class="op">]</span><span class="op">]</span>; <span class="va">af</span> <span class="op">&lt;-</span> <span class="va">design</span><span class="op">[[</span><span class="fl">3</span><span class="op">]</span><span class="op">]</span></span>
+<span>  <span class="va">q12</span> <span class="op">&lt;-</span> <span class="va">hypothesis</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span>; <span class="va">q23</span> <span class="op">&lt;-</span> <span class="va">hypothesis</span><span class="op">[[</span><span class="fl">2</span><span class="op">]</span><span class="op">]</span>; <span class="va">q34</span> <span class="op">&lt;-</span> <span class="va">hypothesis</span><span class="op">[[</span><span class="fl">3</span><span class="op">]</span><span class="op">]</span> </span>
+<span>  <span class="va">b12</span> <span class="op">&lt;-</span> <span class="va">hypothesis</span><span class="op">[[</span><span class="fl">4</span><span class="op">]</span><span class="op">]</span>; <span class="va">b23</span> <span class="op">&lt;-</span> <span class="va">hypothesis</span><span class="op">[[</span><span class="fl">5</span><span class="op">]</span><span class="op">]</span>; <span class="va">b34</span> <span class="op">&lt;-</span> <span class="va">hypothesis</span><span class="op">[[</span><span class="fl">6</span><span class="op">]</span><span class="op">]</span></span>
 <span>  </span>
 <span>  <span class="va">na</span> <span class="op">&lt;-</span> <span class="va">n</span><span class="op">*</span><span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">floor</a></span><span class="op">(</span><span class="va">fu</span><span class="op">/</span><span class="va">af</span><span class="op">)</span></span>
 <span>  </span>
@@ -653,65 +674,62 @@ be (probably) less than 0.2 and the follow-up length to be less than
 <span><span class="co">#&gt; Design variables for the Pareto set: </span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;           n       fu       af</span></span>
-<span><span class="co">#&gt; 31 228.5281 49.35014 3.796745</span></span>
-<span><span class="co">#&gt; 32 436.0485 24.43320 3.054609</span></span>
-<span><span class="co">#&gt; 33 427.0384 25.46592 2.831004</span></span>
-<span><span class="co">#&gt; 35 375.1751 35.87907 7.225270</span></span>
-<span><span class="co">#&gt; 36 299.7509 33.84992 2.426087</span></span>
-<span><span class="co">#&gt; 37 266.0080 45.64281 5.707002</span></span>
-<span><span class="co">#&gt; 38 409.0015 39.50040 9.875706</span></span>
-<span><span class="co">#&gt; 39 460.2070 27.09531 5.422619</span></span>
-<span><span class="co">#&gt; 40 210.6164 53.24293 3.328948</span></span>
-<span><span class="co">#&gt; 41 351.2584 29.99896 3.340470</span></span>
-<span><span class="co">#&gt; 42 460.0331 28.08401 5.657101</span></span>
-<span><span class="co">#&gt; 43 492.5110 22.98154 2.639792</span></span>
-<span><span class="co">#&gt; 44 284.9192 51.21357 8.542463</span></span>
-<span><span class="co">#&gt; 45 224.9842 52.27752 5.274293</span></span>
-<span><span class="co">#&gt; 46 497.8736 20.94598 2.201160</span></span>
-<span><span class="co">#&gt; 48 198.2200 56.76570 2.842515</span></span>
-<span><span class="co">#&gt; 49 257.5549 39.58456 2.950562</span></span>
+<span><span class="co">#&gt; 14 303.1250 31.87500 2.687500</span></span>
+<span><span class="co">#&gt; 31 226.7023 49.48812 3.543657</span></span>
+<span><span class="co">#&gt; 32 437.1483 24.37747 3.068252</span></span>
+<span><span class="co">#&gt; 33 371.7745 33.72155 6.758731</span></span>
+<span><span class="co">#&gt; 36 282.0871 36.80602 3.688027</span></span>
+<span><span class="co">#&gt; 37 248.6326 50.85734 6.359775</span></span>
+<span><span class="co">#&gt; 39 208.7821 53.31176 4.102278</span></span>
+<span><span class="co">#&gt; 40 410.2598 27.16768 4.539190</span></span>
+<span><span class="co">#&gt; 41 213.8159 54.30283 4.537738</span></span>
+<span><span class="co">#&gt; 43 482.4240 22.17029 3.195361</span></span>
+<span><span class="co">#&gt; 44 341.9060 44.84317 8.973592</span></span>
+<span><span class="co">#&gt; 45 363.7644 30.17949 5.041646</span></span>
+<span><span class="co">#&gt; 46 252.3668 42.81866 4.340260</span></span>
+<span><span class="co">#&gt; 47 213.8567 52.59133 4.047495</span></span>
+<span><span class="co">#&gt; 48 479.9210 25.29238 5.113757</span></span>
+<span><span class="co">#&gt; 50 207.7006 53.61345 3.412483</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Corresponding objective function values...</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;    n, alt (mean) a, alt (mean) f, alt (mean)</span></span>
-<span><span class="co">#&gt; 31      228.5281      2742.337      49.35014</span></span>
-<span><span class="co">#&gt; 32      436.0485      3052.340      24.43320</span></span>
-<span><span class="co">#&gt; 33      427.0384      3416.307      25.46592</span></span>
-<span><span class="co">#&gt; 35      375.1751      1500.700      35.87907</span></span>
-<span><span class="co">#&gt; 36      299.7509      3896.762      33.84992</span></span>
-<span><span class="co">#&gt; 37      266.0080      1862.056      45.64281</span></span>
-<span><span class="co">#&gt; 38      409.0015      1227.004      39.50040</span></span>
-<span><span class="co">#&gt; 39      460.2070      1840.828      27.09531</span></span>
-<span><span class="co">#&gt; 40      210.6164      3159.247      53.24293</span></span>
-<span><span class="co">#&gt; 41      351.2584      2810.067      29.99896</span></span>
-<span><span class="co">#&gt; 42      460.0331      1840.132      28.08401</span></span>
-<span><span class="co">#&gt; 43      492.5110      3940.088      22.98154</span></span>
-<span><span class="co">#&gt; 44      284.9192      1424.596      51.21357</span></span>
-<span><span class="co">#&gt; 45      224.9842      2024.858      52.27752</span></span>
-<span><span class="co">#&gt; 46      497.8736      4480.862      20.94598</span></span>
-<span><span class="co">#&gt; 48      198.2200      3766.181      56.76570</span></span>
-<span><span class="co">#&gt; 49      257.5549      3348.214      39.58456</span></span>
+<span><span class="co">#&gt; 14      303.1250      3334.375      31.87500</span></span>
+<span><span class="co">#&gt; 31      226.7023      2947.129      49.48812</span></span>
+<span><span class="co">#&gt; 32      437.1483      3060.038      24.37747</span></span>
+<span><span class="co">#&gt; 33      371.7745      1487.098      33.72155</span></span>
+<span><span class="co">#&gt; 36      282.0871      2538.783      36.80602</span></span>
+<span><span class="co">#&gt; 37      248.6326      1740.428      50.85734</span></span>
+<span><span class="co">#&gt; 39      208.7821      2505.385      53.31176</span></span>
+<span><span class="co">#&gt; 40      410.2598      2051.299      27.16768</span></span>
+<span><span class="co">#&gt; 41      213.8159      2351.975      54.30283</span></span>
+<span><span class="co">#&gt; 43      482.4240      2894.544      22.17029</span></span>
+<span><span class="co">#&gt; 44      341.9060      1367.624      44.84317</span></span>
+<span><span class="co">#&gt; 45      363.7644      1818.822      30.17949</span></span>
+<span><span class="co">#&gt; 46      252.3668      2271.302      42.81866</span></span>
+<span><span class="co">#&gt; 47      213.8567      2566.281      52.59133</span></span>
+<span><span class="co">#&gt; 48      479.9210      1919.684      25.29238</span></span>
+<span><span class="co">#&gt; 50      207.7006      3115.509      53.61345</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ...and constraint function values:</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;    s, alt (mean) s, alt (var)</span></span>
-<span><span class="co">#&gt; 31     -1.442005   0.06465620</span></span>
-<span><span class="co">#&gt; 32     -1.317975   0.06003526</span></span>
-<span><span class="co">#&gt; 33     -2.179642   0.10956219</span></span>
-<span><span class="co">#&gt; 35     -1.648184   0.07389930</span></span>
+<span><span class="co">#&gt; 14     -1.648184   0.07389930</span></span>
+<span><span class="co">#&gt; 31     -1.723706   0.07783667</span></span>
+<span><span class="co">#&gt; 32     -1.723706   0.07783667</span></span>
+<span><span class="co">#&gt; 33     -2.074967   0.10089846</span></span>
 <span><span class="co">#&gt; 36     -1.648184   0.07389930</span></span>
-<span><span class="co">#&gt; 37     -1.648184   0.07389930</span></span>
-<span><span class="co">#&gt; 38     -1.648184   0.07389930</span></span>
-<span><span class="co">#&gt; 39     -1.378841   0.06222167</span></span>
-<span><span class="co">#&gt; 40     -1.723706   0.07783667</span></span>
-<span><span class="co">#&gt; 41     -1.442005   0.06465620</span></span>
-<span><span class="co">#&gt; 42     -1.576338   0.07043940</span></span>
-<span><span class="co">#&gt; 43     -1.978171   0.09367830</span></span>
-<span><span class="co">#&gt; 44     -1.978171   0.09367830</span></span>
-<span><span class="co">#&gt; 45     -1.507734   0.06737895</span></span>
-<span><span class="co">#&gt; 46     -1.803428   0.08235156</span></span>
+<span><span class="co">#&gt; 37     -1.576338   0.07043940</span></span>
+<span><span class="co">#&gt; 39     -1.442005   0.06465620</span></span>
+<span><span class="co">#&gt; 40     -1.978171   0.09367830</span></span>
+<span><span class="co">#&gt; 41     -1.378841   0.06222167</span></span>
+<span><span class="co">#&gt; 43     -1.442005   0.06465620</span></span>
+<span><span class="co">#&gt; 44     -1.723706   0.07783667</span></span>
+<span><span class="co">#&gt; 45     -1.378841   0.06222167</span></span>
+<span><span class="co">#&gt; 46     -1.507734   0.06737895</span></span>
+<span><span class="co">#&gt; 47     -1.507734   0.06737895</span></span>
 <span><span class="co">#&gt; 48     -1.648184   0.07389930</span></span>
-<span><span class="co">#&gt; 49     -1.442005   0.06465620</span></span>
+<span><span class="co">#&gt; 50     -1.648184   0.07389930</span></span>
 <span></span>
 <span><span class="va">p</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/PS_empirical_ests.html">PS_empirical_ests</a></span><span class="op">(</span><span class="va">sol</span>, <span class="va">prob</span><span class="op">)</span><span class="op">[[</span><span class="fl">2</span><span class="op">]</span><span class="op">]</span><span class="op">[</span>, <span class="fl">1</span><span class="op">]</span></span>
 <span><span class="va">p</span> <span class="op">&lt;-</span> <span class="fl">1</span> <span class="op">-</span> <span class="fl">1</span><span class="op">/</span><span class="op">(</span><span class="fl">1</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">exp</a></span><span class="op">(</span><span class="op">-</span><span class="va">p</span><span class="op">)</span><span class="op">)</span></span>
@@ -762,10 +780,10 @@ two objective functions.</p>
 <div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://dtwilson.github.io/BOSSS/">BOSSS</a></span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">sim_rec</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">m</span><span class="op">=</span><span class="fl">20</span>, <span class="va">t</span><span class="op">=</span><span class="fl">3</span>, </span>
-<span>                    <span class="va">a</span><span class="op">=</span><span class="fl">7</span>, <span class="va">b</span><span class="op">=</span><span class="fl">2</span>, <span class="va">c</span><span class="op">=</span><span class="fl">2</span>, <span class="va">d</span><span class="op">=</span><span class="fl">0.8</span>, </span>
-<span>                    <span class="va">f</span><span class="op">=</span><span class="fl">10</span>, <span class="va">g</span><span class="op">=</span><span class="fl">1</span>, </span>
-<span>                    <span class="va">j</span><span class="op">=</span><span class="fl">0.3</span>, <span class="va">k</span><span class="op">=</span><span class="fl">0.3</span>, <span class="va">x</span><span class="op">=</span><span class="fl">1</span>, <span class="va">y</span><span class="op">=</span><span class="fl">0.2</span><span class="op">)</span> </span>
+<span><span class="va">sim_rec</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">design</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>m<span class="op">=</span><span class="fl">20</span>, t<span class="op">=</span><span class="fl">3</span><span class="op">)</span>, </span>
+<span>                    <span class="va">hypothesis</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>a<span class="op">=</span><span class="fl">7</span>, b<span class="op">=</span><span class="fl">2</span>, c<span class="op">=</span><span class="fl">2</span>, d<span class="op">=</span><span class="fl">0.8</span>, </span>
+<span>                                      f<span class="op">=</span><span class="fl">10</span>, g<span class="op">=</span><span class="fl">1</span>,</span>
+<span>                                      j<span class="op">=</span><span class="fl">0.3</span>, k<span class="op">=</span><span class="fl">0.3</span>, x<span class="op">=</span><span class="fl">1</span>, y<span class="op">=</span><span class="fl">0.2</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="op">{</span></span>
 <span>  <span class="co"># m - total number of sites to be set up</span></span>
 <span>  <span class="co"># t - time (in years) for recruitment</span></span>
@@ -774,6 +792,12 @@ two objective functions.</p>
 <span>  <span class="co"># f, g - hyperparameters for eta (gamma)</span></span>
 <span>  <span class="co"># j, k - hyperparameters for delta (normal)</span></span>
 <span>  <span class="co"># x, y - hyperparameters for sigma (gamma)</span></span>
+<span>  </span>
+<span>  <span class="va">m</span> <span class="op">&lt;-</span> <span class="va">design</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span>; <span class="va">t</span> <span class="op">&lt;-</span> <span class="va">design</span><span class="op">[[</span><span class="fl">2</span><span class="op">]</span><span class="op">]</span></span>
+<span>  </span>
+<span>  <span class="va">a</span> <span class="op">&lt;-</span> <span class="va">hypothesis</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span>; <span class="va">b</span> <span class="op">&lt;-</span> <span class="va">hypothesis</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span>; <span class="va">c</span> <span class="op">&lt;-</span> <span class="va">hypothesis</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span>; <span class="va">d</span> <span class="op">&lt;-</span> <span class="va">hypothesis</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span></span>
+<span>  <span class="va">f</span> <span class="op">&lt;-</span> <span class="va">hypothesis</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span>; <span class="va">g</span> <span class="op">&lt;-</span> <span class="va">hypothesis</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span></span>
+<span>  <span class="va">j</span> <span class="op">&lt;-</span> <span class="va">hypothesis</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span>; <span class="va">k</span> <span class="op">&lt;-</span> <span class="va">hypothesis</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span>; <span class="va">x</span> <span class="op">&lt;-</span> <span class="va">hypothesis</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span>; <span class="va">y</span> <span class="op">&lt;-</span> <span class="va">hypothesis</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span></span>
 <span></span>
 <span>  <span class="co"># Sample parameters from their priors</span></span>
 <span>  <span class="co"># Recruitment rate</span></span>
@@ -809,11 +833,16 @@ two objective functions.</p>
 <span>  <span class="kw"><a href="https://rdrr.io/r/base/function.html" class="external-link">return</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>pr_tII <span class="op">=</span> <span class="fl">1</span> <span class="op">-</span> <span class="va">pow</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="op">}</span></span>
 <span></span>
-<span><span class="va">det_rec</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">m</span><span class="op">=</span><span class="fl">20</span>, <span class="va">t</span><span class="op">=</span><span class="fl">3</span>, </span>
-<span>                    <span class="va">a</span><span class="op">=</span><span class="fl">7</span>, <span class="va">b</span><span class="op">=</span><span class="fl">2</span>, <span class="va">c</span><span class="op">=</span><span class="fl">2</span>, <span class="va">d</span><span class="op">=</span><span class="fl">0.8</span>, </span>
-<span>                    <span class="va">f</span><span class="op">=</span><span class="fl">10</span>, <span class="va">g</span><span class="op">=</span><span class="fl">1</span>, </span>
-<span>                    <span class="va">j</span><span class="op">=</span><span class="fl">0.3</span>, <span class="va">k</span><span class="op">=</span><span class="fl">0.3</span>, <span class="va">x</span><span class="op">=</span><span class="fl">1</span>, <span class="va">y</span><span class="op">=</span><span class="fl">0.2</span><span class="op">)</span></span>
+<span><span class="va">det_rec</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">design</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>m<span class="op">=</span><span class="fl">20</span>, t<span class="op">=</span><span class="fl">3</span><span class="op">)</span>, </span>
+<span>                    <span class="va">hypothesis</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>a<span class="op">=</span><span class="fl">7</span>, b<span class="op">=</span><span class="fl">2</span>, c<span class="op">=</span><span class="fl">2</span>, d<span class="op">=</span><span class="fl">0.8</span>, </span>
+<span>                                      f<span class="op">=</span><span class="fl">10</span>, g<span class="op">=</span><span class="fl">1</span>,</span>
+<span>                                      j<span class="op">=</span><span class="fl">0.3</span>, k<span class="op">=</span><span class="fl">0.3</span>, x<span class="op">=</span><span class="fl">1</span>, y<span class="op">=</span><span class="fl">0.2</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="op">{</span></span>
+<span>  <span class="va">m</span> <span class="op">&lt;-</span> <span class="va">design</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span>; <span class="va">t</span> <span class="op">&lt;-</span> <span class="va">design</span><span class="op">[[</span><span class="fl">2</span><span class="op">]</span><span class="op">]</span></span>
+<span>  </span>
+<span>  <span class="va">a</span> <span class="op">&lt;-</span> <span class="va">hypothesis</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span>; <span class="va">b</span> <span class="op">&lt;-</span> <span class="va">hypothesis</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span>; <span class="va">c</span> <span class="op">&lt;-</span> <span class="va">hypothesis</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span>; <span class="va">d</span> <span class="op">&lt;-</span> <span class="va">hypothesis</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span></span>
+<span>  <span class="va">f</span> <span class="op">&lt;-</span> <span class="va">hypothesis</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span>; <span class="va">g</span> <span class="op">&lt;-</span> <span class="va">hypothesis</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span></span>
+<span>  <span class="va">j</span> <span class="op">&lt;-</span> <span class="va">hypothesis</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span>; <span class="va">k</span> <span class="op">&lt;-</span> <span class="va">hypothesis</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span>; <span class="va">x</span> <span class="op">&lt;-</span> <span class="va">hypothesis</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span>; <span class="va">y</span> <span class="op">&lt;-</span> <span class="va">hypothesis</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span></span>
 <span>  <span class="kw"><a href="https://rdrr.io/r/base/function.html" class="external-link">return</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>m <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">floor</a></span><span class="op">(</span><span class="va">m</span><span class="op">)</span>, t <span class="op">=</span> <span class="va">t</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="op">}</span></span>
 <span></span>
@@ -850,7 +879,7 @@ running from between 6 months and 5 years.</p>
 <span><span class="va">prob</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/BOSSS_problem.html">BOSSS_problem</a></span><span class="op">(</span><span class="va">sim_rec</span>, <span class="va">design_space</span>, <span class="va">hypotheses</span>, <span class="va">objectives</span>, <span class="va">constraints</span>, det_func <span class="op">=</span> <span class="va">det_rec</span><span class="op">)</span></span></code></pre></div>
 <div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">size</span> <span class="op">&lt;-</span> <span class="fl">20</span></span>
-<span><span class="va">N</span> <span class="op">&lt;-</span> <span class="fl">500</span></span>
+<span><span class="va">N</span> <span class="op">&lt;-</span> <span class="fl">100</span></span>
 <span></span>
 <span><span class="va">sol</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/BOSSS_solution.html">BOSSS_solution</a></span><span class="op">(</span><span class="va">size</span>, <span class="va">N</span>, <span class="va">prob</span><span class="op">)</span></span>
 <span></span>
@@ -882,8 +911,6 @@ multistate model analysis of longitudinal discrete outcomes in disease
 prevention trials. <em>Statistics in Medicine</em>, 40: 1960–1971
 (2021). <a href="https://doi.org/10.1002/sim.8882" class="external-link uri">https://doi.org/10.1002/sim.8882</a></p></li>
 </ul>
-<div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu">knitr</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/knitr/man/knit_exit.html" class="external-link">knit_exit</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>
