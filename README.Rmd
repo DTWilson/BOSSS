@@ -15,6 +15,7 @@ knitr::opts_chunk$set(
 
 <!-- badges: start -->
   [![R-CMD-check](https://github.com/DTWilson/BOSSS/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/DTWilson/BOSSS/actions/workflows/R-CMD-check.yaml)
+[![Codecov test coverage](https://codecov.io/gh/DTWilson/BOSSS/graph/badge.svg)](https://app.codecov.io/gh/DTWilson/BOSSS)
 <!-- badges: end -->
 
 The goal of BOSSS is to help people use Bayesian optimisation to solve sample size determination problems when simulation is required to calculate operating characteristics.
