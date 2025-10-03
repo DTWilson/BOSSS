@@ -1,0 +1,16 @@
+% latex table generated in R 4.5.1 by xtable 1.8-4 package
+% Fri Oct  3 11:58:53 2025
+\begin{tabular}{rrrr}
+  \toprule
+ & $m$ & $t$ & $E[p ~|~ H_1]$ \\ 
+  \midrule
+22 & 3 & 1.58 & 0.40 \\ 
+  35 & 4 & 1.49 & 0.40 \\ 
+  26 & 5 & 1.45 & 0.38 \\ 
+  32 & 6 & 1.35 & 0.40 \\ 
+  27 & 7 & 1.31 & 0.40 \\ 
+  30 & 9 & 1.27 & 0.39 \\ 
+  49 & 10 & 1.26 & 0.40 \\ 
+  28 & 11 & 1.25 & 0.40 \\ 
+   \bottomrule
+\end{tabular}

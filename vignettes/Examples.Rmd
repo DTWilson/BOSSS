@@ -610,24 +610,64 @@ prob <- BOSSS_problem(sim_trial = sim_rec,
                       constraints = constraints,
                       det_func = det_rec)
 ```
-
 ```{r}
+set.seed(543663)
+
 size <- 20
-N <- 100
+N <- 10^4
 
+ptm <- proc.time()
 sol <- BOSSS_solution(size, N, prob)
+proc.time() - ptm
+```
 
-print(sol)
-plot(sol)
+
+```{r, include = FALSE, eval=TRUE}
+# Save problems and initial solution
+p <- here("vignettes", "example_files", "rec_prob.rds")
+#saveRDS(prob, p)
+prob <- readRDS(p)
+
+p <- here("vignettes", "example_files", "rec_sol_init.rds")
+#saveRDS(sol, p)
+sol <- readRDS(p)
 ```
 
 ```{r}
+ptm <- proc.time()
 for(i in 1:30) {
   sol <- iterate(sol, prob, N) 
 }
+proc.time() - ptm
+```
 
+
+```{r, include = FALSE, eval=TRUE}
+# Save problems and initial solution
+p <- here("vignettes", "example_files", "rec_sol_final.rds")
+#saveRDS(sol, p)
+sol <- readRDS(p)
+```
+
+
+```{r, eval = TRUE}
 print(sol)
+
+p <- PS_empirical_ests(sol, prob)[[2]][, 1]
+
+df <- sol$p_set[,c(3,2)]
+
+df <- cbind(df, p)
+
+df <- df[order(df[,1]),]
+  
+colnames(df) <- c("$m$", "$t$", "$E[p ~|~ H_1]$")
+
+#print(xtable(df, digits = c(0,0,2,2)), booktabs = T, include.rownames = T, sanitize.text.function = function(x) {x}, floating = F, file = here("man", "tables", "rec.txt"))
+
 plot(sol)
+
+#ggsave(here("man", "figures", "rec.pdf"), height=9, width=14, units="cm")
 ```
 
 ## References
