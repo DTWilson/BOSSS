@@ -4,6 +4,9 @@ pareto_front <- function(solution, problem)
   ## Return the objective values of current Pareto optimal solutions,
   ## penalising constrain violations and considering only solutions
   ## where some evaluation has actually happened
+  ##
+  ## Also return a vector of design ids, so that the members of the
+  ## Pareto set can be extracted from the list of all evaluated designs.
 
   ## Get objective values
   # Add the objective values for all evaluated points, using point estimates
@@ -32,6 +35,10 @@ pareto_front <- function(solution, problem)
 
 check_constraint <- function(i, solution, problem)
 {
+  # For a given constraint, return a matrix with a row for every design and
+  # columns redording the penalty to apply, the probability of constraint
+  # violation, and the estimated constraint function value
+
   dimen <- problem$dimen
 
   out <- problem$constraints[i, "out"]
