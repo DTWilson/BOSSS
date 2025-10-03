@@ -52,7 +52,7 @@ sim_cRCT <- function(design = list(m = 10, n = 20),
   y <- rnorm(2*m, 0, sqrt(var_u + var_e/n))
   y <- y + x*beta_1
 
-  s <- t.test(y[x==1], y[x==0], alternative = "greater")$p.value > 0.025
+  s <- stats::t.test(y[x==1], y[x==0], alternative = "greater")$p.value > 0.025
 
   return(c(s = s))
 }

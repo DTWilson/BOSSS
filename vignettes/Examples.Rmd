@@ -344,7 +344,7 @@ sim_P2 <- function(design = list(n = 500, fu = 60, af = 1),
   y <- t(apply(times_m, 1, function(x) rep(1:4, times = x)))
   
   # Reshape to long
-  y <- melt(y)
+  y <- reshape2::melt(y)
   colnames(y) <- c("id", "time", "state")
   y$trt <- trt[y$id]
   
@@ -359,7 +359,7 @@ sim_P2 <- function(design = list(n = 500, fu = 60, af = 1),
 
   # If msm returns an error we take this as a non-significant result
   suppressWarnings(fit <- try({
-    msm(state ~ time, subject=id, data = y, qmatrix = Q,
+    msm::msm(state ~ time, subject=id, data = y, qmatrix = Q,
              covariates = ~ trt)
   }, silent = TRUE))
   
@@ -367,16 +367,16 @@ sim_P2 <- function(design = list(n = 500, fu = 60, af = 1),
     sig <- 0
   } else {
     # If not converged, will not return CIs
-    r1.67 <- hazard.msm(fit, cl = 1 - 0.0167)$trt
+    r1.67 <- msm::hazard.msm(fit, cl = 1 - 0.0167)$trt
     if(ncol(r1.67) != 3){
       sig <- 0
     } else {
       sig1.67 <- sum(!(r1.67[,2] < 1 & r1.67[,3] > 1)) >= 3
       
-      r2.5 <- hazard.msm(fit, cl = 1 - 0.025)$trt
+      r2.5 <- msm::hazard.msm(fit, cl = 1 - 0.025)$trt
       sig2.5 <- sum(!(r2.5[,2] < 1 & r2.5[,3] > 1)) >= 2
       
-      r5 <- hazard.msm(fit, cl = 1 - 0.05)$trt
+      r5 <- msm::hazard.msm(fit, cl = 1 - 0.05)$trt
       sig5 <- sum(!(r5[,2] < 1 & r5[,3] > 1)) >= 1
       
       sig <- any(c(sig1.67, sig2.5, sig5))
