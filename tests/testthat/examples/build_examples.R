@@ -18,6 +18,11 @@ sol <- readRDS(here("vignettes", "example_files", "P2_sol_final.rds"))
 
 examples[[3]] <- list(prob, sol)
 
+prob <- readRDS(here("vignettes", "example_files", "rec_prob.rds"))
+sol <- readRDS(here("vignettes", "example_files", "rec_sol_final.rds"))
+
+examples[[4]] <- list(prob, sol)
+
 saveRDS(examples, test_path("examples", "examples.rds"))
 
 
