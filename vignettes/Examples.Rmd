@@ -160,7 +160,7 @@ sim_NIFTy <- function(design = list(n = 300, ninterim = 0.5, ainterim = 0.4, afi
 }
 
 # For example,
-sim_trial()
+sim_NIFTy()
 ```
 We can construct the BOSSS problem object as follows:
 
