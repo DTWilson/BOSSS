@@ -953,6 +953,15 @@ running from between 6 months and 5 years.</p>
 <code class="sourceCode R"><span></span>
 <span><span class="co">#ggsave(here("man", "figures", "rec.pdf"), height=9, width=14, units="cm")</span></span></code></pre></div>
 <p>If we want to revise a constraint, we can do that easily:</p>
+<div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">prob</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/update_constraint.html">update_constraint</a></span><span class="op">(</span><span class="va">prob</span>, name <span class="op">=</span> <span class="st">"TII_ass"</span>, nom <span class="op">=</span> <span class="fl">0.5</span><span class="op">)</span></span>
+<span></span>
+<span><span class="kw">for</span><span class="op">(</span><span class="va">i</span> <span class="kw">in</span> <span class="fl">1</span><span class="op">:</span><span class="fl">30</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="va">sol</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/iterate.html">iterate</a></span><span class="op">(</span><span class="va">sol</span>, <span class="va">prob</span>, <span class="va">N</span><span class="op">)</span> </span>
+<span><span class="op">}</span></span>
+<span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">sol</span><span class="op">)</span></span>
+<span><span class="co">#ggsave(here("man", "figures", "rec2.pdf"), height=9, width=14, units="cm")</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>
