@@ -673,7 +673,14 @@ plot(sol)
 If we want to revise a constraint, we can do that easily:
 
 ```{r}
+prob <- update_constraint(prob, name = "TII_ass", nom = 0.5)
 
+for(i in 1:30) {
+  sol <- iterate(sol, prob, N) 
+}
+
+plot(sol)
+#ggsave(here("man", "figures", "rec2.pdf"), height=9, width=14, units="cm")
 ```
 
 
