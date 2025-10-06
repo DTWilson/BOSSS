@@ -1,27 +1,33 @@
 
 #' Run a one-dimensional sensitivity analysis
 #'
-#' @param sa_hypothesis Data frame defining the SA variable and its bounds
 #' @param design Design to be tested
+#' @param name name of the parameter to be varied
+#' @param hypothesis name of the hypothesis around which the SA will be
+#' conducted
+#' @param lower lower bound of the parameter
+#' @param upper upper bound of the parameter
 #' @param problem BOSSS problem
-#' @param solution BOSSS solution
 #' @param num_eval Number of points to evaluate
 #' @param N Number of MC samples to use in each evaluation
 #'
 #' @return A matrix of estimated means and their variances for each simulation
-#' output over the SA variable range.
+#' output over the sensitivity analysis parameter range.
 #'
 #' @export
-sensitivity <- function(sa_hypothesis, design, problem, solution, num_eval = 20, N = 100) {
+sensitivity <- function(design, name = NULL, hypothesis = NULL, lower, upper,
+                        problem, num_eval = 20, N = 100) {
 
-    # Create the grid to evaluate, varying only the SA parameter
-    to_eval <- matrix(rep(problem$hypotheses[,sa_hypothesis$hyp], each = num_eval), ncol = nrow(problem$hypotheses))
-    to_eval[, sa_hypothesis$sa_param] <- seq(sa_hypothesis$lower, sa_hypothesis$upper, length.out = num_eval)
+    p_vals <- seq(lower, upper, length.out = num_eval)
 
     # Run simulations for the given design at all these hypotheses
     results <- NULL
     for(j in 1:num_eval) {
-      sims <- replicate(N, problem$simulation(design, as.data.frame(to_eval)[j,]))
+
+      hyp <- problem$hypotheses[,hypothesis,drop=F]
+      hyp[rownames(hyp) == name,] <- p_vals[j]
+
+      sims <- replicate(N, problem$simulation(as.numeric(design), as.matrix(hyp)))
       r <- NULL
       n <- NULL
       # Handle this depending on if there is 1 or more than one output
@@ -39,8 +45,8 @@ sensitivity <- function(sa_hypothesis, design, problem, solution, num_eval = 20,
     }
     colnames(results) <- n
 
-    results <- cbind(to_eval[, sa_hypothesis$sa_param], results)
-    colnames(results)[1] <- rownames(problem$hypotheses)[sa_hypothesis$sa_param]
+    results <- cbind(p_vals, results)
+    colnames(results)[1] <- name
 
     return(results)
 }
