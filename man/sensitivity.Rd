@@ -4,16 +4,30 @@
 \alias{sensitivity}
 \title{Run a one-dimensional sensitivity analysis}
 \usage{
-sensitivity(sa_hypothesis, design, problem, solution, num_eval = 20, N = 100)
+sensitivity(
+  design,
+  name = NULL,
+  hypothesis = NULL,
+  lower,
+  upper,
+  problem,
+  num_eval = 20,
+  N = 100
+)
 }
 \arguments{
-\item{sa_hypothesis}{Data frame defining the SA variable and its bounds}
-
 \item{design}{Design to be tested}
 
-\item{problem}{BOSSS problem}
+\item{name}{name of the parameter to be varied}
 
-\item{solution}{BOSSS solution}
+\item{hypothesis}{name of the hypothesis around which the SA will be
+conducted}
+
+\item{lower}{lower bound of the parameter}
+
+\item{upper}{upper bound of the parameter}
+
+\item{problem}{BOSSS problem}
 
 \item{num_eval}{Number of points to evaluate}
 
@@ -21,7 +35,7 @@ sensitivity(sa_hypothesis, design, problem, solution, num_eval = 20, N = 100)
 }
 \value{
 A matrix of estimated means and their variances for each simulation
-output over the SA variable range.
+output over the sensitivity analysis parameter range.
 }
 \description{
 Run a one-dimensional sensitivity analysis

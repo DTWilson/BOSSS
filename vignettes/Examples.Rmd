@@ -670,6 +670,13 @@ plot(sol)
 #ggsave(here("man", "figures", "rec.pdf"), height=9, width=14, units="cm")
 ```
 
+If we want to revise a constraint, we can do that easily:
+
+```{r}
+
+```
+
+
 ## References
 
 - Croft J, Ainsworth G, Corrigan N, et al. NIFTy: near-infrared fluorescence (NIRF) imaging to prevent postsurgical hypoparathyroidism (PoSH) after thyroid surgery—a phase II/III pragmatic, multicentre randomised controlled trial protocol in patients undergoing a total or completion thyroidectomy. _BMJ Open_, 15:e092422 (2025). https://doi.org/10.1136/bmjopen-2024-092422
