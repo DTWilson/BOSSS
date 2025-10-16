@@ -22,7 +22,7 @@ The goal of BOSSS is to help people use Bayesian optimisation to solve sample si
 
 ## Installation
 
-Install the released version of tout from CRAN:
+Install the released version of BOSSS from CRAN:
 
 ``` r
 install.packages("BOSSS")

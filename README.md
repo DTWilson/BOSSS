@@ -14,7 +14,7 @@ calculate operating characteristics.
 
 ## Installation
 
-Install the released version of tout from CRAN:
+Install the released version of BOSSS from CRAN:
 
 ``` r
 install.packages("BOSSS")
